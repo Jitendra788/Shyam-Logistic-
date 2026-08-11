@@ -17,11 +17,12 @@ type BrandLogoProps = {
 
 const sizes = {
   sm: {
-    mark: 48,
-    markSm: 52,
-    first: "text-[0.95rem] sm:text-[1.1rem]",
-    second: "text-[1.05rem] sm:text-[1.25rem]",
-    gap: "gap-2.5 sm:gap-3",
+    mark: 44,
+    markSm: 48,
+    // CSS responsive - slightly smaller text on very narrow phones
+    first: "text-[0.9rem] sm:text-[1.05rem] md:text-[1.1rem]",
+    second: "text-[1rem] sm:text-[1.15rem] md:text-[1.25rem]",
+    gap: "gap-2 sm:gap-2.5",
   },
   md: {
     mark: 62,
@@ -117,9 +118,9 @@ export function BrandLogo({
       </span>
 
       {showWordmark && (
-        <span className="flex min-w-0 flex-col leading-none">
+        <span className="flex min-w-0 flex-1 flex-col leading-none">
           <span
-            className={`truncate font-display font-bold uppercase tracking-[0.04em] ${s.first} ${
+            className={`max-w-full truncate font-display font-bold uppercase tracking-[0.04em] ${s.first} ${
               variant === "dark" ? "text-white" : "text-navy"
             }`}
           >
@@ -127,7 +128,7 @@ export function BrandLogo({
           </span>
           {second ? (
             <span
-              className={`mt-0.5 truncate font-display font-extrabold uppercase tracking-[0.12em] text-red sm:tracking-[0.14em] ${s.second}`}
+              className={`mt-0.5 max-w-full truncate font-display font-extrabold uppercase tracking-[0.1em] text-red sm:tracking-[0.14em] ${s.second}`}
             >
               {second}
             </span>
