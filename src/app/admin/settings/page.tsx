@@ -218,12 +218,12 @@ export default function AdminSettingsPage() {
           <ImageUploadCard
             title="Company logo"
             help="Shows in header, footer, and blog. Transparent PNG works best. Reset restores the official Shyam logo."
-            preview={settings.logoUrl || "/brand/shyam-logo.png"}
+            preview={settings.logoUrl || "/brand/shyam-brand-logo.png"}
             fallbackLabel="Shyam"
             rounded="rounded-xl"
             uploading={uploading === "logo"}
             onPick={(file) => uploadBrandImage("logo", file)}
-            onReset={() => update("logoUrl", "/brand/shyam-logo.png")}
+            onReset={() => update("logoUrl", "/brand/shyam-brand-logo.png")}
             resetLabel="Use official Shyam logo"
           />
           <ImageUploadCard

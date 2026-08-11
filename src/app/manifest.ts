@@ -14,13 +14,13 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       {
         src: "/brand/shyam-mark.png",
-        sizes: "256x256",
+        sizes: "320x320",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/brand/shyam-logo.png",
-        sizes: "670x469",
+        src: "/brand/shyam-brand-logo.png",
+        sizes: "826x933",
         type: "image/png",
         purpose: "any",
       },

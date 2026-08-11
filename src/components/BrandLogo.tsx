@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** Official SHYAM logo (flute / S mark + wordmark artwork). */
-export const DEFAULT_LOGO_URL = "/brand/shyam-logo.png";
+/** Full Shyam logo with mor pankh (peacock) + wordmark */
+export const DEFAULT_LOGO_URL = "/brand/shyam-brand-logo.png";
+/** Compact circular mark for badges */
 export const DEFAULT_MARK_URL = "/brand/shyam-mark.png";
 
 type BrandLogoProps = {
@@ -16,20 +17,20 @@ type BrandLogoProps = {
 
 const sizes = {
   sm: {
-    logoH: 44,
-    logoW: 64,
+    logoH: 52,
+    logoW: 50,
     text: "text-[0.95rem] xs:text-base sm:text-[1.15rem]",
     gap: "gap-2 sm:gap-2.5",
   },
   md: {
-    logoH: 56,
-    logoW: 80,
+    logoH: 72,
+    logoW: 68,
     text: "text-lg sm:text-2xl",
     gap: "gap-2.5 sm:gap-3",
   },
   lg: {
-    logoH: 68,
-    logoW: 96,
+    logoH: 88,
+    logoW: 84,
     text: "text-xl sm:text-3xl",
     gap: "gap-3 sm:gap-3.5",
   },
@@ -47,7 +48,7 @@ export function LogoMark({ size }: { size: number }) {
         src={DEFAULT_MARK_URL}
         alt=""
         fill
-        className="object-contain p-[8%]"
+        className="object-contain p-[6%]"
         sizes={`${size}px`}
       />
     </span>
@@ -66,6 +67,11 @@ export function BrandLogo({
   const first = parts[0] || "SHYAM";
   const second = parts.slice(1).join(" ") || "LOGISTIC";
   const src = logoUrl?.trim() || DEFAULT_LOGO_URL;
+  // Full brand art already has Shyam / LOGISTIC — avoid duplicate text
+  const hasBuiltInWordmark =
+    /shyam-logo|shyam-brand|\/brand\/logo/i.test(src) &&
+    !/shyam-mark/i.test(src);
+  const showText = showWordmark && !hasBuiltInWordmark;
 
   return (
     <Link
@@ -79,7 +85,7 @@ export function BrandLogo({
       >
         <Image
           src={src}
-          alt=""
+          alt={companyName}
           fill
           priority={size === "sm"}
           className="object-contain object-left"
@@ -87,7 +93,7 @@ export function BrandLogo({
         />
       </span>
 
-      {showWordmark && (
+      {showText && (
         <span
           className={`min-w-0 truncate font-display font-bold uppercase leading-[1.05] tracking-[0.02em] sm:tracking-[0.03em] ${s.text}`}
         >

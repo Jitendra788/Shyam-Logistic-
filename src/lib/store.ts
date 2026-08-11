@@ -12,7 +12,7 @@ async function ensureDataDir() {
 }
 
 const settingsDefaults: Partial<SiteSettings> = {
-  logoUrl: "/brand/shyam-logo.png",
+  logoUrl: "/brand/shyam-brand-logo.png",
   founderImageUrl: "/brand/mohanlal.jpg",
   alsoKnownAs: ["Shree Shyam Logistics", "Shree Shyam Logistic"],
 };
@@ -20,10 +20,20 @@ const settingsDefaults: Partial<SiteSettings> = {
 export async function getSettings(): Promise<SiteSettings> {
   const raw = await fs.readFile(settingsPath, "utf-8");
   const data = JSON.parse(raw) as SiteSettings;
+  // Prefer new peafowl brand art if settings still point at older default paths
+  let logoUrl = data.logoUrl?.trim() || "";
+  if (
+    !logoUrl ||
+    logoUrl === "/brand/shyam-logo.png" ||
+    logoUrl === "/brand/logo.png" ||
+    logoUrl === "/brand/logo.svg"
+  ) {
+    logoUrl = "/brand/shyam-brand-logo.png";
+  }
   return {
     ...settingsDefaults,
     ...data,
-    logoUrl: data.logoUrl?.trim() || "/brand/shyam-logo.png",
+    logoUrl,
     founderImageUrl: data.founderImageUrl || "/brand/mohanlal.jpg",
     alsoKnownAs:
       Array.isArray(data.alsoKnownAs) && data.alsoKnownAs.length
