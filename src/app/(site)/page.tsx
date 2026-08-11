@@ -12,32 +12,41 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero — Highway structure + Shyam branding */}
-      <section className="relative overflow-hidden bg-navy-deep text-white">
+      {/* Hero — full-bleed logistics photo */}
+      <section className="relative min-h-[88vh] overflow-hidden text-white">
+        <Image
+          src="/brand/hero.jpg"
+          alt="Professional freight logistics and trucking solutions"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(ellipse 70% 70% at 85% 20%, rgba(198,40,40,0.28), transparent), linear-gradient(120deg, #061428 0%, #0a1f3d 50%, #123056 100%)",
-          }}
+          className="absolute inset-0 bg-gradient-to-r from-navy-deep via-navy-deep/90 to-navy/55"
         />
-        <div className="site-container relative grid min-h-[88vh] items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
-          <div>
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-transparent to-navy-deep/30"
+        />
+
+        <div className="site-container relative z-10 flex min-h-[88vh] flex-col justify-center py-20">
+          <div className="max-w-2xl">
             <p className="animate-fade-in section-label !text-gold">
               {settings.heroEyebrow}
             </p>
-            <h1 className="animate-fade-up mt-4 max-w-xl font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.1rem]">
+            <h1 className="animate-fade-up mt-4 font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.25rem]">
               {settings.heroHeadline.split(" ").slice(0, 2).join(" ")}
               <span className="text-red">
                 {" "}
                 {settings.heroHeadline.split(" ").slice(2).join(" ")}
               </span>
             </h1>
-            <p className="animate-fade-up-delay mt-3 text-base font-medium text-white/90 sm:text-lg">
+            <p className="animate-fade-up-delay mt-4 text-base font-medium text-white/95 sm:text-lg">
               {settings.hindiTagline}
             </p>
-            <p className="animate-fade-up-delay mt-4 max-w-lg text-base leading-relaxed text-white/70 sm:text-lg">
+            <p className="animate-fade-up-delay mt-4 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
               {settings.heroSubtext}
             </p>
 
@@ -50,11 +59,14 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="animate-fade-up-delay-2 mt-10 flex flex-wrap gap-6">
+            <div className="animate-fade-up-delay-2 mt-10 flex flex-wrap gap-5">
               {settings.attributes.map((attr) => (
-                <div key={attr.title} className="flex items-center gap-3">
-                  <IconBadge icon={attr.icon} className="!h-10 !w-10 !bg-red" />
-                  <span className="text-sm font-bold tracking-[0.12em] text-white">
+                <div
+                  key={attr.title}
+                  className="flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3 py-2 backdrop-blur-sm"
+                >
+                  <IconBadge icon={attr.icon} className="!h-9 !w-9 !bg-red" />
+                  <span className="text-xs font-bold tracking-[0.14em] text-white sm:text-sm">
                     {attr.title}
                   </span>
                 </div>
@@ -62,29 +74,29 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="animate-fade-up-delay relative">
-            <div className="overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/40">
-              <Image
-                src="/brand/hero-banner.png"
-                alt={`${settings.companyName} — ${settings.legalName}, Proprietor`}
-                width={1200}
-                height={700}
-                className="h-auto w-full object-cover object-right"
-                priority
-              />
-            </div>
-            <div className="absolute -bottom-4 left-4 right-4 rounded-xl border border-white/10 bg-navy/95 p-4 backdrop-blur sm:left-auto sm:right-6 sm:w-72">
-              <p className="text-xs uppercase tracking-[0.16em] text-gold">
-                Proprietor
-              </p>
-              <p className="mt-1 font-display text-2xl font-bold">
-                {settings.legalName}
-              </p>
-              <p className="mt-2 text-sm text-white/70">
+          <div className="mt-12 flex max-w-md flex-col gap-1 rounded-xl border border-white/15 bg-navy-deep/70 p-4 backdrop-blur-md sm:mt-14">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">
+              Proprietor · {settings.legalName}
+            </p>
+            <p className="text-sm text-white/85">
+              <a
+                href={`tel:${settings.phone.replace(/\s/g, "")}`}
+                className="font-semibold hover:text-white"
+              >
                 {settings.phone}
-                {settings.phone2 ? ` · ${settings.phone2}` : ""}
-              </p>
-            </div>
+              </a>
+              {settings.phone2 ? (
+                <>
+                  {" · "}
+                  <a
+                    href={`tel:${settings.phone2.replace(/\s/g, "")}`}
+                    className="font-semibold hover:text-white"
+                  >
+                    {settings.phone2}
+                  </a>
+                </>
+              ) : null}
+            </p>
           </div>
         </div>
       </section>
@@ -103,7 +115,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Solutions grid — Highway home services */}
+      {/* Solutions grid */}
       <section className="py-16 sm:py-20">
         <div className="site-container">
           <div className="max-w-2xl">
@@ -192,7 +204,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* FAQ — Highway structure */}
+      {/* FAQ */}
       <section className="py-16 sm:py-20">
         <div className="site-container grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
@@ -208,7 +220,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Footer CTA strip from banner services */}
       <section className="bg-navy py-10 text-white">
         <div className="site-container">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -230,7 +241,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Mobile quick quote */}
       <section className="py-14 lg:hidden">
         <div className="site-container">
           <p className="section-label">Get Quote</p>
