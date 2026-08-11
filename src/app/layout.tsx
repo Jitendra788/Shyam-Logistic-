@@ -43,7 +43,10 @@ export async function generateMetadata(): Promise<Metadata> {
     "shyamlogistic | SHYAM LOGISTIC — Official Logistics Website";
   const description = brandDescription(settings);
   const address = formatPrimaryAddress(settings);
-  const verification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+  // HTML tag verification for Google Search Console (public meta; safe to ship)
+  const verification =
+    process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+    "8WNzFDB0O1ePiN1_zGWBMYBRYu8uLb6rIUHj9F1gdl8";
 
   return {
     metadataBase: new URL(site),
@@ -109,11 +112,9 @@ export async function generateMetadata(): Promise<Metadata> {
       "business:contact_data:email": settings.email,
       "business:contact_data:phone_number": settings.phone,
     },
-    verification: verification
-      ? {
-          google: verification,
-        }
-      : undefined,
+    verification: {
+      google: verification,
+    },
   };
 }
 
