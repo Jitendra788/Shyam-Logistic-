@@ -3,8 +3,8 @@ import Link from "next/link";
 
 /** Full Shyam logo art (peacock + flute + Shyam word) */
 export const DEFAULT_LOGO_URL = "/brand/shyam-brand-logo.png";
-/** Compact circular mark for clear header display */
-export const DEFAULT_MARK_URL = "/brand/shyam-mark.png";
+/** Compact circular peacock mark (rich colours) */
+export const DEFAULT_MARK_URL = "/brand/shyam-peacock-mark.png";
 
 type BrandLogoProps = {
   companyName?: string;
@@ -17,22 +17,22 @@ type BrandLogoProps = {
 
 const sizes = {
   sm: {
-    mark: 46,
-    markSm: 48,
+    mark: 48,
+    markSm: 52,
     first: "text-[0.95rem] sm:text-[1.1rem]",
     second: "text-[1.05rem] sm:text-[1.25rem]",
     gap: "gap-2.5 sm:gap-3",
   },
   md: {
-    mark: 58,
-    markSm: 62,
+    mark: 62,
+    markSm: 68,
     first: "text-lg sm:text-xl",
     second: "text-xl sm:text-2xl",
     gap: "gap-3",
   },
   lg: {
-    mark: 70,
-    markSm: 76,
+    mark: 76,
+    markSm: 84,
     first: "text-xl sm:text-2xl",
     second: "text-2xl sm:text-3xl",
     gap: "gap-3.5",
@@ -43,7 +43,7 @@ const sizes = {
 export function LogoMark({ size }: { size: number }) {
   return (
     <span
-      className="relative inline-block shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-line/80"
+      className="relative inline-block shrink-0 overflow-hidden rounded-full bg-gradient-to-b from-white to-[#f3f7fb] shadow-[0_1px_4px_rgba(10,31,61,0.12)] ring-1 ring-[#0a1f3d]/12"
       style={{ width: size, height: size }}
       aria-hidden
     >
@@ -51,7 +51,7 @@ export function LogoMark({ size }: { size: number }) {
         src={DEFAULT_MARK_URL}
         alt=""
         fill
-        className="object-contain p-[5%]"
+        className="object-contain p-[3%]"
         sizes={`${size}px`}
       />
     </span>
@@ -76,7 +76,9 @@ export function BrandLogo({
   const custom = logoUrl?.trim() || "";
   const isDefaultBrand =
     !custom ||
-    /shyam-logo|shyam-brand|shyam-mark|\/brand\/logo/i.test(custom);
+    /shyam-logo|shyam-brand|shyam-mark|shyam-peacock|\/brand\/logo/i.test(
+      custom
+    );
   // Use crisp circular mark for default brand so feathers stay visible at small size
   const markSrc = isDefaultBrand ? DEFAULT_MARK_URL : custom;
   const useSquareCustom = Boolean(custom && !isDefaultBrand);
@@ -88,8 +90,10 @@ export function BrandLogo({
       aria-label={companyName}
     >
       <span
-        className={`relative shrink-0 overflow-hidden bg-white shadow-[0_1px_3px_rgba(10,31,61,0.1)] ${
-          useSquareCustom ? "rounded-lg" : "rounded-full ring-1 ring-navy/10"
+        className={`relative shrink-0 overflow-hidden shadow-[0_1px_5px_rgba(10,31,61,0.12)] ${
+          useSquareCustom
+            ? "rounded-lg bg-white ring-1 ring-line"
+            : "rounded-full bg-gradient-to-b from-white to-[#eef4fa] ring-1 ring-[#0a1f3d]/10"
         }`}
         style={{
           width: useSquareCustom ? s.markSm * 1.15 : s.markSm,
@@ -106,7 +110,7 @@ export function BrandLogo({
           className={
             useSquareCustom
               ? "object-contain p-0.5"
-              : "object-contain p-[4%]"
+              : "object-contain p-[2%]"
           }
           sizes={`${s.markSm * 2}px`}
         />
