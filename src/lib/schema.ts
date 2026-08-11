@@ -9,18 +9,27 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
   return {
     "@context": "https://schema.org",
     "@type": ["Organization", "LocalBusiness", "MovingCompany"],
-    name: settings.companyName,
+    "@id": `${site}/#organization`,
+    name: "shyamlogistic",
     legalName: settings.legalName,
     alternateName: [
-      "shyamlogistic",
+      "SHYAM LOGISTIC",
+      "shyam logistic",
       "Shyam Logistic",
       "Shyam Logistics",
       "SHYAM LOGISTICS",
-      "shyam logistic",
       "shyamlogistic.online",
       "www.shyamlogistic.online",
+      settings.companyName,
     ],
-    description: `${settings.description} Official website: shyamlogistic.online`,
+    brand: {
+      "@type": "Brand",
+      name: "shyamlogistic",
+      alternateName: settings.companyName,
+      logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
+      url: site,
+    },
+    description: `shyamlogistic is the official website of SHYAM LOGISTIC. ${settings.description}`,
     url: site,
     logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
     image: absoluteUrl("/brand/hero.jpg"),
@@ -103,7 +112,7 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
     ],
     hasOfferCatalog: {
       "@type": "OfferCatalog",
-      name: "Logistics Services",
+      name: "Logistics Services by shyamlogistic",
       itemListElement: settings.services.map((s) => ({
         "@type": "Offer",
         itemOffered: {
@@ -112,7 +121,8 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
           description: s.description,
           provider: {
             "@type": "Organization",
-            name: settings.companyName,
+            name: "shyamlogistic",
+            alternateName: settings.companyName,
           },
           areaServed: "IN",
         },
@@ -126,22 +136,37 @@ export function buildWebsiteJsonLd(settings: SiteSettings) {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "SHYAM LOGISTIC",
-    alternateName: ["shyamlogistic", "SHYAM LOGISTIC", "Shyam Logistics"],
+    "@id": `${site}/#website`,
+    name: "shyamlogistic",
+    alternateName: ["SHYAM LOGISTIC", "shyam logistic", "Shyam Logistics"],
     url: site,
-    description: `${settings.description} Book online at www.shyamlogistic.online`,
+    description:
+      "Official website of shyamlogistic (SHYAM LOGISTIC). Book freight online at www.shyamlogistic.online",
     inLanguage: ["en-IN", "hi-IN"],
     publisher: {
-      "@type": "Organization",
-      name: "SHYAM LOGISTIC",
-      alternateName: "shyamlogistic",
-      logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
+      "@id": `${site}/#organization`,
     },
     potentialAction: {
       "@type": "SearchAction",
       target: `${site}/blog?q={search_term_string}`,
       "query-input": "required name=search_term_string",
     },
+  };
+}
+
+export function buildFaqJsonLd(settings: SiteSettings) {
+  if (!settings.faqs?.length) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: settings.faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
   };
 }
 

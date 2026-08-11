@@ -22,7 +22,7 @@ export default async function HomePage() {
       <section className="relative min-h-[min(92vh,820px)] overflow-hidden text-white sm:min-h-[88vh]">
         <Image
           src="/brand/hero.jpg"
-          alt="Professional freight logistics and trucking solutions"
+          alt="shyamlogistic freight logistics and trucking solutions"
           fill
           priority
           className="object-cover object-center"
@@ -132,13 +132,15 @@ export default async function HomePage() {
           <div className="max-w-2xl">
             <p className="section-label">What we offer</p>
             <h2 className="section-title mt-2">
-              Logistics solutions from SHYAM LOGISTIC
+              Logistics solutions from shyamlogistic
             </h2>
             <p className="mt-3 text-sm text-muted sm:mt-4 sm:text-base">
               From full truckloads to custom logistics,{" "}
-              <strong className="font-semibold text-navy">SHYAM LOGISTIC</strong>{" "}
-              delivers speed, safety, and precision across India. Book FTL, PTL,
-              and express cargo online at{" "}
+              <strong className="font-semibold text-navy">shyamlogistic</strong>{" "}
+              (
+              <strong className="font-semibold text-navy">SHYAM LOGISTIC</strong>
+              ) delivers speed, safety, and precision across India. Book FTL,
+              PTL, and express cargo online at{" "}
               <span className="font-semibold text-navy">
                 www.shyamlogistic.online
               </span>
@@ -154,16 +156,17 @@ export default async function HomePage() {
       <section className="border-y border-line bg-white py-12 sm:py-16">
         <div className="site-container max-w-3xl">
           <h2 className="section-title text-center">
-            Why choose SHYAM LOGISTIC?
+            Why choose shyamlogistic?
           </h2>
           <div className="prose-like mt-6 space-y-4 text-sm leading-relaxed text-muted sm:text-base">
             <p>
-              <strong className="text-navy">SHYAM LOGISTIC</strong>{" "}
-              (shyamlogistic) is a GST-registered logistics company serving
-              Sangli, Maharashtra, and pan-India routes. We provide full truck
-              load (FTL), part truck load (PTL), express cargo, and custom
-              freight services with transparent billing and a strong focus on
-              on-time delivery.
+              <strong className="text-navy">shyamlogistic</strong> is the
+              official online name of{" "}
+              <strong className="text-navy">SHYAM LOGISTIC</strong>, a
+              GST-registered logistics company serving Sangli, Maharashtra, and
+              pan-India routes. We provide full truck load (FTL), part truck load
+              (PTL), express cargo, and custom freight services with transparent
+              billing and a strong focus on on-time delivery.
             </p>
             <p>
               Need full truck load, part truck load, express delivery,

@@ -3,11 +3,17 @@ import { Barlow, Barlow_Condensed } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
 import { getSettings } from "@/lib/store";
 import {
+  buildFaqJsonLd,
   buildOrganizationJsonLd,
   buildWebsiteJsonLd,
   formatPrimaryAddress,
 } from "@/lib/schema";
-import { SEO_KEYWORDS, absoluteUrl, brandDescription, getSiteUrl } from "@/lib/seo";
+import {
+  SEO_KEYWORDS,
+  absoluteUrl,
+  brandDescription,
+  getSiteUrl,
+} from "@/lib/seo";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -32,8 +38,9 @@ const body = Barlow({
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const site = getSiteUrl();
+  // Brand-first title: Google search "shyamlogistic" should match official site
   const title =
-    "SHYAM LOGISTIC | FTL, PTL and Transport Across India";
+    "shyamlogistic | SHYAM LOGISTIC — Official Logistics Website";
   const description = brandDescription(settings);
   const address = formatPrimaryAddress(settings);
   const verification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
@@ -42,15 +49,15 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(site),
     title: {
       default: title,
-      template: `%s | SHYAM LOGISTIC`,
+      template: `%s | shyamlogistic`,
     },
     description,
     keywords: SEO_KEYWORDS,
-    authors: [{ name: "SHYAM LOGISTIC" }],
-    creator: "SHYAM LOGISTIC",
+    authors: [{ name: "shyamlogistic" }, { name: "SHYAM LOGISTIC" }],
+    creator: "shyamlogistic",
     publisher: "SHYAM LOGISTIC",
     category: "Logistics",
-    applicationName: "SHYAM LOGISTIC",
+    applicationName: "shyamlogistic",
     alternates: {
       canonical: "/",
       languages: {
@@ -73,7 +80,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "en_IN",
       url: site,
-      siteName: "SHYAM LOGISTIC",
+      siteName: "shyamlogistic",
       title,
       description,
       images: [
@@ -81,7 +88,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: absoluteUrl("/brand/hero.jpg"),
           width: 1200,
           height: 630,
-          alt: "SHYAM LOGISTIC freight and logistics services across India",
+          alt: "shyamlogistic — SHYAM LOGISTIC freight and logistics across India",
         },
       ],
     },
@@ -116,6 +123,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const settings = await getSettings();
+  const faqLd = buildFaqJsonLd(settings);
 
   return (
     <html
@@ -131,6 +139,7 @@ export default async function RootLayout({
           data={[
             buildOrganizationJsonLd(settings),
             buildWebsiteJsonLd(settings),
+            ...(faqLd ? [faqLd] : []),
           ]}
         />
         {children}

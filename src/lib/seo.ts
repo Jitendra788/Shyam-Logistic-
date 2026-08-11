@@ -64,7 +64,7 @@ export function brandDescription(settings: {
   hindiTagline?: string;
 }): string {
   return (
-    `SHYAM LOGISTIC (shyamlogistic) is a trusted logistics and transport company in Sangli, Maharashtra. ` +
+    `shyamlogistic is the official brand of SHYAM LOGISTIC — logistics and transport company in Sangli, Maharashtra. ` +
     `Book FTL, PTL, express cargo, and pan-India freight at www.shyamlogistic.online. ` +
     `Call ${settings.phone}${settings.phone2 ? ` / ${settings.phone2}` : ""}. ` +
     `GSTIN ${settings.gstin}. ${settings.hindiTagline || ""}`

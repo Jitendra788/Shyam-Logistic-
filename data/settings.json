@@ -15,9 +15,9 @@
   "phone": "8459858242",
   "phone2": "9057420562",
   "whatsapp": "8459858242",
-  "heroEyebrow": "India's Trusted Logistics Partner",
+  "heroEyebrow": "shyamlogistic · Official Website",
   "heroHeadline": "Delivering Excellence Across Every Mile",
-  "heroSubtext": "Book freight with SHYAM LOGISTIC—seamless logistics connecting businesses nationwide. Professional handling, GST billing, and on-time road transport from Sangli to pan-India routes.",
+  "heroSubtext": "Book freight with shyamlogistic (SHYAM LOGISTIC)—seamless logistics connecting businesses nationwide. Professional handling, GST billing, and on-time road transport from Sangli to pan-India routes.",
   "locations": [
     {
       "id": "loc-hq",
@@ -197,9 +197,14 @@
   ],
   "faqs": [
     {
+      "id": "faq-brand",
+      "question": "What is shyamlogistic?",
+      "answer": "shyamlogistic is the official brand and website name of SHYAM LOGISTIC — a GST-registered logistics and transport company in Sangli, Maharashtra. Visit www.shyamlogistic.online to book FTL, PTL, express cargo, and pan-India freight."
+    },
+    {
       "id": "faq1",
-      "question": "What services does SHYAM LOGISTIC offer?",
-      "answer": "We offer full truck load (FTL), part truck load (PTL), express delivery, supply-chain solutions, warehousing support, and custom logistics for all types of goods booking."
+      "question": "What services does SHYAM LOGISTIC (shyamlogistic) offer?",
+      "answer": "We offer full truck load (FTL), part truck load (PTL), express delivery, supply-chain solutions, warehousing support, and custom logistics for all types of goods booking via www.shyamlogistic.online."
     },
     {
       "id": "faq2",
@@ -219,7 +224,7 @@
     {
       "id": "faq5",
       "question": "How can I get a quote for your services?",
-      "answer": "Use the Get Quote form on this website or call 8459858242 / 9057420562. Share the cargo type, weight, and route for a clear estimate."
+      "answer": "Use the Get Quote form on www.shyamlogistic.online or call 8459858242 / 9057420562. Share the cargo type, weight, and route for a clear estimate."
     }
   ],
   "workingHours": "Monday – Saturday: 9:00 AM – 7:00 PM · Sunday: Closed",

@@ -24,14 +24,14 @@ export function pageMeta({
       description,
       url: absoluteUrl(path),
       type: "website",
-      siteName: "SHYAM LOGISTIC",
+      siteName: "shyamlogistic",
       locale: "en_IN",
       images: [
         {
           url: absoluteUrl("/brand/hero.jpg"),
           width: 1200,
           height: 630,
-          alt: `${title} | SHYAM LOGISTIC`,
+          alt: `${title} | shyamlogistic`,
         },
       ],
     },
