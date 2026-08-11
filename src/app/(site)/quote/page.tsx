@@ -5,11 +5,16 @@ import { pageMeta } from "@/lib/page-meta";
 import { getSettings } from "@/lib/store";
 
 export const metadata: Metadata = pageMeta({
-  title: "Get a Free Freight Quote | Book Cargo Online",
+  title: "Get Free Quote | shyamlogistic Freight Booking Online",
   description:
-    "Request a free logistics quote from SHYAM LOGISTIC. FTL, PTL and express cargo rates for routes across India. Fast callback from our Sangli team.",
+    "Request a free logistics quote from shyamlogistic. FTL, PTL and express cargo rates across India. Fast callback — book now at shyamlogistic.online/quote.",
   path: "/quote",
-  keywords: ["free freight quote", "cargo booking form", "truck rate India"],
+  keywords: [
+    "shyamlogistic quote",
+    "shyam logistic booking",
+    "free freight quote",
+    "cargo booking form",
+  ],
 });
 
 export default async function QuotePage() {

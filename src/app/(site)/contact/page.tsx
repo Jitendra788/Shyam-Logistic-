@@ -7,12 +7,13 @@ import { pageMeta } from "@/lib/page-meta";
 import { getSettings } from "@/lib/store";
 
 export const metadata: Metadata = pageMeta({
-  title: "Contact Us — Call 8459858242 | Sangli Office",
+  title: "Contact shyamlogistic | Call 8459858242 Sangli Office",
   description:
-    "Contact SHYAM LOGISTIC for freight booking. Phone 8459858242 / 9057420562. Office: Shalini Nagar, Sangli, Maharashtra 416416. GST 27AXGPL2293R1ZP.",
+    "Contact shyamlogistic for freight booking. Phone 8459858242 / 9057420562. Office: Shalini Nagar, Sangli 416416. Official site: www.shyamlogistic.online.",
   path: "/contact",
   keywords: [
-    "contact logistics Sangli",
+    "contact shyamlogistic",
+    "shyam logistic phone",
     "8459858242",
     "transport office Sangli",
   ],

@@ -6,15 +6,15 @@ import { pageMeta } from "@/lib/page-meta";
 import { getSettings } from "@/lib/store";
 
 export const metadata: Metadata = pageMeta({
-  title: "Logistics Services — FTL, PTL, Express & Supply Chain",
+  title: "shyamlogistic Services | FTL, PTL, Express & Supply Chain",
   description:
-    "SHYAM LOGISTIC services: Full Truck Load, Part Load, Express Delivery, Warehousing, Last-Mile and Supply Chain Solutions across India.",
+    "shyamlogistic logistics services: Full Truck Load, Part Load, Express Delivery, Warehousing and Supply Chain Solutions. Book online at shyamlogistic.online.",
   path: "/services",
   keywords: [
-    "FTL services India",
-    "PTL transport",
+    "shyamlogistic services",
+    "shyam logistic FTL",
+    "shyam logistic PTL",
     "express delivery logistics",
-    "warehousing Sangli",
   ],
 });
 

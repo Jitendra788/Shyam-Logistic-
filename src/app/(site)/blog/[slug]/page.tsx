@@ -16,32 +16,41 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
-  if (!post) return { title: "Post not found" };
+  if (!post) return { title: "Post not found | shyamlogistic" };
   const url = absoluteUrl(`/blog/${post.slug}`);
+  const title = `${post.title} | shyamlogistic Blog`;
+  const description = `${post.excerpt} — Read more on the shyamlogistic (SHYAM LOGISTIC) logistics blog.`;
   return {
-    title: post.title,
-    description: post.excerpt,
-    keywords: [post.category, post.title, "SHYAM LOGISTIC blog", ...SEO_KEYWORDS.slice(0, 8)],
+    title,
+    description,
+    keywords: [
+      "shyamlogistic",
+      "shyam logistic",
+      post.category,
+      post.title,
+      "shyamlogistic blog",
+      ...SEO_KEYWORDS.slice(0, 12),
+    ],
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       type: "article",
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       url,
       publishedTime: post.createdAt,
       modifiedTime: post.updatedAt,
-      authors: [post.author],
+      authors: [post.author || "shyamlogistic"],
       images: [
         {
           url: absoluteUrl(post.coverImage || "/brand/hero.jpg"),
-          alt: post.title,
+          alt: `${post.title} — shyamlogistic`,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       images: [absoluteUrl(post.coverImage || "/brand/hero.jpg")],
     },
   };

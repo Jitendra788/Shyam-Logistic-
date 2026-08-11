@@ -7,7 +7,7 @@ import {
   buildWebsiteJsonLd,
   formatPrimaryAddress,
 } from "@/lib/schema";
-import { SEO_KEYWORDS, absoluteUrl, getSiteUrl } from "@/lib/seo";
+import { SEO_KEYWORDS, absoluteUrl, brandDescription, getSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -32,10 +32,9 @@ const body = Barlow({
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const site = getSiteUrl();
-  const title = `${settings.companyName} | FTL, PTL & Transport Across India`;
-  const description = `${settings.description} Call ${settings.phone}${
-    settings.phone2 ? ` / ${settings.phone2}` : ""
-  }. GSTIN ${settings.gstin}. ${settings.hindiTagline}`;
+  const title =
+    "shyamlogistic | SHYAM LOGISTIC — FTL, PTL & Transport Across India";
+  const description = brandDescription(settings);
   const address = formatPrimaryAddress(settings);
   const verification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 
@@ -43,17 +42,21 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(site),
     title: {
       default: title,
-      template: `%s | ${settings.companyName}`,
+      template: `%s | shyamlogistic`,
     },
     description,
     keywords: SEO_KEYWORDS,
-    authors: [{ name: settings.companyName }],
-    creator: settings.companyName,
-    publisher: settings.companyName,
+    authors: [{ name: "SHYAM LOGISTIC (shyamlogistic)" }],
+    creator: "shyamlogistic",
+    publisher: "SHYAM LOGISTIC",
     category: "Logistics",
-    applicationName: settings.companyName,
+    applicationName: "shyamlogistic",
     alternates: {
       canonical: "/",
+      languages: {
+        "en-IN": site,
+        "x-default": site,
+      },
     },
     robots: {
       index: true,
@@ -70,7 +73,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "en_IN",
       url: site,
-      siteName: settings.companyName,
+      siteName: "shyamlogistic | SHYAM LOGISTIC",
       title,
       description,
       images: [
@@ -78,7 +81,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: absoluteUrl("/brand/hero.jpg"),
           width: 1200,
           height: 630,
-          alt: `${settings.companyName} — logistics and freight transport India`,
+          alt: "shyamlogistic — SHYAM LOGISTIC freight & logistics India",
         },
       ],
     },

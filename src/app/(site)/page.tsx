@@ -132,15 +132,76 @@ export default async function HomePage() {
           <div className="max-w-2xl">
             <p className="section-label">What we offer</p>
             <h2 className="section-title mt-2">
-              Comprehensive Logistics Solutions
+              shyamlogistic logistics solutions
             </h2>
             <p className="mt-3 text-sm text-muted sm:mt-4 sm:text-base">
-              From full truckloads to custom logistics, we deliver speed, safety,
-              and precision across India.
+              From full truckloads to custom logistics,{" "}
+              <strong className="font-semibold text-navy">shyamlogistic</strong>{" "}
+              delivers speed, safety, and precision across India. Book FTL, PTL
+              and express cargo online at{" "}
+              <span className="font-semibold text-navy">shyamlogistic.online</span>
+              .
             </p>
           </div>
           <div className="mt-8 sm:mt-10">
             <ServiceGrid services={settings.services} />
+          </div>
+        </div>
+      </section>
+
+      {/* SEO marketing block — brand + service keywords */}
+      <section className="border-y border-line bg-white py-12 sm:py-16">
+        <div className="site-container max-w-3xl">
+          <h2 className="section-title text-center">
+            Why choose shyamlogistic?
+          </h2>
+          <div className="prose-like mt-6 space-y-4 text-sm leading-relaxed text-muted sm:text-base">
+            <p>
+              <strong className="text-navy">shyamlogistic</strong> (SHYAM
+              LOGISTIC) is a GST-registered logistics company serving Sangli,
+              Maharashtra and pan-India routes. Businesses search for{" "}
+              <em>shyam logistic</em>, transport, FTL and PTL services — we
+              deliver all of them with transparent billing and on-time focus.
+            </p>
+            <p>
+              Need full truck load, part truck load, express delivery,
+              warehousing support or custom supply-chain coordination? Book
+              through{" "}
+              <strong className="text-navy">www.shyamlogistic.online</strong> or
+              call{" "}
+              <a
+                href={`tel:${settings.phone}`}
+                className="font-semibold text-red hover:underline"
+              >
+                {settings.phone}
+              </a>
+              {settings.phone2 ? (
+                <>
+                  {" / "}
+                  <a
+                    href={`tel:${settings.phone2}`}
+                    className="font-semibold text-red hover:underline"
+                  >
+                    {settings.phone2}
+                  </a>
+                </>
+              ) : null}
+              . Proprietor: {settings.legalName}. GSTIN: {settings.gstin}.
+            </p>
+            <p>
+              Marketing tip for customers: remember the brand as{" "}
+              <strong className="text-navy">shyamlogistic</strong> — one word for
+              Google search and official portal{" "}
+              <strong className="text-navy">shyamlogistic.online</strong>.
+            </p>
+          </div>
+          <div className="btn-stack-mobile mt-8 justify-center">
+            <Link href="/quote" className="btn-primary">
+              Book with shyamlogistic
+            </Link>
+            <Link href="/contact" className="btn-navy">
+              Contact shyamlogistic
+            </Link>
           </div>
         </div>
       </section>

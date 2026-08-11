@@ -6,13 +6,14 @@ import { pageMeta } from "@/lib/page-meta";
 import { getPublishedPosts, getSettings } from "@/lib/store";
 
 export const metadata: Metadata = pageMeta({
-  title: "Logistics Blog — FTL, PTL & Freight Tips",
+  title: "shyamlogistic Blog | FTL, PTL & Freight Tips India",
   description:
-    "Read SHYAM LOGISTIC blog for Indian freight guides: FTL vs PTL, cargo packing tips, and pan-India transport advice for businesses.",
+    "Read the shyamlogistic blog for freight guides: FTL vs PTL, cargo packing tips and pan-India transport advice for businesses.",
   path: "/blog",
   keywords: [
+    "shyamlogistic blog",
+    "shyam logistic tips",
     "logistics blog India",
-    "freight tips",
     "FTL vs PTL guide",
   ],
 });
