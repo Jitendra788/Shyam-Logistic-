@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { PageHero } from "@/components/PageHero";
 import { FeatureGrid } from "@/components/ServiceGrid";
@@ -54,17 +55,20 @@ export default async function AboutPage() {
           </div>
 
           <aside className="rounded-2xl border border-line bg-white p-7 shadow-sm">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-navy font-display text-xl font-bold text-white">
-              {settings.legalName
-                .split(" ")
-                .map((w) => w[0])
-                .join("")
-                .slice(0, 2)}
+            <div className="relative mx-auto h-40 w-40 overflow-hidden rounded-full border-4 border-sand shadow-sm sm:h-44 sm:w-44">
+              <Image
+                src="/brand/mohanlal.jpg"
+                alt={`${settings.legalName}, proprietor of ${settings.companyName}`}
+                fill
+                className="object-cover object-[center_18%]"
+                sizes="176px"
+                priority
+              />
             </div>
-            <p className="mt-5 font-display text-2xl font-bold text-navy">
+            <p className="mt-5 text-center font-display text-2xl font-bold text-navy sm:text-left">
               {settings.legalName}
             </p>
-            <p className="mt-1 text-sm font-semibold uppercase tracking-[0.14em] text-red">
+            <p className="mt-1 text-center text-sm font-semibold uppercase tracking-[0.14em] text-red sm:text-left">
               Proprietor · {settings.companyName}
             </p>
             <p className="mt-4 text-sm leading-relaxed text-muted">
