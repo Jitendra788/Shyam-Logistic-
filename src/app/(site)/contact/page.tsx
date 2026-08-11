@@ -35,20 +35,22 @@ export default async function ContactPage() {
           <div className="space-y-5">
             <div className="card-grid-item">
               <p className="section-label">Phone</p>
-              <a
-                href={`tel:${settings.phone.replace(/\s/g, "")}`}
-                className="mt-2 block font-display text-2xl font-bold text-navy hover:text-red"
-              >
-                {settings.phone}
-              </a>
-              {settings.phone2 && (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <a
-                  href={`tel:${settings.phone2.replace(/\s/g, "")}`}
-                  className="mt-1 block font-display text-2xl font-bold text-navy hover:text-red"
+                  href={`tel:+91${settings.phone.replace(/\D/g, "")}`}
+                  className="flex min-h-12 items-center justify-center rounded-lg bg-red px-3 text-center font-display text-lg font-bold tabular-nums text-white sm:text-xl"
                 >
-                  {settings.phone2}
+                  {settings.phone.replace(/(\d{5})(\d{5})/, "$1 $2")}
                 </a>
-              )}
+                {settings.phone2 ? (
+                  <a
+                    href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}
+                    className="flex min-h-12 items-center justify-center rounded-lg bg-navy px-3 text-center font-display text-lg font-bold tabular-nums text-white sm:text-xl"
+                  >
+                    {settings.phone2.replace(/(\d{5})(\d{5})/, "$1 $2")}
+                  </a>
+                ) : null}
+              </div>
               {settings.whatsapp && (
                 <a
                   href={`https://wa.me/${settings.whatsapp.replace(/\D/g, "")}`}

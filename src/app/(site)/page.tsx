@@ -90,27 +90,22 @@ export default async function HomePage() {
             <p className="mt-1 text-xs text-white/70">
               Official site: www.shyamlogistic.online
             </p>
-            <p className="mt-1 break-all text-sm text-white/85 sm:break-normal">
+            <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
               <a
-                href={`tel:${settings.phone.replace(/\s/g, "")}`}
-                className="font-semibold hover:text-white"
+                href={`tel:+91${settings.phone.replace(/\D/g, "")}`}
+                className="flex min-h-11 items-center justify-center rounded-lg bg-red px-2 text-center text-sm font-bold tabular-nums text-white"
               >
-                {settings.phone}
+                {settings.phone.replace(/(\d{5})(\d{5})/, "$1 $2")}
               </a>
               {settings.phone2 ? (
-                <>
-                  <span className="hidden sm:inline"> · </span>
-                  <span className="block sm:inline">
-                    <a
-                      href={`tel:${settings.phone2.replace(/\s/g, "")}`}
-                      className="font-semibold hover:text-white"
-                    >
-                      {settings.phone2}
-                    </a>
-                  </span>
-                </>
+                <a
+                  href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}
+                  className="flex min-h-11 items-center justify-center rounded-lg bg-white/15 px-2 text-center text-sm font-bold tabular-nums text-white ring-1 ring-white/20"
+                >
+                  {settings.phone2.replace(/(\d{5})(\d{5})/, "$1 $2")}
+                </a>
               ) : null}
-            </p>
+            </div>
           </div>
         </div>
       </section>

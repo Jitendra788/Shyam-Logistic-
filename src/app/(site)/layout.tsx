@@ -20,7 +20,7 @@ export default async function SiteLayout({
         phone={settings.phone}
         phone2={settings.phone2}
       />
-      <main className="flex-1 pb-20 lg:pb-0">{children}</main>
+      <main className="flex-1 pb-[5.5rem] lg:pb-0">{children}</main>
       <Footer settings={settings} />
       <MobileCallBar settings={settings} />
     </>

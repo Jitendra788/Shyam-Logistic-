@@ -1,32 +1,60 @@
 import Link from "next/link";
 import type { SiteSettings } from "@/lib/types";
 
-/** Mobile sticky call bar so phone numbers stay one tap away */
+function digits(phone: string) {
+  return phone.replace(/\D/g, "");
+}
+
+/** Format 10-digit Indian mobile for compact display */
+function displayPhone(phone: string) {
+  const d = digits(phone);
+  if (d.length === 10) {
+    return `${d.slice(0, 5)} ${d.slice(5)}`;
+  }
+  return phone.trim();
+}
+
+/** Mobile sticky dual-call bar — fits small screens without overflow */
 export function MobileCallBar({ settings }: { settings: SiteSettings }) {
-  const tel1 = settings.phone?.replace(/\D/g, "") || "";
-  const tel2 = settings.phone2?.replace(/\D/g, "") || "";
+  const tel1 = digits(settings.phone || "");
+  const tel2 = digits(settings.phone2 || "");
   if (!tel1) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(10,31,61,0.1)] backdrop-blur-md lg:hidden">
-      <div className="site-container grid grid-cols-2 gap-2 py-2.5">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/98 pb-[max(0.4rem,env(safe-area-inset-bottom))] shadow-[0_-6px_24px_rgba(10,31,61,0.12)] backdrop-blur-md lg:hidden">
+      <div
+        className={`site-container grid gap-1.5 py-2 ${
+          tel2 ? "grid-cols-2" : "grid-cols-2"
+        }`}
+      >
         <a
           href={`tel:+91${tel1}`}
-          className="inline-flex min-h-11 items-center justify-center rounded-md bg-red px-2 text-center text-sm font-bold text-white"
+          className="flex min-h-12 min-w-0 flex-col items-center justify-center rounded-lg bg-red px-1.5 py-1.5 text-center text-white active:scale-[0.98] sm:px-2"
         >
-          Call {settings.phone}
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/85">
+            Call
+          </span>
+          <span className="mt-0.5 w-full truncate text-[13px] font-bold leading-tight tabular-nums sm:text-sm">
+            {displayPhone(settings.phone)}
+          </span>
         </a>
+
         {tel2 ? (
           <a
             href={`tel:+91${tel2}`}
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-navy px-2 text-center text-sm font-bold text-white"
+            className="flex min-h-12 min-w-0 flex-col items-center justify-center rounded-lg bg-navy px-1.5 py-1.5 text-center text-white active:scale-[0.98] sm:px-2"
           >
-            Call {settings.phone2}
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/85">
+              Call
+            </span>
+            <span className="mt-0.5 w-full truncate text-[13px] font-bold leading-tight tabular-nums sm:text-sm">
+              {displayPhone(settings.phone2)}
+            </span>
           </a>
         ) : (
           <Link
             href="/quote"
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-navy px-2 text-center text-sm font-bold text-white"
+            className="flex min-h-12 min-w-0 items-center justify-center rounded-lg bg-navy px-2 text-center text-sm font-bold text-white"
           >
             Get Quote
           </Link>

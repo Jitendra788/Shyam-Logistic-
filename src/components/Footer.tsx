@@ -28,19 +28,22 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             <br />
             brand: shyamlogistic · {settings.companyName} · Sangli
           </p>
-          <p className="mt-3 text-sm font-bold text-white">
-            <a href={`tel:+91${settings.phone.replace(/\D/g, "")}`}>
-              {settings.phone}
+          <div className="mt-3 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-3">
+            <a
+              href={`tel:+91${settings.phone.replace(/\D/g, "")}`}
+              className="inline-flex min-h-10 items-center justify-center rounded-md bg-red px-3 text-sm font-bold tabular-nums text-white sm:justify-start"
+            >
+              {settings.phone.replace(/(\d{5})(\d{5})/, "$1 $2")}
             </a>
             {settings.phone2 ? (
-              <>
-                {" / "}
-                <a href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}>
-                  {settings.phone2}
-                </a>
-              </>
+              <a
+                href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}
+                className="inline-flex min-h-10 items-center justify-center rounded-md bg-white/10 px-3 text-sm font-bold tabular-nums text-white ring-1 ring-white/20 sm:justify-start"
+              >
+                {settings.phone2.replace(/(\d{5})(\d{5})/, "$1 $2")}
+              </a>
             ) : null}
-          </p>
+          </div>
         </div>
 
         <div>
