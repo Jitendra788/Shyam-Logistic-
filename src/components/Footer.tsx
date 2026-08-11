@@ -28,6 +28,19 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             <br />
             brand: shyamlogistic · {settings.companyName} · Sangli
           </p>
+          <p className="mt-3 text-sm font-bold text-white">
+            <a href={`tel:+91${settings.phone.replace(/\D/g, "")}`}>
+              {settings.phone}
+            </a>
+            {settings.phone2 ? (
+              <>
+                {" / "}
+                <a href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}>
+                  {settings.phone2}
+                </a>
+              </>
+            ) : null}
+          </p>
         </div>
 
         <div>

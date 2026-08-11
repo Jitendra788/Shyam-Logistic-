@@ -42,7 +42,32 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
     logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
     image: absoluteUrl("/brand/hero.jpg"),
     email: settings.email,
-    telephone: [`+91${settings.phone.replace(/\D/g, "")}`],
+    telephone: [
+      `+91${settings.phone.replace(/\D/g, "")}`,
+      ...(settings.phone2
+        ? [`+91${settings.phone2.replace(/\D/g, "")}`]
+        : []),
+    ],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        telephone: `+91${settings.phone.replace(/\D/g, "")}`,
+        contactType: "customer service",
+        areaServed: "IN",
+        availableLanguage: ["en", "hi"],
+      },
+      ...(settings.phone2
+        ? [
+            {
+              "@type": "ContactPoint",
+              telephone: `+91${settings.phone2.replace(/\D/g, "")}`,
+              contactType: "sales",
+              areaServed: "IN",
+              availableLanguage: ["en", "hi"],
+            },
+          ]
+        : []),
+    ],
     identifier: [
       {
         "@type": "PropertyValue",
@@ -54,27 +79,21 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
         name: "Official website",
         value: "https://www.shyamlogistic.online",
       },
+      {
+        "@type": "PropertyValue",
+        name: "Primary phone",
+        value: `+91${settings.phone.replace(/\D/g, "")}`,
+      },
+      ...(settings.phone2
+        ? [
+            {
+              "@type": "PropertyValue",
+              name: "Secondary phone",
+              value: `+91${settings.phone2.replace(/\D/g, "")}`,
+            },
+          ]
+        : []),
     ],
-    ...(settings.phone2
-      ? {
-          contactPoint: [
-            {
-              "@type": "ContactPoint",
-              telephone: `+91${settings.phone.replace(/\D/g, "")}`,
-              contactType: "customer service",
-              areaServed: "IN",
-              availableLanguage: ["en", "hi"],
-            },
-            {
-              "@type": "ContactPoint",
-              telephone: `+91${settings.phone2.replace(/\D/g, "")}`,
-              contactType: "sales",
-              areaServed: "IN",
-              availableLanguage: ["en", "hi"],
-            },
-          ],
-        }
-      : {}),
     taxID: settings.gstin,
     vatID: settings.gstin,
     foundingLocation: primary

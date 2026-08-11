@@ -38,8 +38,7 @@ const body = Barlow({
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const site = getSiteUrl();
-  const title =
-    "shyamlogistic.online | SHYAM LOGISTIC Sangli — Official Site";
+  const title = `shyamlogistic.online | Call ${settings.phone}${settings.phone2 ? ` / ${settings.phone2}` : ""} | SHYAM LOGISTIC Sangli`;
   const description = brandDescription(settings);
   const address = formatPrimaryAddress(settings);
   // HTML tag verification for Google Search Console (public meta; safe to ship)
@@ -110,6 +109,10 @@ export async function generateMetadata(): Promise<Metadata> {
       "business:contact_data:country_name": "India",
       "business:contact_data:email": settings.email,
       "business:contact_data:phone_number": settings.phone,
+      "og:phone_number": settings.phone,
+      ...(settings.phone2
+        ? { "business:contact_data:phone_number:alt": settings.phone2 }
+        : {}),
     },
     verification: {
       google: verification,
