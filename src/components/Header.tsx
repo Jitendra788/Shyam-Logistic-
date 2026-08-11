@@ -15,8 +15,10 @@ const links = [
 
 export function Header({
   companyName,
+  logoUrl = "",
 }: {
   companyName: string;
+  logoUrl?: string;
   brandShort?: string;
 }) {
   const pathname = usePathname();
@@ -37,7 +39,12 @@ export function Header({
     <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur-md">
       <div className="site-container flex h-14 items-center justify-between gap-3 sm:h-[4.5rem] sm:gap-4">
         <div className="min-w-0 flex-1">
-          <BrandLogo companyName={companyName} size="sm" variant="light" />
+          <BrandLogo
+            companyName={companyName}
+            logoUrl={logoUrl}
+            size="sm"
+            variant="light"
+          />
         </div>
 
         <nav className="hidden items-center gap-0.5 lg:flex">

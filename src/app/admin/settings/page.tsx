@@ -50,6 +50,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState<"logo" | "founder" | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +67,33 @@ export default function AdminSettingsPage() {
 
   function update<K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }
+
+  async function uploadBrandImage(
+    kind: "logo" | "founder",
+    file: File | null
+  ) {
+    if (!file) return;
+    setUploading(kind);
+    setError("");
+    setMessage("");
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("kind", kind);
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      if (kind === "logo") update("logoUrl", data.url);
+      else update("founderImageUrl", data.url);
+      setMessage(
+        `${kind === "logo" ? "Logo" : "Founder photo"} uploaded. Click “Save all changes” to apply on the website.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(null);
+    }
   }
 
   function updateLocation(index: number, patch: Partial<Location>) {
@@ -149,6 +177,9 @@ export default function AdminSettingsPage() {
     return <p className="text-muted">Loading settings...</p>;
   }
 
+  const founderPreview =
+    settings.founderImageUrl?.trim() || "/brand/mohanlal.jpg";
+
   return (
     <form onSubmit={onSubmit} className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -176,6 +207,38 @@ export default function AdminSettingsPage() {
           {error}
         </p>
       )}
+
+      <Section title="Logo & founder photo">
+        <p className="text-sm text-muted">
+          Phone: gallery or camera · Laptop: choose a file · JPG, PNG, or WebP
+          (max 5 MB). After upload, click <strong>Save all changes</strong>.
+        </p>
+
+        <div className="mt-4 grid gap-6 lg:grid-cols-2">
+          <ImageUploadCard
+            title="Company logo"
+            help="Shows in header, footer, and blog. Square PNG with transparent background works best. Leave empty for default SB mark."
+            preview={settings.logoUrl}
+            fallbackLabel="Default SB"
+            rounded="rounded-full"
+            uploading={uploading === "logo"}
+            onPick={(file) => uploadBrandImage("logo", file)}
+            onReset={() => update("logoUrl", "")}
+            resetLabel="Use default SB logo"
+          />
+          <ImageUploadCard
+            title="Founder photo"
+            help="Shows on the About page next to founder details."
+            preview={founderPreview}
+            fallbackLabel="Founder"
+            rounded="rounded-full"
+            uploading={uploading === "founder"}
+            onPick={(file) => uploadBrandImage("founder", file)}
+            onReset={() => update("founderImageUrl", "/brand/mohanlal.jpg")}
+            resetLabel="Use default photo"
+          />
+        </div>
+      </Section>
 
       <Section title="Company identity">
         <div className="grid gap-4 md:grid-cols-2">
@@ -444,6 +507,81 @@ function Section({
       <h2 className="font-display text-2xl font-bold text-navy">{title}</h2>
       <div className="mt-4 space-y-4">{children}</div>
     </section>
+  );
+}
+
+function ImageUploadCard({
+  title,
+  help,
+  preview,
+  fallbackLabel,
+  rounded,
+  uploading,
+  onPick,
+  onReset,
+  resetLabel,
+}: {
+  title: string;
+  help: string;
+  preview: string;
+  fallbackLabel: string;
+  rounded: string;
+  uploading: boolean;
+  onPick: (file: File | null) => void;
+  onReset: () => void;
+  resetLabel: string;
+}) {
+  return (
+    <div className="rounded-xl border border-dashed border-line bg-sand/40 p-4">
+      <p className="text-sm font-semibold text-ink">{title}</p>
+      <p className="mt-1 text-xs text-muted">{help}</p>
+      <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row">
+        <div
+          className={`relative h-28 w-28 shrink-0 overflow-hidden border border-line bg-white ${rounded}`}
+        >
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={preview}
+              alt={title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-navy text-sm font-bold text-white">
+              {fallbackLabel}
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            disabled={uploading}
+            className="block w-full text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-navy file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white hover:file:bg-navy-mid"
+            onChange={(e) => {
+              onPick(e.target.files?.[0] ?? null);
+              e.target.value = "";
+            }}
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={uploading}
+              className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-navy"
+              onClick={onReset}
+            >
+              {resetLabel}
+            </button>
+          </div>
+          {uploading && (
+            <p className="text-xs font-medium text-navy">Uploading…</p>
+          )}
+          {preview && (
+            <p className="break-all text-xs text-muted">Path: {preview}</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -13,7 +13,7 @@ export default async function SiteLayout({
 
   return (
     <>
-      <Header companyName={settings.companyName} />
+      <Header companyName={settings.companyName} logoUrl={settings.logoUrl} />
       <main className="flex-1">{children}</main>
       <Footer settings={settings} />
     </>

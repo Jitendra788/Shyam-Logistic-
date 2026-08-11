@@ -40,6 +40,10 @@ export type SiteSettings = {
   companyName: string;
   legalName: string;
   brandShort: string;
+  /** Custom logo image URL (empty = built-in SB mark) */
+  logoUrl: string;
+  /** Founder portrait shown on About page */
+  founderImageUrl: string;
   tagline: string;
   hindiTagline: string;
   slogan: string;

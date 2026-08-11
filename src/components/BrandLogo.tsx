@@ -1,7 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type BrandLogoProps = {
   companyName?: string;
+  /** Custom uploaded logo; empty uses built-in SB mark */
+  logoUrl?: string;
   size?: "sm" | "md" | "lg";
   variant?: "light" | "dark";
   showWordmark?: boolean;
@@ -84,6 +87,7 @@ export function LogoMark({ size }: { size: number }) {
 
 export function BrandLogo({
   companyName = "SHYAM LOGISTIC",
+  logoUrl = "",
   size = "sm",
   variant = "light",
   showWordmark = true,
@@ -92,6 +96,7 @@ export function BrandLogo({
   const parts = companyName.trim().split(/\s+/);
   const first = parts[0] || "SHYAM";
   const second = parts.slice(1).join(" ") || "LOGISTIC";
+  const custom = logoUrl?.trim();
 
   return (
     <Link
@@ -100,10 +105,27 @@ export function BrandLogo({
       aria-label={companyName}
     >
       <span
-        className="relative shrink-0 overflow-hidden rounded-full shadow-[0_1px_3px_rgba(10,31,61,0.12)] transition group-hover:shadow-[0_2px_8px_rgba(198,40,40,0.2)]"
-        style={{ width: s.markSm, height: s.markSm, maxWidth: "12vw", maxHeight: "12vw", minWidth: s.mark, minHeight: s.mark }}
+        className="relative shrink-0 overflow-hidden rounded-full bg-white shadow-[0_1px_3px_rgba(10,31,61,0.12)] transition group-hover:shadow-[0_2px_8px_rgba(198,40,40,0.2)]"
+        style={{
+          width: s.markSm,
+          height: s.markSm,
+          maxWidth: "12vw",
+          maxHeight: "12vw",
+          minWidth: s.mark,
+          minHeight: s.mark,
+        }}
       >
-        <LogoMark size={s.markSm} />
+        {custom ? (
+          <Image
+            src={custom}
+            alt=""
+            fill
+            className="object-contain p-0.5"
+            sizes="68px"
+          />
+        ) : (
+          <LogoMark size={s.markSm} />
+        )}
       </span>
 
       {showWordmark && (

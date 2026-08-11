@@ -12,6 +12,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         <div className="lg:col-span-1">
           <BrandLogo
             companyName={settings.companyName}
+            logoUrl={settings.logoUrl}
             size="sm"
             variant="dark"
           />

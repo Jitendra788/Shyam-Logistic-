@@ -57,7 +57,7 @@ export default async function AboutPage() {
           <aside className="rounded-2xl border border-line bg-white p-7 shadow-sm">
             <div className="relative mx-auto h-40 w-40 overflow-hidden rounded-full border-4 border-sand shadow-sm sm:h-44 sm:w-44">
               <Image
-                src="/brand/mohanlal.jpg"
+                src={settings.founderImageUrl || "/brand/mohanlal.jpg"}
                 alt={`${settings.legalName}, founder of ${settings.companyName}`}
                 fill
                 className="object-cover object-[center_18%]"

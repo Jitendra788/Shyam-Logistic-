@@ -35,7 +35,11 @@ export default async function BlogPage() {
       <section className="py-12 sm:py-16 md:py-20">
         <div className="site-container">
           <div className="mb-10 flex justify-center sm:justify-start">
-            <BrandLogo companyName={settings.companyName} size="md" />
+            <BrandLogo
+              companyName={settings.companyName}
+              logoUrl={settings.logoUrl}
+              size="md"
+            />
           </div>
 
           {posts.length === 0 ? (

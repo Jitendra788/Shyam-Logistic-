@@ -11,9 +11,20 @@ async function ensureDataDir() {
   await fs.mkdir(dataDir, { recursive: true });
 }
 
+const settingsDefaults: Partial<SiteSettings> = {
+  logoUrl: "",
+  founderImageUrl: "/brand/mohanlal.jpg",
+};
+
 export async function getSettings(): Promise<SiteSettings> {
   const raw = await fs.readFile(settingsPath, "utf-8");
-  return JSON.parse(raw) as SiteSettings;
+  const data = JSON.parse(raw) as SiteSettings;
+  return {
+    ...settingsDefaults,
+    ...data,
+    logoUrl: data.logoUrl ?? "",
+    founderImageUrl: data.founderImageUrl || "/brand/mohanlal.jpg",
+  };
 }
 
 export async function saveSettings(settings: SiteSettings): Promise<void> {

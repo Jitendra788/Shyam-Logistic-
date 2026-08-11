@@ -83,6 +83,7 @@ export default async function BlogPostPage({ params }: Props) {
             <div className="mb-5">
               <BrandLogo
                 companyName={settings.companyName}
+                logoUrl={settings.logoUrl}
                 size="sm"
                 variant="dark"
               />
@@ -164,7 +165,11 @@ export default async function BlogPostPage({ params }: Props) {
                 Get Free Quote
               </Link>
             </div>
-            <BrandLogo companyName={settings.companyName} size="sm" />
+            <BrandLogo
+              companyName={settings.companyName}
+              logoUrl={settings.logoUrl}
+              size="sm"
+            />
           </div>
         </div>
       </article>
