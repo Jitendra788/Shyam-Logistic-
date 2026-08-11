@@ -24,19 +24,33 @@ export function BlogCover({
   const second = parts.slice(1).join(" ") || "LOGISTIC";
   const src = coverImage?.trim() || "/brand/hero.jpg";
   const mark = Math.max(40, Math.min(logoSize, 80));
+  const isRemoteOrData =
+    src.startsWith("data:") ||
+    src.startsWith("http://") ||
+    src.startsWith("https://");
 
   return (
     <div
       className={`relative h-full w-full min-h-[10.5rem] overflow-hidden bg-[#0a1f3d] sm:min-h-[12rem] ${className}`}
     >
-      <Image
-        src={src}
-        alt={title}
-        fill
-        priority={priority}
-        className="object-cover object-center"
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-      />
+      {isRemoteOrData ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={title}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+      ) : (
+        <Image
+          src={src}
+          alt={title}
+          fill
+          priority={priority}
+          unoptimized={src.startsWith("/uploads/")}
+          className="object-cover object-center"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
+      )}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#061428]/75 via-transparent to-[#061428]/25"

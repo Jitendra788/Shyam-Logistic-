@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BlogPost } from "@/lib/types";
 
@@ -17,9 +17,11 @@ const emptyForm = {
 
 export default function AdminBlogPage() {
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
@@ -55,6 +57,7 @@ export default function AdminBlogPage() {
     setForm(emptyForm);
     setMessage("");
     setError("");
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   function startEdit(post: BlogPost) {
@@ -71,7 +74,28 @@ export default function AdminBlogPage() {
     });
     setMessage("");
     setError("");
+    if (fileRef.current) fileRef.current.value = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function onCoverPick(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    setMessage("");
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setField("coverImage", data.url as string);
+      setMessage("Cover image uploaded.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function onSubmit(e: FormEvent) {
@@ -92,6 +116,7 @@ export default function AdminBlogPage() {
       setMessage(editingId ? "Post updated." : "Post published.");
       setEditingId(null);
       setForm(emptyForm);
+      if (fileRef.current) fileRef.current.value = "";
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -132,19 +157,40 @@ export default function AdminBlogPage() {
             {editingId ? "Edit post" : "New post"}
           </h2>
           {editingId && (
-            <button type="button" onClick={startCreate} className="text-sm font-semibold text-red">
+            <button
+              type="button"
+              onClick={startCreate}
+              className="text-sm font-semibold text-red"
+            >
               Cancel edit
             </button>
           )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Title *" value={form.title} onChange={(v) => setField("title", v)} required />
-          <Field label="Slug (optional)" value={form.slug} onChange={(v) => setField("slug", v)} placeholder="auto-from-title" />
-          <Field label="Category" value={form.category} onChange={(v) => setField("category", v)} />
-          <Field label="Author" value={form.author} onChange={(v) => setField("author", v)} />
-          <Field label="Cover image path" value={form.coverImage} onChange={(v) => setField("coverImage", v)} />
-          <label className="flex items-center gap-2 pt-7 text-sm font-medium">
+          <Field
+            label="Title *"
+            value={form.title}
+            onChange={(v) => setField("title", v)}
+            required
+          />
+          <Field
+            label="Slug (optional)"
+            value={form.slug}
+            onChange={(v) => setField("slug", v)}
+            placeholder="auto-from-title"
+          />
+          <Field
+            label="Category"
+            value={form.category}
+            onChange={(v) => setField("category", v)}
+          />
+          <Field
+            label="Author"
+            value={form.author}
+            onChange={(v) => setField("author", v)}
+          />
+          <label className="flex items-center gap-2 pt-2 text-sm font-medium md:col-span-2 md:pt-0">
             <input
               type="checkbox"
               checked={form.published}
@@ -153,13 +199,77 @@ export default function AdminBlogPage() {
             Published (visible on website)
           </label>
         </div>
-        <TextArea label="Excerpt" value={form.excerpt} onChange={(v) => setField("excerpt", v)} />
-        <TextArea label="Content (paragraphs separated by blank line)" value={form.content} onChange={(v) => setField("content", v)} tall />
+
+        {/* Cover image upload — phone gallery / camera + laptop files */}
+        <div className="rounded-xl border border-dashed border-line bg-sand/40 p-4">
+          <p className="mb-2 text-sm font-medium text-ink">Cover image</p>
+          <p className="mb-3 text-xs text-muted">
+            Phone: Gallery / Camera · Laptop: file choose · JPG, PNG, WebP (max 5
+            MB)
+          </p>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-line bg-navy/10 sm:max-w-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={form.coverImage || "/brand/hero.jpg"}
+                alt="Cover preview"
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="block w-full text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-navy file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white hover:file:bg-navy-mid"
+                disabled={uploading}
+                onChange={(e) => onCoverPick(e.target.files?.[0] ?? null)}
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={uploading}
+                  className="btn-navy !min-h-0 !py-2 !text-sm"
+                  onClick={() => fileRef.current?.click()}
+                >
+                  {uploading ? "Uploading..." : "Choose / Upload image"}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-navy"
+                  onClick={() => {
+                    setField("coverImage", "/brand/blog/cargo-safe.jpg");
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                >
+                  Use default
+                </button>
+              </div>
+              <p className="break-all text-xs text-muted">
+                Path: {form.coverImage}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <TextArea
+          label="Excerpt"
+          value={form.excerpt}
+          onChange={(v) => setField("excerpt", v)}
+        />
+        <TextArea
+          label="Content (paragraphs separated by blank line)"
+          value={form.content}
+          onChange={(v) => setField("content", v)}
+          tall
+        />
 
         {message && <p className="text-sm text-success">{message}</p>}
         {error && <p className="text-sm text-danger">{error}</p>}
 
-        <button type="submit" disabled={saving} className="btn-primary">
+        <button type="submit" disabled={saving || uploading} className="btn-primary">
           {saving ? "Saving..." : editingId ? "Update post" : "Create post"}
         </button>
       </form>
@@ -174,9 +284,17 @@ export default function AdminBlogPage() {
           posts.map((post) => (
             <article
               key={post.id}
-              className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-line bg-white p-4"
+              className="flex flex-wrap items-start gap-4 rounded-xl border border-line bg-white p-4"
             >
-              <div>
+              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md border border-line bg-sand">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={post.coverImage || "/brand/hero.jpg"}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold text-navy">{post.title}</h3>
                   <span
@@ -194,13 +312,26 @@ export default function AdminBlogPage() {
                 </p>
               </div>
               <div className="flex gap-3 text-sm font-semibold">
-                <button type="button" onClick={() => startEdit(post)} className="text-navy hover:underline">
+                <button
+                  type="button"
+                  onClick={() => startEdit(post)}
+                  className="text-navy hover:underline"
+                >
                   Edit
                 </button>
-                <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer" className="text-steel hover:underline">
+                <a
+                  href={`/blog/${post.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-steel hover:underline"
+                >
                   View
                 </a>
-                <button type="button" onClick={() => remove(post.id)} className="text-danger hover:underline">
+                <button
+                  type="button"
+                  onClick={() => remove(post.id)}
+                  className="text-danger hover:underline"
+                >
                   Delete
                 </button>
               </div>

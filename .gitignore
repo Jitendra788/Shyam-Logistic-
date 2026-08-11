@@ -30,6 +30,10 @@
 
 # keep posts & settings seed in repo
 
+# user-uploaded blog covers (stored at runtime)
+/public/uploads/blog/*
+!/public/uploads/blog/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*
