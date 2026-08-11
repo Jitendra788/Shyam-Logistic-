@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Shyam Logistic">
+  <defs>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1f3d"/>
+      <stop offset="100%" stop-color="#123056"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="#ffffff" stroke="url(#ring)" stroke-width="5"/>
+  <circle cx="60" cy="60" r="48" fill="none" stroke="#e8eef5" stroke-width="1.5"/>
+  <text x="36" y="74" font-family="Arial Black, Arial, sans-serif" font-size="42" font-weight="900" fill="#0a1f3d" letter-spacing="-1">S</text>
+  <text x="62" y="74" font-family="Arial Black, Arial, sans-serif" font-size="42" font-weight="900" fill="#c62828" letter-spacing="-1">B</text>
+</svg>
