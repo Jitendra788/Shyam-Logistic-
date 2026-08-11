@@ -12,7 +12,7 @@ async function ensureDataDir() {
 }
 
 const settingsDefaults: Partial<SiteSettings> = {
-  logoUrl: "",
+  logoUrl: "/brand/shyam-logo.png",
   founderImageUrl: "/brand/mohanlal.jpg",
 };
 
@@ -22,7 +22,7 @@ export async function getSettings(): Promise<SiteSettings> {
   return {
     ...settingsDefaults,
     ...data,
-    logoUrl: data.logoUrl ?? "",
+    logoUrl: data.logoUrl ?? "/brand/shyam-logo.png",
     founderImageUrl: data.founderImageUrl || "/brand/mohanlal.jpg",
   };
 }

@@ -22,7 +22,7 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
     ],
     description: `${settings.description} Official website: shyamlogistic.online`,
     url: site,
-    logo: absoluteUrl(settings.logoUrl || "/brand/logo.svg"),
+    logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
     image: absoluteUrl("/brand/hero.jpg"),
     email: settings.email,
     telephone: [`+91${settings.phone.replace(/\D/g, "")}`],
@@ -135,7 +135,7 @@ export function buildWebsiteJsonLd(settings: SiteSettings) {
       "@type": "Organization",
       name: "SHYAM LOGISTIC",
       alternateName: "shyamlogistic",
-      logo: absoluteUrl(settings.logoUrl || "/brand/logo.svg"),
+      logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
     },
     potentialAction: {
       "@type": "SearchAction",
