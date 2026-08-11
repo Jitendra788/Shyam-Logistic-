@@ -197,13 +197,14 @@ export default async function HomePage() {
               . Founder: {settings.legalName}. GSTIN: {settings.gstin}.
             </p>
             <p>
-              Search for{" "}
-              <strong className="text-navy">shyamlogistic.online</strong> or{" "}
-              <strong className="text-navy">shyamlogistic Sangli</strong> to
-              reach our official website only. Other firms may share similar
-              names in different cities — always match GSTIN{" "}
-              <strong className="text-navy">{settings.gstin}</strong> and office
-              address in Sangli.
+              Local directories may show{" "}
+              <strong className="text-navy">Shree Shyam Logistics</strong>{" "}
+              (Sangli / Kupwad). That listing refers to the same Sangli business
+              as <strong className="text-navy">SHYAM LOGISTIC</strong> online (
+              <strong className="text-navy">shyamlogistic</strong> · GSTIN{" "}
+              <strong className="text-navy">{settings.gstin}</strong>). Always
+              book on{" "}
+              <strong className="text-navy">www.shyamlogistic.online</strong>.
             </p>
           </div>
           <div className="btn-stack-mobile mt-8 justify-center">

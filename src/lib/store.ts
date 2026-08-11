@@ -14,6 +14,7 @@ async function ensureDataDir() {
 const settingsDefaults: Partial<SiteSettings> = {
   logoUrl: "/brand/shyam-logo.png",
   founderImageUrl: "/brand/mohanlal.jpg",
+  alsoKnownAs: ["Shree Shyam Logistics", "Shree Shyam Logistic"],
 };
 
 export async function getSettings(): Promise<SiteSettings> {
@@ -24,6 +25,10 @@ export async function getSettings(): Promise<SiteSettings> {
     ...data,
     logoUrl: data.logoUrl?.trim() || "/brand/shyam-logo.png",
     founderImageUrl: data.founderImageUrl || "/brand/mohanlal.jpg",
+    alsoKnownAs:
+      Array.isArray(data.alsoKnownAs) && data.alsoKnownAs.length
+        ? data.alsoKnownAs
+        : settingsDefaults.alsoKnownAs || [],
   };
 }
 

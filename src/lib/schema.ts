@@ -18,19 +18,25 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
       "www.shyamlogistic.online",
       "shyam logistic Sangli",
       "SHYAM LOGISTIC Sangli",
+      ...(settings.alsoKnownAs || []),
       settings.companyName,
     ],
     brand: {
       "@type": "Brand",
       name: "shyamlogistic",
-      alternateName: ["SHYAM LOGISTIC", "shyamlogistic.online"],
+      alternateName: [
+        "SHYAM LOGISTIC",
+        "shyamlogistic.online",
+        ...(settings.alsoKnownAs || []).slice(0, 3),
+      ],
       logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
       url: site,
     },
     description:
-      `Official website of SHYAM LOGISTIC (shyamlogistic) in Sangli, Maharashtra. ` +
+      `Official website of SHYAM LOGISTIC (shyamlogistic) in Sangli / Kupwad, Maharashtra. ` +
+      `Also known locally as ${(settings.alsoKnownAs || ["Shree Shyam Logistics"]).join(", ")}. ` +
       `Founder ${settings.legalName}. GSTIN ${settings.gstin}. ` +
-      `Book at www.shyamlogistic.online. Not affiliated with similarly named firms in other cities. ` +
+      `Book only at www.shyamlogistic.online. ` +
       settings.description,
     url: site,
     logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),

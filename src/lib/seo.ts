@@ -61,8 +61,8 @@ export function brandDescription(settings: {
   hindiTagline?: string;
 }): string {
   return (
-    `shyamlogistic.online is the official website of SHYAM LOGISTIC, Sangli, Maharashtra. ` +
-    `Search shyamlogistic for our FTL, PTL and pan-India freight. Founder Mohanlal · GSTIN ${settings.gstin}. ` +
+    `shyamlogistic.online is the official website of SHYAM LOGISTIC, Sangli (also known as Shree Shyam Logistics locally). ` +
+    `Founder Mohanlal · GSTIN ${settings.gstin}. FTL / PTL freight. ` +
     `Call ${settings.phone}${settings.phone2 ? ` / ${settings.phone2}` : ""}. ` +
     `${settings.hindiTagline || ""}`
   ).trim();

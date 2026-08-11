@@ -2,14 +2,20 @@
   "companyName": "SHYAM LOGISTIC",
   "legalName": "MOHANLAL",
   "brandShort": "SB",
+  "alsoKnownAs": [
+    "Shree Shyam Logistics",
+    "Shree Shyam Logistic",
+    "Shree Shyam Logistics Sangli",
+    "Shree Shyam Logistics Kupwad"
+  ],
   "logoUrl": "/brand/shyam-logo.png",
   "founderImageUrl": "/brand/mohanlal.jpg",
   "tagline": "Trusted logistics across India",
   "hindiTagline": "हमारे यहाँ सभी प्रकार का माल बुकिंग किया जाता है।",
   "slogan": "We don't just move freight. We move your business forward.",
-  "description": "SHYAM LOGISTIC (shyamlogistic) is a trusted logistics partner in Sangli, Maharashtra, offering reliable road transport across India. Book full truck load (FTL), part truck load (PTL), express cargo, and supply-chain support at www.shyamlogistic.online with transparent GST billing.",
-  "aboutText": "SHYAM LOGISTIC (shyamlogistic) was founded with a clear vision: make freight booking simple, transparent, and reliable for businesses and individuals across India. Founded by Mohanlal, we have built our reputation on dependable road logistics and customer-first service.\n\nWhether you need industrial cargo, commercial goods, or time-critical consignments, every delivery is handled with care, accountability, and proper GST documentation.\n\nWe operate from our registered office in Shalini Nagar, Sangli, Maharashtra, and coordinate routes pan-India so your goods reach safely and on time. Visit www.shyamlogistic.online to get a free quote.",
-  "missionText": "Our mission at SHYAM LOGISTIC is to provide seamless logistics solutions that help businesses grow—with speed, safety, and full transparency on every mile.",
+  "description": "SHYAM LOGISTIC (shyamlogistic / www.shyamlogistic.online) is the official website of the Sangli logistics company also known locally as Shree Shyam Logistics. Founder Mohanlal, GSTIN 27AXGPL2293R1ZP. Book FTL, PTL and pan-India freight online with transparent GST billing.",
+  "aboutText": "SHYAM LOGISTIC operates from Shalini Nagar / Kupwad, Sangli, Maharashtra. Online brand: shyamlogistic · Official website: www.shyamlogistic.online. Local directories and customers may also know us as Shree Shyam Logistics (Sangli). Founded under the proprietorship of Mohanlal, we focus on dependable road logistics and customer-first service.\n\nWhether you need industrial cargo, commercial goods, or time-critical consignments, every delivery is handled with care, accountability, and proper GST documentation (GSTIN 27AXGPL2293R1ZP).\n\nRegistered office: Ground Floor, Shop No. 2, Indrajit Apartment, Old Kupwad Road, Shalini Nagar, Sangli. Visit www.shyamlogistic.online to get a free quote.",
+  "missionText": "Our mission at SHYAM LOGISTIC (shyamlogistic) is to provide seamless logistics solutions that help businesses grow—with speed, safety, and full transparency on every mile.",
   "gstin": "27AXGPL2293R1ZP",
   "email": "info@shyamlogistic.online",
   "phone": "8459858242",
@@ -23,12 +29,12 @@
       "id": "loc-hq",
       "label": "Registered Office",
       "addressLine1": "Ground Floor, Shop No. 2, S No. 2124",
-      "addressLine2": "Indrajit Apartment, Old Kupwad Road",
-      "locality": "Shalini Nagar",
+      "addressLine2": "Indrajit Apartment, Old Kupwad Road, Near Shalininagar Bus Stop",
+      "locality": "Shalini Nagar, Kupwad",
       "city": "Sangli",
       "state": "Maharashtra",
       "pincode": "416416",
-      "mapEmbedUrl": "https://www.google.com/maps?q=Shalini+Nagar+Sangli+Maharashtra+416416&output=embed",
+      "mapEmbedUrl": "https://www.google.com/maps?q=Shalini+Nagar+Kupwad+Sangli+Maharashtra+416416&output=embed",
       "isPrimary": true
     }
   ],
@@ -198,8 +204,8 @@
   "faqs": [
     {
       "id": "faq-brand",
-      "question": "What is shyamlogistic and is www.shyamlogistic.online official?",
-      "answer": "Yes. shyamlogistic is the official online brand of SHYAM LOGISTIC in Sangli, Maharashtra. Founder Mohanlal, GSTIN 27AXGPL2293R1ZP. Always book via www.shyamlogistic.online or phones 8459858242 / 9057420562. We are not affiliated with similarly named firms in other cities."
+      "question": "Is shyamlogistic the same as Shree Shyam Logistics in Sangli?",
+      "answer": "Yes for our Sangli business. SHYAM LOGISTIC is the company name on www.shyamlogistic.online (brand: shyamlogistic). Local listings may show us as Shree Shyam Logistics in Kupwad / Shalini Nagar, Sangli. Founder Mohanlal, GSTIN 27AXGPL2293R1ZP. Always book via www.shyamlogistic.online or phones 8459858242 / 9057420562."
     },
     {
       "id": "faq1",

@@ -40,6 +40,8 @@ export type SiteSettings = {
   companyName: string;
   legalName: string;
   brandShort: string;
+  /** Local / directory trade names (helps Google match Justdial etc.) */
+  alsoKnownAs: string[];
   /** Custom logo image URL (empty = official Shyam logo) */
   logoUrl: string;
   /** Founder portrait shown on About page */
