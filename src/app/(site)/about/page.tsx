@@ -26,9 +26,9 @@ export default async function AboutPage() {
   return (
     <div>
       <PageHero
-        eyebrow="Our Journey"
-        title="Our Story"
-        subtitle="From humble beginnings to becoming a trusted logistics partner — discover our journey of reliability and service."
+        eyebrow={settings.aboutHeroEyebrow}
+        title={settings.aboutHeroTitle}
+        subtitle={settings.aboutHeroSubtitle}
       />
 
       <section className="py-12 sm:py-16 md:py-20">
@@ -36,7 +36,7 @@ export default async function AboutPage() {
           <div className="prose-like max-w-2xl">
             <p className="section-label">About {settings.companyName}</p>
             <h2 className="section-title mt-2 ">
-              Building Trust Through Excellence
+              {settings.aboutSectionTitle}
             </h2>
             {paragraphs.map((p) => (
               <p

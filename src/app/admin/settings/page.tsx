@@ -50,7 +50,9 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [uploading, setUploading] = useState<"logo" | "founder" | null>(null);
+  const [uploading, setUploading] = useState<
+    "logo" | "founder" | "hero" | null
+  >(null);
 
   useEffect(() => {
     (async () => {
@@ -70,7 +72,7 @@ export default function AdminSettingsPage() {
   }
 
   async function uploadBrandImage(
-    kind: "logo" | "founder",
+    kind: "logo" | "founder" | "hero",
     file: File | null
   ) {
     if (!file) return;
@@ -85,9 +87,10 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
       if (kind === "logo") update("logoUrl", data.url);
-      else update("founderImageUrl", data.url);
+      else if (kind === "founder") update("founderImageUrl", data.url);
+      else update("heroImageUrl", data.url);
       setMessage(
-        `${kind === "logo" ? "Logo" : "Founder photo"} uploaded. Click “Save all changes” to apply on the website.`
+        `${kind === "logo" ? "Logo" : kind === "founder" ? "Founder photo" : "Hero image"} uploaded. Click “Save all changes” to apply on the website.`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -184,12 +187,15 @@ export default function AdminSettingsPage() {
     <form onSubmit={onSubmit} className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="section-label">Site content</p>
+          <p className="section-label">Full website control</p>
           <h1 className="mt-1 font-display text-3xl font-bold text-navy">
-            Settings & locations
+            Admin Settings
           </h1>
-          <p className="mt-1 text-sm text-muted">
-            Highway-style structure content — editable from here.
+          <p className="mt-1 max-w-2xl text-sm text-muted">
+            Yahan se almost sab kuch change hota hai — phones, logo, hero image,
+            services, FAQs, home page text, about/services/contact headings.
+            Change ke baad neeche <strong>Save all changes</strong> zaroor dabayein.
+            Blog posts alag se <strong>Admin → Blog</strong> se manage karein.
           </p>
         </div>
         <button type="submit" disabled={saving} className="btn-primary">
@@ -208,68 +214,155 @@ export default function AdminSettingsPage() {
         </p>
       )}
 
-      <Section title="Logo & founder photo">
+      <Section title="1) Images — Logo, founder, home hero">
         <p className="text-sm text-muted">
-          Phone: gallery or camera · Laptop: choose a file · JPG, PNG, or WebP
-          (max 5 MB). After upload, click <strong>Save all changes</strong>.
+          Phone gallery / laptop file · JPG PNG WebP (max 5 MB) · then{" "}
+          <strong>Save all changes</strong>.
         </p>
-
-        <div className="mt-4 grid gap-6 lg:grid-cols-2">
+        <div className="mt-4 grid gap-6 lg:grid-cols-3">
           <ImageUploadCard
             title="Company logo"
-            help="Shows in header, footer, and blog. Transparent PNG works best. Reset restores the official Shyam logo."
+            help="Header & footer brand mark."
             preview={settings.logoUrl || "/brand/shyam-brand-logo.png"}
-            fallbackLabel="Shyam"
+            fallbackLabel="Logo"
             rounded="rounded-xl"
             uploading={uploading === "logo"}
             onPick={(file) => uploadBrandImage("logo", file)}
             onReset={() => update("logoUrl", "/brand/shyam-brand-logo.png")}
-            resetLabel="Use official Shyam logo"
+            resetLabel="Default logo"
           />
           <ImageUploadCard
             title="Founder photo"
-            help="Shows on the About page next to founder details."
+            help="About page founder card."
             preview={founderPreview}
             fallbackLabel="Founder"
             rounded="rounded-full"
             uploading={uploading === "founder"}
             onPick={(file) => uploadBrandImage("founder", file)}
             onReset={() => update("founderImageUrl", "/brand/mohanlal.jpg")}
-            resetLabel="Use default photo"
+            resetLabel="Default photo"
+          />
+          <ImageUploadCard
+            title="Home hero background"
+            help="Big image behind home headline."
+            preview={settings.heroImageUrl || "/brand/hero.jpg"}
+            fallbackLabel="Hero"
+            rounded="rounded-xl"
+            uploading={uploading === "hero"}
+            onPick={(file) => uploadBrandImage("hero", file)}
+            onReset={() => update("heroImageUrl", "/brand/hero.jpg")}
+            resetLabel="Default hero"
           />
         </div>
       </Section>
 
-      <Section title="Company identity">
+      <Section title="2) Company identity & phones">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Company name" value={settings.companyName} onChange={(v) => update("companyName", v)} />
-          <Field label="Brand short (logo letters)" value={settings.brandShort} onChange={(v) => update("brandShort", v)} />
+          <Field label="Brand short" value={settings.brandShort} onChange={(v) => update("brandShort", v)} />
           <Field label="Founder / legal name" value={settings.legalName} onChange={(v) => update("legalName", v)} />
           <Field label="GSTIN" value={settings.gstin} onChange={(v) => update("gstin", v)} />
-          <Field label="Phone 1" value={settings.phone} onChange={(v) => update("phone", v)} />
+          <Field label="Phone 1 (primary)" value={settings.phone} onChange={(v) => update("phone", v)} />
           <Field label="Phone 2" value={settings.phone2} onChange={(v) => update("phone2", v)} />
-          <Field label="WhatsApp" value={settings.whatsapp} onChange={(v) => update("whatsapp", v)} />
+          <Field label="WhatsApp number" value={settings.whatsapp} onChange={(v) => update("whatsapp", v)} />
           <Field label="Email" value={settings.email} onChange={(v) => update("email", v)} />
           <Field label="Tagline" value={settings.tagline} onChange={(v) => update("tagline", v)} />
           <Field label="Hindi tagline" value={settings.hindiTagline} onChange={(v) => update("hindiTagline", v)} />
-          <Field label="Slogan" value={settings.slogan} onChange={(v) => update("slogan", v)} />
+          <Field label="Slogan (home banner)" value={settings.slogan} onChange={(v) => update("slogan", v)} />
           <Field label="Working hours" value={settings.workingHours} onChange={(v) => update("workingHours", v)} />
         </div>
-        <TextArea label="Short description" value={settings.description} onChange={(v) => update("description", v)} />
-        <TextArea label="About text" value={settings.aboutText} onChange={(v) => update("aboutText", v)} />
+        <TextArea
+          label="Also known as (comma separated — Justdial names etc.)"
+          value={(settings.alsoKnownAs || []).join(", ")}
+          onChange={(v) =>
+            update(
+              "alsoKnownAs",
+              v
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean)
+            )
+          }
+        />
+        <TextArea label="Short description (SEO / footer)" value={settings.description} onChange={(v) => update("description", v)} />
+        <TextArea label="About page main text" value={settings.aboutText} onChange={(v) => update("aboutText", v)} />
         <TextArea label="Mission text" value={settings.missionText} onChange={(v) => update("missionText", v)} />
         <Field label="Footer note" value={settings.footerNote} onChange={(v) => update("footerNote", v)} />
       </Section>
 
-      <Section title="Home hero">
-        <Field label="Eyebrow" value={settings.heroEyebrow} onChange={(v) => update("heroEyebrow", v)} />
+      <Section title="3) Home hero text">
+        <Field label="Eyebrow (top small line)" value={settings.heroEyebrow} onChange={(v) => update("heroEyebrow", v)} />
         <Field label="Headline" value={settings.heroHeadline} onChange={(v) => update("heroHeadline", v)} />
         <TextArea label="Subtext" value={settings.heroSubtext} onChange={(v) => update("heroSubtext", v)} />
       </Section>
 
-      <Section title="Locations">
+      <Section title="4) Home page section headings">
+        <p className="text-sm text-muted">Home page har section ke title / intro yahan se.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Services label" value={settings.homeServicesLabel || ""} onChange={(v) => update("homeServicesLabel", v)} />
+          <Field label="Services title" value={settings.homeServicesTitle || ""} onChange={(v) => update("homeServicesTitle", v)} />
+        </div>
+        <TextArea label="Services intro" value={settings.homeServicesIntro || ""} onChange={(v) => update("homeServicesIntro", v)} />
+        <Field label="Why choose title" value={settings.homeWhyTitle || ""} onChange={(v) => update("homeWhyTitle", v)} />
+        <TextArea label="Why choose body (blank line = new paragraph)" value={settings.homeWhyBody || ""} onChange={(v) => update("homeWhyBody", v)} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Visit label" value={settings.homeVisitLabel || ""} onChange={(v) => update("homeVisitLabel", v)} />
+          <Field label="Visit title" value={settings.homeVisitTitle || ""} onChange={(v) => update("homeVisitTitle", v)} />
+        </div>
+        <TextArea label="Visit intro" value={settings.homeVisitIntro || ""} onChange={(v) => update("homeVisitIntro", v)} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Blog label" value={settings.homeBlogLabel || ""} onChange={(v) => update("homeBlogLabel", v)} />
+          <Field label="Blog title" value={settings.homeBlogTitle || ""} onChange={(v) => update("homeBlogTitle", v)} />
+        </div>
+        <TextArea label="Blog intro" value={settings.homeBlogIntro || ""} onChange={(v) => update("homeBlogIntro", v)} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="FAQ label" value={settings.homeFaqLabel || ""} onChange={(v) => update("homeFaqLabel", v)} />
+          <Field label="FAQ title" value={settings.homeFaqTitle || ""} onChange={(v) => update("homeFaqTitle", v)} />
+        </div>
+        <TextArea label="FAQ intro" value={settings.homeFaqIntro || ""} onChange={(v) => update("homeFaqIntro", v)} />
+      </Section>
+
+      <Section title="5) About / Services / Contact page heroes">
+        <p className="mb-2 text-sm font-semibold text-navy">About page</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="About eyebrow" value={settings.aboutHeroEyebrow || ""} onChange={(v) => update("aboutHeroEyebrow", v)} />
+          <Field label="About title" value={settings.aboutHeroTitle || ""} onChange={(v) => update("aboutHeroTitle", v)} />
+        </div>
+        <TextArea label="About subtitle" value={settings.aboutHeroSubtitle || ""} onChange={(v) => update("aboutHeroSubtitle", v)} />
+        <Field label="About section H2" value={settings.aboutSectionTitle || ""} onChange={(v) => update("aboutSectionTitle", v)} />
+
+        <p className="mb-2 mt-6 text-sm font-semibold text-navy">Services page</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Services eyebrow" value={settings.servicesHeroEyebrow || ""} onChange={(v) => update("servicesHeroEyebrow", v)} />
+          <Field label="Services title" value={settings.servicesHeroTitle || ""} onChange={(v) => update("servicesHeroTitle", v)} />
+        </div>
+        <TextArea label="Services subtitle" value={settings.servicesHeroSubtitle || ""} onChange={(v) => update("servicesHeroSubtitle", v)} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Specialized label" value={settings.servicesSpecializedLabel || ""} onChange={(v) => update("servicesSpecializedLabel", v)} />
+          <Field label="Specialized title" value={settings.servicesSpecializedTitle || ""} onChange={(v) => update("servicesSpecializedTitle", v)} />
+        </div>
+        <TextArea label="Specialized intro" value={settings.servicesSpecializedIntro || ""} onChange={(v) => update("servicesSpecializedIntro", v)} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Additional label" value={settings.servicesAdditionalLabel || ""} onChange={(v) => update("servicesAdditionalLabel", v)} />
+          <Field label="Additional title" value={settings.servicesAdditionalTitle || ""} onChange={(v) => update("servicesAdditionalTitle", v)} />
+        </div>
+        <TextArea label="Additional intro" value={settings.servicesAdditionalIntro || ""} onChange={(v) => update("servicesAdditionalIntro", v)} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Core label" value={settings.servicesCoreLabel || ""} onChange={(v) => update("servicesCoreLabel", v)} />
+          <Field label="Core title" value={settings.servicesCoreTitle || ""} onChange={(v) => update("servicesCoreTitle", v)} />
+        </div>
+
+        <p className="mb-2 mt-6 text-sm font-semibold text-navy">Contact page</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Contact eyebrow" value={settings.contactHeroEyebrow || ""} onChange={(v) => update("contactHeroEyebrow", v)} />
+          <Field label="Contact title" value={settings.contactHeroTitle || ""} onChange={(v) => update("contactHeroTitle", v)} />
+        </div>
+        <TextArea label="Contact subtitle" value={settings.contactHeroSubtitle || ""} onChange={(v) => update("contactHeroSubtitle", v)} />
+      </Section>
+
+      <Section title="6) Locations">
         <p className="text-sm text-muted">
-          Office addresses + Google Maps embed URLs (shown on Home & Contact).
+          Office addresses + Google Maps embed URLs (Home & Contact).
         </p>
         {settings.locations.map((loc, index) => (
           <div key={loc.id} className="mt-4 space-y-3 rounded-xl border border-line bg-white p-4">
@@ -328,7 +421,7 @@ export default function AdminSettingsPage() {
         onPatch={(i, patch) => updateServiceList("services", i, patch)}
       />
       <ServiceListEditor
-        title="Specialized services (Services → What We Deliver)"
+        title="Specialized services (Services page)"
         items={settings.specializedServices}
         onChange={(items) => update("specializedServices", items)}
         onPatch={(i, patch) => updateServiceList("specializedServices", i, patch)}
@@ -340,7 +433,7 @@ export default function AdminSettingsPage() {
         onPatch={(i, patch) => updateServiceList("additionalServices", i, patch)}
       />
 
-      <Section title="Why choose us features">
+      <Section title="Why choose us features (About / features grid)">
         {settings.features.map((f, index) => (
           <div key={f.id} className="mt-3 space-y-3 rounded-xl border border-line bg-white p-4">
             <div className="flex justify-between">
@@ -405,18 +498,39 @@ export default function AdminSettingsPage() {
         </button>
       </Section>
 
-      <Section title="Stats">
+      <Section title="7) Stats">
         <div className="grid gap-4 md:grid-cols-2">
           {settings.stats.map((stat, index) => (
-            <div key={index} className="grid gap-2 rounded-xl border border-line bg-white p-4 sm:grid-cols-2">
+            <div key={index} className="grid gap-2 rounded-xl border border-line bg-white p-4 sm:grid-cols-[1fr_1fr_auto]">
               <Field label="Value" value={stat.value} onChange={(v) => updateStat(index, { value: v })} />
               <Field label="Label" value={stat.label} onChange={(v) => updateStat(index, { label: v })} />
+              <button
+                type="button"
+                className="self-end text-sm text-danger hover:underline sm:pb-2"
+                onClick={() =>
+                  update(
+                    "stats",
+                    settings.stats.filter((_, i) => i !== index)
+                  )
+                }
+              >
+                Remove
+              </button>
             </div>
           ))}
         </div>
+        <button
+          type="button"
+          className="btn-navy mt-4"
+          onClick={() =>
+            update("stats", [...settings.stats, { label: "New stat", value: "0" }])
+          }
+        >
+          + Add stat
+        </button>
       </Section>
 
-      <Section title="FAST / RELIABLE / TRUSTED attributes">
+      <Section title="8) Hero attributes (FAST / RELIABLE chips)">
         <div className="grid gap-4 md:grid-cols-3">
           {settings.attributes.map((attr, index) => (
             <div key={index} className="space-y-2 rounded-xl border border-line bg-white p-4">
@@ -430,7 +544,7 @@ export default function AdminSettingsPage() {
                 }}
               />
               <Field
-                label="Icon"
+                label="Icon (truck, shield, trust, fast…)"
                 value={attr.icon}
                 onChange={(v) => {
                   const next = [...settings.attributes];
@@ -438,13 +552,37 @@ export default function AdminSettingsPage() {
                   update("attributes", next);
                 }}
               />
+              <button
+                type="button"
+                className="text-sm text-danger hover:underline"
+                onClick={() =>
+                  update(
+                    "attributes",
+                    settings.attributes.filter((_, i) => i !== index)
+                  )
+                }
+              >
+                Remove
+              </button>
             </div>
           ))}
         </div>
+        <button
+          type="button"
+          className="btn-navy mt-4"
+          onClick={() =>
+            update("attributes", [
+              ...settings.attributes,
+              { title: "NEW", icon: "shield" },
+            ])
+          }
+        >
+          + Add attribute
+        </button>
       </Section>
 
-      <div className="flex justify-end">
-        <button type="submit" disabled={saving} className="btn-primary">
+      <div className="sticky bottom-4 z-10 flex justify-end">
+        <button type="submit" disabled={saving} className="btn-primary shadow-lg">
           {saving ? "Saving..." : "Save all changes"}
         </button>
       </div>

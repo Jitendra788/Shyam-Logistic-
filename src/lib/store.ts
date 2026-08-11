@@ -14,13 +14,45 @@ async function ensureDataDir() {
 const settingsDefaults: Partial<SiteSettings> = {
   logoUrl: "/brand/shyam-brand-logo.png",
   founderImageUrl: "/brand/mohanlal.jpg",
+  heroImageUrl: "/brand/hero.jpg",
   alsoKnownAs: ["Shree Shyam Logistics", "Shree Shyam Logistic"],
+  homeServicesLabel: "What we offer",
+  homeServicesTitle: "Logistics solutions",
+  homeServicesIntro: "",
+  homeWhyTitle: "Why choose us?",
+  homeWhyBody: "",
+  homeVisitLabel: "Visit Our Office",
+  homeVisitTitle: "Ready to move your cargo?",
+  homeVisitIntro: "",
+  homeBlogLabel: "Blog",
+  homeBlogTitle: "Insights and freight tips",
+  homeBlogIntro: "",
+  homeFaqLabel: "FAQ",
+  homeFaqTitle: "Frequently Asked Questions",
+  homeFaqIntro: "",
+  aboutHeroEyebrow: "Our Journey",
+  aboutHeroTitle: "Our Story",
+  aboutHeroSubtitle: "",
+  aboutSectionTitle: "Building Trust Through Excellence",
+  servicesHeroEyebrow: "Complete Logistics Solutions",
+  servicesHeroTitle: "Our Services",
+  servicesHeroSubtitle: "",
+  servicesSpecializedLabel: "What We Deliver",
+  servicesSpecializedTitle: "Specialized transportation",
+  servicesSpecializedIntro: "",
+  servicesAdditionalLabel: "Additional Services",
+  servicesAdditionalTitle: "End-to-end solutions",
+  servicesAdditionalIntro: "",
+  servicesCoreLabel: "Core offerings",
+  servicesCoreTitle: "Full Truck Load to Supply Chain",
+  contactHeroEyebrow: "Get in Touch",
+  contactHeroTitle: "Contact Us",
+  contactHeroSubtitle: "",
 };
 
 export async function getSettings(): Promise<SiteSettings> {
   const raw = await fs.readFile(settingsPath, "utf-8");
   const data = JSON.parse(raw) as SiteSettings;
-  // Prefer new peafowl brand art if settings still point at older default paths
   let logoUrl = data.logoUrl?.trim() || "";
   if (
     !logoUrl ||
@@ -35,6 +67,7 @@ export async function getSettings(): Promise<SiteSettings> {
     ...data,
     logoUrl,
     founderImageUrl: data.founderImageUrl || "/brand/mohanlal.jpg",
+    heroImageUrl: data.heroImageUrl || "/brand/hero.jpg",
     alsoKnownAs:
       Array.isArray(data.alsoKnownAs) && data.alsoKnownAs.length
         ? data.alsoKnownAs

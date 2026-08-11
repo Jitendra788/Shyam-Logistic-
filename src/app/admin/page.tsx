@@ -77,9 +77,14 @@ export default function AdminEnquiriesPage() {
             {enquiries.length} total · {newCount} new
           </p>
         </div>
-        <a href="/admin/settings" className="btn-navy text-sm">
-          Edit locations & content
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <a href="/admin/settings" className="btn-navy text-sm">
+            Edit all website content
+          </a>
+          <a href="/admin/blog" className="btn-primary text-sm">
+            Manage blog
+          </a>
+        </div>
       </div>
 
       {enquiries.length === 0 ? (

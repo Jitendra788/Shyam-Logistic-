@@ -21,8 +21,8 @@ export default async function HomePage() {
     <>
       <section className="relative min-h-[min(92vh,820px)] overflow-hidden text-white sm:min-h-[88vh]">
         <Image
-          src="/brand/hero.jpg"
-          alt="shyamlogistic freight logistics and trucking solutions"
+          src={settings.heroImageUrl || "/brand/hero.jpg"}
+          alt={`${settings.companyName} freight logistics`}
           fill
           priority
           className="object-cover object-center"
@@ -128,21 +128,12 @@ export default async function HomePage() {
       <section className="py-12 sm:py-16 md:py-20">
         <div className="site-container">
           <div className="max-w-2xl">
-            <p className="section-label">What we offer</p>
+            <p className="section-label">{settings.homeServicesLabel}</p>
             <h2 className="section-title mt-2">
-              Logistics solutions from shyamlogistic
+              {settings.homeServicesTitle}
             </h2>
             <p className="mt-3 text-sm text-muted sm:mt-4 sm:text-base">
-              From full truckloads to custom logistics,{" "}
-              <strong className="font-semibold text-navy">shyamlogistic</strong>{" "}
-              (
-              <strong className="font-semibold text-navy">SHYAM LOGISTIC</strong>
-              ) delivers speed, safety, and precision across India. Book FTL,
-              PTL, and express cargo online at{" "}
-              <span className="font-semibold text-navy">
-                www.shyamlogistic.online
-              </span>
-              .
+              {settings.homeServicesIntro}
             </p>
           </div>
           <div className="mt-8 sm:mt-10">
@@ -154,26 +145,20 @@ export default async function HomePage() {
       <section className="border-y border-line bg-white py-12 sm:py-16">
         <div className="site-container max-w-3xl">
           <h2 className="section-title text-center">
-            Why choose shyamlogistic?
+            {settings.homeWhyTitle}
           </h2>
           <div className="prose-like mt-6 space-y-4 text-sm leading-relaxed text-muted sm:text-base">
+            {(settings.homeWhyBody || "")
+              .split("\n\n")
+              .map((p) => p.trim())
+              .filter(Boolean)
+              .map((p) => (
+                <p key={p.slice(0, 40)}>{p}</p>
+              ))}
             <p>
-              <strong className="text-navy">shyamlogistic</strong> is the
-              official online name of{" "}
-              <strong className="text-navy">SHYAM LOGISTIC</strong>, a
-              GST-registered logistics company serving Sangli, Maharashtra, and
-              pan-India routes. We provide full truck load (FTL), part truck load
-              (PTL), express cargo, and custom freight services with transparent
-              billing and a strong focus on on-time delivery.
-            </p>
-            <p>
-              Need full truck load, part truck load, express delivery,
-              warehousing support, or custom supply-chain coordination? Book
-              through{" "}
-              <strong className="text-navy">www.shyamlogistic.online</strong> or
-              call{" "}
+              Call{" "}
               <a
-                href={`tel:${settings.phone}`}
+                href={`tel:+91${settings.phone.replace(/\D/g, "")}`}
                 className="font-semibold text-red hover:underline"
               >
                 {settings.phone}
@@ -182,7 +167,7 @@ export default async function HomePage() {
                 <>
                   {" / "}
                   <a
-                    href={`tel:${settings.phone2}`}
+                    href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}
                     className="font-semibold text-red hover:underline"
                   >
                     {settings.phone2}
@@ -191,23 +176,13 @@ export default async function HomePage() {
               ) : null}
               . Founder: {settings.legalName}. GSTIN: {settings.gstin}.
             </p>
-            <p>
-              Local directories may show{" "}
-              <strong className="text-navy">Shree Shyam Logistics</strong>{" "}
-              (Sangli / Kupwad). That listing refers to the same Sangli business
-              as <strong className="text-navy">SHYAM LOGISTIC</strong> online (
-              <strong className="text-navy">shyamlogistic</strong> · GSTIN{" "}
-              <strong className="text-navy">{settings.gstin}</strong>). Always
-              book on{" "}
-              <strong className="text-navy">www.shyamlogistic.online</strong>.
-            </p>
           </div>
           <div className="btn-stack-mobile mt-8 justify-center">
             <Link href="/quote" className="btn-primary">
               Get a free quote
             </Link>
-            <Link href="/shyamlogistic" className="btn-navy">
-              About shyamlogistic brand
+            <Link href="/contact" className="btn-navy">
+              Contact us
             </Link>
           </div>
         </div>
@@ -218,10 +193,10 @@ export default async function HomePage() {
           <div className="site-container">
             <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
               <div className="max-w-xl">
-                <p className="section-label">Blog</p>
-                <h2 className="section-title mt-2">Insights and freight tips</h2>
+                <p className="section-label">{settings.homeBlogLabel}</p>
+                <h2 className="section-title mt-2">{settings.homeBlogTitle}</h2>
                 <p className="mt-2 text-sm text-muted sm:mt-3 sm:text-base">
-                  Guides to help you plan FTL, PTL, and pan-India cargo movement.
+                  {settings.homeBlogIntro}
                 </p>
               </div>
               <Link href="/blog" className="btn-navy w-full sm:w-auto">
@@ -244,11 +219,10 @@ export default async function HomePage() {
       <section className="bg-sand py-12 sm:py-16 md:py-20">
         <div className="site-container grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-10">
           <div>
-            <p className="section-label">Visit Our Office</p>
-            <h2 className="section-title mt-2">Ready to move your cargo?</h2>
+            <p className="section-label">{settings.homeVisitLabel}</p>
+            <h2 className="section-title mt-2">{settings.homeVisitTitle}</h2>
             <p className="mt-3 text-sm text-muted sm:mt-4 sm:text-base">
-              Located in Sangli, Maharashtra — always ready to serve your logistics
-              needs.
+              {settings.homeVisitIntro}
             </p>
 
             <div className="mt-6 space-y-5 sm:mt-8">
@@ -311,10 +285,10 @@ export default async function HomePage() {
       <section className="py-12 sm:py-16 md:py-20">
         <div className="site-container grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
           <div>
-            <p className="section-label">FAQ</p>
-            <h2 className="section-title mt-2">Frequently Asked Questions</h2>
+            <p className="section-label">{settings.homeFaqLabel}</p>
+            <h2 className="section-title mt-2">{settings.homeFaqTitle}</h2>
             <p className="mt-3 text-sm text-muted sm:mt-4 sm:text-base">
-              Have questions? Find everything you need to know about our services.
+              {settings.homeFaqIntro}
             </p>
           </div>
           <FaqList faqs={settings.faqs} />
@@ -336,7 +310,7 @@ export default async function HomePage() {
           <p className="mt-6 border-t border-white/10 pt-5 text-center text-sm leading-relaxed text-white/70 sm:mt-8 sm:pt-6 sm:text-base">
             We don&apos;t just move freight.{" "}
             <span className="font-semibold text-gold">
-              We move your business forward.
+              {settings.slogan || "We move your business forward."}
             </span>
           </p>
         </div>

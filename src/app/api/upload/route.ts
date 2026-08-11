@@ -40,7 +40,10 @@ export async function POST(request: Request) {
       .replace(/[^a-z]/g, "");
 
     const folder =
-      kind === "logo" || kind === "founder" || kind === "brand"
+      kind === "logo" ||
+      kind === "founder" ||
+      kind === "hero" ||
+      kind === "brand"
         ? "brand"
         : FOLDERS.has(kind)
           ? kind
@@ -77,7 +80,14 @@ export async function POST(request: Request) {
             ? "gif"
             : "jpg";
 
-    const prefix = kind === "logo" ? "logo" : kind === "founder" ? "founder" : "img";
+    const prefix =
+      kind === "logo"
+        ? "logo"
+        : kind === "founder"
+          ? "founder"
+          : kind === "hero"
+            ? "hero"
+            : "img";
     const filename = `${prefix}-${safeName(file.name)}.${ext}`;
     const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
 

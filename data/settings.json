@@ -191,15 +191,36 @@
     }
   ],
   "attributes": [
-    { "title": "FAST", "icon": "fast" },
-    { "title": "RELIABLE", "icon": "shield" },
-    { "title": "TRUSTED", "icon": "trust" }
+    {
+      "title": "FAST",
+      "icon": "fast"
+    },
+    {
+      "title": "RELIABLE",
+      "icon": "shield"
+    },
+    {
+      "title": "TRUSTED",
+      "icon": "trust"
+    }
   ],
   "stats": [
-    { "label": "Happy Clients", "value": "50+" },
-    { "label": "Deliveries", "value": "5000+" },
-    { "label": "States Covered", "value": "11+" },
-    { "label": "On-time Focus", "value": "99%" }
+    {
+      "label": "Happy Clients",
+      "value": "50+"
+    },
+    {
+      "label": "Deliveries",
+      "value": "5000+"
+    },
+    {
+      "label": "States Covered",
+      "value": "11+"
+    },
+    {
+      "label": "On-time Focus",
+      "value": "99%"
+    }
   ],
   "faqs": [
     {
@@ -234,5 +255,38 @@
     }
   ],
   "workingHours": "Monday – Saturday: 9:00 AM – 7:00 PM · Sunday: Closed",
-  "footerNote": "We don't just move freight. We move your business forward."
+  "footerNote": "We don't just move freight. We move your business forward.",
+  "heroImageUrl": "/brand/hero.jpg",
+  "homeServicesLabel": "What we offer",
+  "homeServicesTitle": "Logistics solutions from shyamlogistic",
+  "homeServicesIntro": "From full truckloads to custom logistics, shyamlogistic (SHYAM LOGISTIC) delivers speed, safety, and precision across India. Book FTL, PTL, and express cargo online at www.shyamlogistic.online.",
+  "homeWhyTitle": "Why choose shyamlogistic?",
+  "homeWhyBody": "shyamlogistic is the official online name of SHYAM LOGISTIC, a GST-registered logistics company serving Sangli, Maharashtra, and pan-India routes. We provide full truck load (FTL), part truck load (PTL), express cargo, and custom freight services with transparent billing and a strong focus on on-time delivery.\n\nNeed full truck load, part truck load, express delivery, warehousing support, or custom supply-chain coordination? Book through www.shyamlogistic.online. Founder, phones, and GST appear automatically below when you save contact details.\n\nLocal directories may show Shree Shyam Logistics (Sangli / Kupwad). That listing refers to the same Sangli business as SHYAM LOGISTIC online. Always book on www.shyamlogistic.online.",
+  "homeVisitLabel": "Visit Our Office",
+  "homeVisitTitle": "Ready to move your cargo?",
+  "homeVisitIntro": "Located in Sangli, Maharashtra — always ready to serve your logistics needs.",
+  "homeBlogLabel": "Blog",
+  "homeBlogTitle": "Insights and freight tips",
+  "homeBlogIntro": "Guides to help you plan FTL, PTL, and pan-India cargo movement.",
+  "homeFaqLabel": "FAQ",
+  "homeFaqTitle": "Frequently Asked Questions",
+  "homeFaqIntro": "Have questions? Find everything you need to know about our services.",
+  "aboutHeroEyebrow": "Our Journey",
+  "aboutHeroTitle": "Our Story",
+  "aboutHeroSubtitle": "From humble beginnings to becoming a trusted logistics partner — discover our journey of reliability and service.",
+  "aboutSectionTitle": "Building Trust Through Excellence",
+  "servicesHeroEyebrow": "Complete Logistics Solutions",
+  "servicesHeroTitle": "Our Services",
+  "servicesHeroSubtitle": "At SHYAM LOGISTIC, we specialize in reliable and efficient logistics solutions across India. From transporting industrial materials to custom logistics, we ensure excellence in every delivery.",
+  "servicesSpecializedLabel": "What We Deliver",
+  "servicesSpecializedTitle": "Specialized transportation",
+  "servicesSpecializedIntro": "Specialized services with precision handling and timely delivery.",
+  "servicesAdditionalLabel": "Additional Services",
+  "servicesAdditionalTitle": "End-to-end solutions",
+  "servicesAdditionalIntro": "Comprehensive logistics solutions tailored to meet your unique business requirements.",
+  "servicesCoreLabel": "Core offerings",
+  "servicesCoreTitle": "Full Truck Load to Supply Chain",
+  "contactHeroEyebrow": "Get in Touch",
+  "contactHeroTitle": "Contact Us",
+  "contactHeroSubtitle": "Call, email, or visit our office. All contact details here can be updated from Admin Settings."
 }

@@ -25,22 +25,24 @@ export default async function ServicesPage() {
   return (
     <div>
       <PageHero
-        eyebrow="Complete Logistics Solutions"
-        title="Our Services"
-        subtitle={`At ${settings.companyName}, we specialize in reliable and efficient logistics solutions across India. From transporting industrial materials to custom logistics, we ensure excellence in every delivery.`}
+        eyebrow={settings.servicesHeroEyebrow}
+        title={settings.servicesHeroTitle}
+        subtitle={
+          settings.servicesHeroSubtitle ||
+          `At ${settings.companyName}, we specialize in reliable logistics solutions across India.`
+        }
       />
 
       {/* What We Deliver — Highway numbered specialty grid */}
       <section className="py-12 sm:py-16 md:py-20">
         <div className="site-container">
           <div className="max-w-2xl">
-            <p className="section-label">What We Deliver</p>
+            <p className="section-label">{settings.servicesSpecializedLabel}</p>
             <h2 className="section-title mt-2">
-              Specialized transportation
+              {settings.servicesSpecializedTitle}
             </h2>
             <p className="mt-4 text-muted">
-              {settings.hindiTagline} Specialized services with precision
-              handling and timely delivery.
+              {settings.servicesSpecializedIntro || settings.hindiTagline}
             </p>
           </div>
           <div className="mt-10">
@@ -53,13 +55,12 @@ export default async function ServicesPage() {
       <section className="bg-sand py-12 sm:py-16 md:py-20">
         <div className="site-container">
           <div className="max-w-2xl">
-            <p className="section-label">Additional Services</p>
+            <p className="section-label">{settings.servicesAdditionalLabel}</p>
             <h2 className="section-title mt-2">
-              End-to-end solutions
+              {settings.servicesAdditionalTitle}
             </h2>
             <p className="mt-4 text-muted">
-              Comprehensive logistics solutions tailored to meet your unique
-              business requirements.
+              {settings.servicesAdditionalIntro}
             </p>
           </div>
           <div className="mt-10">
@@ -72,9 +73,9 @@ export default async function ServicesPage() {
       <section className="py-12 sm:py-16 md:py-20">
         <div className="site-container">
           <div className="max-w-2xl">
-            <p className="section-label">Core offerings</p>
+            <p className="section-label">{settings.servicesCoreLabel}</p>
             <h2 className="section-title mt-2">
-              Full Truck Load to Supply Chain
+              {settings.servicesCoreTitle}
             </h2>
           </div>
           <div className="mt-10">

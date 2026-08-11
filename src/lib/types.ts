@@ -46,6 +46,8 @@ export type SiteSettings = {
   logoUrl: string;
   /** Founder portrait shown on About page */
   founderImageUrl: string;
+  /** Home hero background image */
+  heroImageUrl: string;
   tagline: string;
   hindiTagline: string;
   slogan: string;
@@ -60,6 +62,39 @@ export type SiteSettings = {
   heroEyebrow: string;
   heroHeadline: string;
   heroSubtext: string;
+  /** Editable section copy (admin) */
+  homeServicesLabel: string;
+  homeServicesTitle: string;
+  homeServicesIntro: string;
+  homeWhyTitle: string;
+  homeWhyBody: string;
+  homeVisitLabel: string;
+  homeVisitTitle: string;
+  homeVisitIntro: string;
+  homeBlogLabel: string;
+  homeBlogTitle: string;
+  homeBlogIntro: string;
+  homeFaqLabel: string;
+  homeFaqTitle: string;
+  homeFaqIntro: string;
+  aboutHeroEyebrow: string;
+  aboutHeroTitle: string;
+  aboutHeroSubtitle: string;
+  aboutSectionTitle: string;
+  servicesHeroEyebrow: string;
+  servicesHeroTitle: string;
+  servicesHeroSubtitle: string;
+  servicesSpecializedLabel: string;
+  servicesSpecializedTitle: string;
+  servicesSpecializedIntro: string;
+  servicesAdditionalLabel: string;
+  servicesAdditionalTitle: string;
+  servicesAdditionalIntro: string;
+  servicesCoreLabel: string;
+  servicesCoreTitle: string;
+  contactHeroEyebrow: string;
+  contactHeroTitle: string;
+  contactHeroSubtitle: string;
   locations: Location[];
   /** Main logistics solutions (FTL, PTL, etc.) */
   services: ServiceItem[];

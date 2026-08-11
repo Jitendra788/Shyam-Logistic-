@@ -25,9 +25,9 @@ export default async function ContactPage() {
   return (
     <div>
       <PageHero
-        eyebrow="Get in Touch"
-        title="Contact Us"
-        subtitle="Call, email, or visit our office. All location details are managed from the admin panel and stay current for customers."
+        eyebrow={settings.contactHeroEyebrow}
+        title={settings.contactHeroTitle}
+        subtitle={settings.contactHeroSubtitle}
       />
 
       <section className="py-12 sm:py-16 md:py-20">
