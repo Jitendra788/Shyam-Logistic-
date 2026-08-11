@@ -204,8 +204,8 @@ export default function AdminBlogPage() {
         <div className="rounded-xl border border-dashed border-line bg-sand/40 p-4">
           <p className="mb-2 text-sm font-medium text-ink">Cover image</p>
           <p className="mb-3 text-xs text-muted">
-            Phone: Gallery / Camera · Laptop: file choose · JPG, PNG, WebP (max 5
-            MB)
+            Phone: gallery or camera · Laptop: choose a file · JPG, PNG, or
+            WebP (max 5 MB)
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">

@@ -6,13 +6,13 @@ import { pageMeta } from "@/lib/page-meta";
 import { getSettings } from "@/lib/store";
 
 export const metadata: Metadata = pageMeta({
-  title: "About shyamlogistic | SHYAM LOGISTIC Sangli Transport Company",
+  title: "About Us | SHYAM LOGISTIC Transport Company in Sangli",
   description:
-    "About shyamlogistic (SHYAM LOGISTIC) — proprietorship of Mohanlal, GSTIN 27AXGPL2293R1ZP. Reliable FTL, PTL and pan-India freight from Sangli. Visit shyamlogistic.online.",
+    "About SHYAM LOGISTIC (shyamlogistic)—proprietorship of Mohanlal, GSTIN 27AXGPL2293R1ZP. Reliable FTL, PTL, and pan-India freight from Sangli. Visit www.shyamlogistic.online.",
   path: "/about",
   keywords: [
+    "about SHYAM LOGISTIC",
     "about shyamlogistic",
-    "shyam logistic company",
     "Mohanlal transport",
     "GST logistics Sangli",
   ],

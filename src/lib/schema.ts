@@ -126,10 +126,10 @@ export function buildWebsiteJsonLd(settings: SiteSettings) {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "shyamlogistic | SHYAM LOGISTIC",
+    name: "SHYAM LOGISTIC",
     alternateName: ["shyamlogistic", "SHYAM LOGISTIC", "Shyam Logistics"],
     url: site,
-    description: `${settings.description} Book online at shyamlogistic.online`,
+    description: `${settings.description} Book online at www.shyamlogistic.online`,
     inLanguage: ["en-IN", "hi-IN"],
     publisher: {
       "@type": "Organization",

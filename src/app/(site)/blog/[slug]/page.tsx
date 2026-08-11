@@ -16,19 +16,19 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
-  if (!post) return { title: "Post not found | shyamlogistic" };
+  if (!post) return { title: "Post not found | SHYAM LOGISTIC" };
   const url = absoluteUrl(`/blog/${post.slug}`);
-  const title = `${post.title} | shyamlogistic Blog`;
-  const description = `${post.excerpt} — Read more on the shyamlogistic (SHYAM LOGISTIC) logistics blog.`;
+  const title = `${post.title} | SHYAM LOGISTIC Blog`;
+  const description = `${post.excerpt} Read more on the SHYAM LOGISTIC logistics blog.`;
   return {
     title,
     description,
     keywords: [
+      "SHYAM LOGISTIC",
       "shyamlogistic",
-      "shyam logistic",
       post.category,
       post.title,
-      "shyamlogistic blog",
+      "logistics blog",
       ...SEO_KEYWORDS.slice(0, 12),
     ],
     alternates: { canonical: `/blog/${post.slug}` },
@@ -39,11 +39,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       publishedTime: post.createdAt,
       modifiedTime: post.updatedAt,
-      authors: [post.author || "shyamlogistic"],
+      authors: [post.author || "SHYAM LOGISTIC"],
       images: [
         {
           url: absoluteUrl(post.coverImage || "/brand/hero.jpg"),
-          alt: `${post.title} — shyamlogistic`,
+          alt: `${post.title} — SHYAM LOGISTIC`,
         },
       ],
     },

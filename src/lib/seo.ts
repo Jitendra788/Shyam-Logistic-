@@ -64,8 +64,8 @@ export function brandDescription(settings: {
   hindiTagline?: string;
 }): string {
   return (
-    `shyamlogistic (SHYAM LOGISTIC) — trusted logistics & transport company in Sangli, Maharashtra. ` +
-    `Book FTL, PTL, express cargo and pan-India freight at shyamlogistic.online. ` +
+    `SHYAM LOGISTIC (shyamlogistic) is a trusted logistics and transport company in Sangli, Maharashtra. ` +
+    `Book FTL, PTL, express cargo, and pan-India freight at www.shyamlogistic.online. ` +
     `Call ${settings.phone}${settings.phone2 ? ` / ${settings.phone2}` : ""}. ` +
     `GSTIN ${settings.gstin}. ${settings.hindiTagline || ""}`
   ).trim();

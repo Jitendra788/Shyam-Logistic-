@@ -2,20 +2,20 @@
   "companyName": "SHYAM LOGISTIC",
   "legalName": "MOHANLAL",
   "brandShort": "SB",
-  "tagline": "shyamlogistic — trusted logistics across India",
+  "tagline": "Trusted logistics across India",
   "hindiTagline": "हमारे यहाँ सभी प्रकार का माल बुकिंग किया जाता है।",
   "slogan": "We don't just move freight. We move your business forward.",
-  "description": "shyamlogistic (SHYAM LOGISTIC) is a trusted logistics partner in Sangli, Maharashtra offering reliable road transport across India. Book FTL, PTL, express cargo and supply chain support at shyamlogistic.online with transparent GST billing.",
-  "aboutText": "shyamlogistic — also known as SHYAM LOGISTIC — was founded with a vision to make freight booking simple, transparent, and reliable for businesses and individuals across India. Under the proprietorship of Mohanlal, shyamlogistic has built its reputation on dependable road logistics and customer-first service.\n\nWhether it is industrial cargo, commercial goods, or time-critical consignments, every delivery is handled with care, accountability, and proper GST documentation.\n\nWe operate from our registered office in Shalini Nagar, Sangli, Maharashtra, and coordinate routes pan-India so your goods reach safely and on time. Visit www.shyamlogistic.online to get a free quote.",
-  "missionText": "Our mission at shyamlogistic is to provide seamless logistics solutions that empower businesses to thrive — with speed, safety, and complete transparency on every mile.",
+  "description": "SHYAM LOGISTIC (shyamlogistic) is a trusted logistics partner in Sangli, Maharashtra, offering reliable road transport across India. Book full truck load (FTL), part truck load (PTL), express cargo, and supply-chain support at www.shyamlogistic.online with transparent GST billing.",
+  "aboutText": "SHYAM LOGISTIC (shyamlogistic) was founded with a clear vision: make freight booking simple, transparent, and reliable for businesses and individuals across India. Under the proprietorship of Mohanlal, we have built our reputation on dependable road logistics and customer-first service.\n\nWhether you need industrial cargo, commercial goods, or time-critical consignments, every delivery is handled with care, accountability, and proper GST documentation.\n\nWe operate from our registered office in Shalini Nagar, Sangli, Maharashtra, and coordinate routes pan-India so your goods reach safely and on time. Visit www.shyamlogistic.online to get a free quote.",
+  "missionText": "Our mission at SHYAM LOGISTIC is to provide seamless logistics solutions that help businesses grow—with speed, safety, and full transparency on every mile.",
   "gstin": "27AXGPL2293R1ZP",
   "email": "info@shyamlogistic.online",
   "phone": "8459858242",
   "phone2": "9057420562",
   "whatsapp": "8459858242",
-  "heroEyebrow": "shyamlogistic · India's Trusted Logistics Partner",
+  "heroEyebrow": "India's Trusted Logistics Partner",
   "heroHeadline": "Delivering Excellence Across Every Mile",
-  "heroSubtext": "Book freight with shyamlogistic — seamless logistics connecting businesses nationwide. Professional handling, GST billing, and on-time road transport from Sangli to pan-India routes.",
+  "heroSubtext": "Book freight with SHYAM LOGISTIC—seamless logistics connecting businesses nationwide. Professional handling, GST billing, and on-time road transport from Sangli to pan-India routes.",
   "locations": [
     {
       "id": "loc-hq",
@@ -34,25 +34,25 @@
     {
       "id": "svc-ftl",
       "title": "Full Truck Load (FTL)",
-      "description": "Direct, non-stop transportation for large consignments with quick delivery timelines, safe handling, and cost efficiency for bulk goods.",
+      "description": "Direct, non-stop transport for large consignments with fast delivery schedules, safe handling, and cost efficiency for bulk goods.",
       "icon": "truck"
     },
     {
       "id": "svc-ptl",
       "title": "Part Truck Load (PTL)",
-      "description": "Move smaller loads without paying for a whole truck. Share truck space, save costs, and still get reliable delivery speed.",
+      "description": "Move smaller loads without paying for a full truck. Share space, save cost, and still get reliable delivery speed.",
       "icon": "boxes"
     },
     {
       "id": "svc-express",
       "title": "Express Delivery",
-      "description": "Fast and reliable express delivery for time-sensitive shipments — your goods reach the destination on time, every time.",
+      "description": "Fast and reliable express delivery for time-sensitive shipments—your goods reach the destination on time, every time.",
       "icon": "clock"
     },
     {
       "id": "svc-supply",
       "title": "Supply Chain Solutions",
-      "description": "End-to-end coordination for freight movement so your business keeps moving without logistics bottlenecks.",
+      "description": "End-to-end coordination of freight so your business keeps moving without logistics delays.",
       "icon": "route"
     },
     {
@@ -64,7 +64,7 @@
     {
       "id": "svc-custom",
       "title": "Custom Logistics Solutions",
-      "description": "Tailored logistics services for unique business needs — specialized handling, multi-stop routes, and flexible vehicle allocation.",
+      "description": "Logistics services tailored to your needs—specialised handling, multi-stop routes, and flexible vehicle allocation.",
       "icon": "document"
     }
   ],
@@ -72,24 +72,24 @@
     {
       "id": "sp-general",
       "title": "General Cargo Booking",
-      "description": "All types of goods booking with transparent rates and careful handling from pickup to delivery.",
+      "description": "Booking for all types of goods with transparent rates and careful handling from pickup to delivery.",
       "icon": "boxes"
     },
     {
       "id": "sp-industrial",
       "title": "Industrial Materials",
-      "description": "Reliable transport for industrial and commercial materials with secure loading and transit care.",
+      "description": "Reliable transport for industrial and commercial materials with secure loading and careful transit.",
       "icon": "warehouse"
     },
     {
       "id": "sp-steel",
-      "title": "Steel & Metal Cargo",
-      "description": "Specialized movement support for heavy and bulky steel-related cargo with trained handlers.",
+      "title": "Steel and Metal Cargo",
+      "description": "Specialist support for heavy and bulky steel-related cargo with trained handlers.",
       "icon": "truck"
     },
     {
       "id": "sp-fmcg",
-      "title": "FMCG & Commercial Goods",
+      "title": "FMCG and Commercial Goods",
       "description": "Scheduled freight for packaged goods, retail stock, and commercial consignments.",
       "icon": "boxes"
     },
@@ -116,31 +116,31 @@
     {
       "id": "add-last",
       "title": "Last-Mile Delivery",
-      "description": "Seamless last-mile delivery so consignments reach the final destination on time.",
+      "description": "Smooth last-mile delivery so consignments reach the final destination on time.",
       "icon": "route"
     },
     {
       "id": "add-ftl",
       "title": "Full Truckload Services",
-      "description": "Dedicated FTL for large shipments — cost-effective and transit-focused.",
+      "description": "Dedicated full truckload (FTL) for large shipments—cost-effective and schedule-focused.",
       "icon": "truck"
     },
     {
       "id": "add-ptl",
       "title": "Part Truckload Services",
-      "description": "Flexible PTL for smaller shipments tailored to your business load size.",
+      "description": "Flexible part truckload (PTL) for smaller shipments tailored to your load size.",
       "icon": "boxes"
     },
     {
       "id": "add-custom",
       "title": "Custom Logistics Solutions",
-      "description": "Specialized handling and route plans matched to your cargo requirements.",
+      "description": "Specialised handling and route plans matched to your cargo requirements.",
       "icon": "document"
     },
     {
       "id": "add-scm",
       "title": "Supply Chain Management",
-      "description": "Coordination across pickup, transit, and delivery to optimize your freight flow.",
+      "description": "Coordination across pickup, transit, and delivery to improve your freight flow.",
       "icon": "route"
     }
   ],
@@ -160,7 +160,7 @@
     {
       "id": "f3",
       "title": "Warehousing Facilities",
-      "description": "Support storage options so cargo stays safe between legs.",
+      "description": "Secure storage options so cargo stays safe between transit legs.",
       "icon": "warehouse"
     },
     {
@@ -197,7 +197,7 @@
     {
       "id": "faq1",
       "question": "What services does SHYAM LOGISTIC offer?",
-      "answer": "We offer Full Truck Load (FTL), Part Load (PTL), Express Delivery, Supply Chain Solutions, warehousing support, and custom logistics for all types of goods booking."
+      "answer": "We offer full truck load (FTL), part truck load (PTL), express delivery, supply-chain solutions, warehousing support, and custom logistics for all types of goods booking."
     },
     {
       "id": "faq2",
@@ -207,17 +207,17 @@
     {
       "id": "faq3",
       "question": "How can I track my shipment?",
-      "answer": "Call or WhatsApp us with your booking details. Our team will share current transit status and expected delivery timeline."
+      "answer": "Call or message us on WhatsApp with your booking details. Our team will share the current transit status and expected delivery time."
     },
     {
       "id": "faq4",
       "question": "What are your delivery timelines?",
-      "answer": "Timelines depend on route, cargo type, and vehicle. Share your from–to cities and we will confirm an estimated transit time with your quote."
+      "answer": "Delivery times depend on route, cargo type, and vehicle. Share your origin and destination cities, and we will confirm an estimated transit time with your quote."
     },
     {
       "id": "faq5",
       "question": "How can I get a quote for your services?",
-      "answer": "Use the Get Quote form on this website or call 8459858242 / 9057420562. Share cargo type, weight, and route for a clear estimate."
+      "answer": "Use the Get Quote form on this website or call 8459858242 / 9057420562. Share the cargo type, weight, and route for a clear estimate."
     }
   ],
   "workingHours": "Monday – Saturday: 9:00 AM – 7:00 PM · Sunday: Closed",

@@ -132,14 +132,16 @@ export default async function HomePage() {
           <div className="max-w-2xl">
             <p className="section-label">What we offer</p>
             <h2 className="section-title mt-2">
-              shyamlogistic logistics solutions
+              Logistics solutions from SHYAM LOGISTIC
             </h2>
             <p className="mt-3 text-sm text-muted sm:mt-4 sm:text-base">
               From full truckloads to custom logistics,{" "}
-              <strong className="font-semibold text-navy">shyamlogistic</strong>{" "}
-              delivers speed, safety, and precision across India. Book FTL, PTL
+              <strong className="font-semibold text-navy">SHYAM LOGISTIC</strong>{" "}
+              delivers speed, safety, and precision across India. Book FTL, PTL,
               and express cargo online at{" "}
-              <span className="font-semibold text-navy">shyamlogistic.online</span>
+              <span className="font-semibold text-navy">
+                www.shyamlogistic.online
+              </span>
               .
             </p>
           </div>
@@ -149,23 +151,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* SEO marketing block — brand + service keywords */}
       <section className="border-y border-line bg-white py-12 sm:py-16">
         <div className="site-container max-w-3xl">
           <h2 className="section-title text-center">
-            Why choose shyamlogistic?
+            Why choose SHYAM LOGISTIC?
           </h2>
           <div className="prose-like mt-6 space-y-4 text-sm leading-relaxed text-muted sm:text-base">
             <p>
-              <strong className="text-navy">shyamlogistic</strong> (SHYAM
-              LOGISTIC) is a GST-registered logistics company serving Sangli,
-              Maharashtra and pan-India routes. Businesses search for{" "}
-              <em>shyam logistic</em>, transport, FTL and PTL services — we
-              deliver all of them with transparent billing and on-time focus.
+              <strong className="text-navy">SHYAM LOGISTIC</strong>{" "}
+              (shyamlogistic) is a GST-registered logistics company serving
+              Sangli, Maharashtra, and pan-India routes. We provide full truck
+              load (FTL), part truck load (PTL), express cargo, and custom
+              freight services with transparent billing and a strong focus on
+              on-time delivery.
             </p>
             <p>
               Need full truck load, part truck load, express delivery,
-              warehousing support or custom supply-chain coordination? Book
+              warehousing support, or custom supply-chain coordination? Book
               through{" "}
               <strong className="text-navy">www.shyamlogistic.online</strong> or
               call{" "}
@@ -189,18 +191,17 @@ export default async function HomePage() {
               . Proprietor: {settings.legalName}. GSTIN: {settings.gstin}.
             </p>
             <p>
-              Marketing tip for customers: remember the brand as{" "}
-              <strong className="text-navy">shyamlogistic</strong> — one word for
-              Google search and official portal{" "}
-              <strong className="text-navy">shyamlogistic.online</strong>.
+              Search for{" "}
+              <strong className="text-navy">shyamlogistic</strong> to find our
+              official website and book your next shipment with confidence.
             </p>
           </div>
           <div className="btn-stack-mobile mt-8 justify-center">
             <Link href="/quote" className="btn-primary">
-              Book with shyamlogistic
+              Get a free quote
             </Link>
             <Link href="/contact" className="btn-navy">
-              Contact shyamlogistic
+              Contact us
             </Link>
           </div>
         </div>
@@ -212,7 +213,7 @@ export default async function HomePage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
               <div className="max-w-xl">
                 <p className="section-label">Blog</p>
-                <h2 className="section-title mt-2">Insights & freight tips</h2>
+                <h2 className="section-title mt-2">Insights and freight tips</h2>
                 <p className="mt-2 text-sm text-muted sm:mt-3 sm:text-base">
                   Guides to help you plan FTL, PTL, and pan-India cargo movement.
                 </p>

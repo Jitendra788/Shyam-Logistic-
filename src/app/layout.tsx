@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const site = getSiteUrl();
   const title =
-    "shyamlogistic | SHYAM LOGISTIC — FTL, PTL & Transport Across India";
+    "SHYAM LOGISTIC | FTL, PTL and Transport Across India";
   const description = brandDescription(settings);
   const address = formatPrimaryAddress(settings);
   const verification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
@@ -42,15 +42,15 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(site),
     title: {
       default: title,
-      template: `%s | shyamlogistic`,
+      template: `%s | SHYAM LOGISTIC`,
     },
     description,
     keywords: SEO_KEYWORDS,
-    authors: [{ name: "SHYAM LOGISTIC (shyamlogistic)" }],
-    creator: "shyamlogistic",
+    authors: [{ name: "SHYAM LOGISTIC" }],
+    creator: "SHYAM LOGISTIC",
     publisher: "SHYAM LOGISTIC",
     category: "Logistics",
-    applicationName: "shyamlogistic",
+    applicationName: "SHYAM LOGISTIC",
     alternates: {
       canonical: "/",
       languages: {
@@ -73,7 +73,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "en_IN",
       url: site,
-      siteName: "shyamlogistic | SHYAM LOGISTIC",
+      siteName: "SHYAM LOGISTIC",
       title,
       description,
       images: [
@@ -81,7 +81,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: absoluteUrl("/brand/hero.jpg"),
           width: 1200,
           height: 630,
-          alt: "shyamlogistic — SHYAM LOGISTIC freight & logistics India",
+          alt: "SHYAM LOGISTIC freight and logistics services across India",
         },
       ],
     },

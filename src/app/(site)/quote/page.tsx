@@ -5,13 +5,13 @@ import { pageMeta } from "@/lib/page-meta";
 import { getSettings } from "@/lib/store";
 
 export const metadata: Metadata = pageMeta({
-  title: "Get Free Quote | shyamlogistic Freight Booking Online",
+  title: "Get a Free Quote | Online Freight Booking",
   description:
-    "Request a free logistics quote from shyamlogistic. FTL, PTL and express cargo rates across India. Fast callback — book now at shyamlogistic.online/quote.",
+    "Request a free logistics quote from SHYAM LOGISTIC. FTL, PTL, and express cargo rates across India. Fast callback—book at www.shyamlogistic.online/quote.",
   path: "/quote",
   keywords: [
+    "SHYAM LOGISTIC quote",
     "shyamlogistic quote",
-    "shyam logistic booking",
     "free freight quote",
     "cargo booking form",
   ],
