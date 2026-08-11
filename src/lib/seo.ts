@@ -12,39 +12,36 @@ export function getSiteUrl(): string {
 
 /** Primary search keywords for Google / local marketing */
 export const SEO_KEYWORDS = [
-  // Brand (primary)
+  // Brand + domain (primary)
   "shyamlogistic",
-  "shyam logistic",
-  "shyam logistics",
-  "SHYAM LOGISTIC",
-  "Shyam Logistic",
-  "Shyam Logistics",
   "shyamlogistic.online",
   "www.shyamlogistic.online",
-  "shyamlogistic sangli",
+  "shyamlogistic official",
+  "SHYAM LOGISTIC",
+  "SHYAM LOGISTIC Sangli",
+  "shyam logistic Sangli",
+  "shyamlogistic Sangli",
+  "shyamlogistic Maharashtra",
+  "shyam logistic",
   "shyam logistic company",
   "shyam logistic transport",
-  "shyam logistics india",
-  "shyam logistics maharashtra",
   // Services
-  "full truck load FTL",
-  "part truck load PTL",
+  "full truck load FTL Sangli",
+  "part truck load PTL Maharashtra",
   "express cargo delivery India",
-  "pan India logistics",
-  "goods transport company",
-  "supply chain solutions",
-  "road transport service",
-  "door to door delivery India",
-  "industrial cargo transport",
-  "freight booking Maharashtra",
-  // Local / owner
+  "pan India logistics Sangli",
+  "goods transport company Sangli",
+  "road transport service Maharashtra",
+  "freight booking Sangli",
+  // Local / owner (disambiguation)
   "logistic company Sangli",
   "transport service Sangli",
   "cargo booking Sangli",
   "truck transport Maharashtra",
-  "GST logistics company",
-  "Mohanlal logistics",
+  "GST logistics Sangli",
+  "Mohanlal logistics Sangli",
   "Mohanlal transport Sangli",
+  "27AXGPL2293R1ZP",
 ];
 
 export const SEO_BRAND = "shyamlogistic";
@@ -55,7 +52,7 @@ export function absoluteUrl(path = "/"): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** Default marketing description with brand keyword */
+/** Default marketing description with unique brand + locality signals */
 export function brandDescription(settings: {
   description: string;
   phone: string;
@@ -64,9 +61,9 @@ export function brandDescription(settings: {
   hindiTagline?: string;
 }): string {
   return (
-    `shyamlogistic is the official brand of SHYAM LOGISTIC — logistics and transport company in Sangli, Maharashtra. ` +
-    `Book FTL, PTL, express cargo, and pan-India freight at www.shyamlogistic.online. ` +
+    `shyamlogistic.online is the official website of SHYAM LOGISTIC, Sangli, Maharashtra. ` +
+    `Search shyamlogistic for our FTL, PTL and pan-India freight. Founder Mohanlal · GSTIN ${settings.gstin}. ` +
     `Call ${settings.phone}${settings.phone2 ? ` / ${settings.phone2}` : ""}. ` +
-    `GSTIN ${settings.gstin}. ${settings.hindiTagline || ""}`
+    `${settings.hindiTagline || ""}`
   ).trim();
 }

@@ -22,6 +22,12 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           <p className="mt-4 text-xs font-semibold tracking-wide text-gold">
             GST: {settings.gstin}
           </p>
+          <p className="mt-2 text-xs text-white/55">
+            Official:{" "}
+            <span className="text-white/80">www.shyamlogistic.online</span>
+            <br />
+            brand: shyamlogistic · {settings.companyName} · Sangli
+          </p>
         </div>
 
         <div>
@@ -32,6 +38,11 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             <li>
               <Link href="/" className="hover:text-white">
                 Home
+              </Link>
+            </li>
+            <li>
+              <Link href="/shyamlogistic" className="hover:text-white">
+                shyamlogistic official
               </Link>
             </li>
             <li>

@@ -38,9 +38,8 @@ const body = Barlow({
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const site = getSiteUrl();
-  // Brand-first title: Google search "shyamlogistic" should match official site
   const title =
-    "shyamlogistic | SHYAM LOGISTIC — Official Logistics Website";
+    "shyamlogistic.online | SHYAM LOGISTIC Sangli — Official Site";
   const description = brandDescription(settings);
   const address = formatPrimaryAddress(settings);
   // HTML tag verification for Google Search Console (public meta; safe to ship)

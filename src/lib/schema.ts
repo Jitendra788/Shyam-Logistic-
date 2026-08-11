@@ -10,31 +10,45 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
     "@context": "https://schema.org",
     "@type": ["Organization", "LocalBusiness", "MovingCompany"],
     "@id": `${site}/#organization`,
-    name: "shyamlogistic",
+    name: "SHYAM LOGISTIC",
     legalName: settings.legalName,
     alternateName: [
-      "SHYAM LOGISTIC",
-      "shyam logistic",
-      "Shyam Logistic",
-      "Shyam Logistics",
-      "SHYAM LOGISTICS",
+      "shyamlogistic",
       "shyamlogistic.online",
       "www.shyamlogistic.online",
+      "shyam logistic Sangli",
+      "SHYAM LOGISTIC Sangli",
       settings.companyName,
     ],
     brand: {
       "@type": "Brand",
       name: "shyamlogistic",
-      alternateName: settings.companyName,
+      alternateName: ["SHYAM LOGISTIC", "shyamlogistic.online"],
       logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
       url: site,
     },
-    description: `shyamlogistic is the official website of SHYAM LOGISTIC. ${settings.description}`,
+    description:
+      `Official website of SHYAM LOGISTIC (shyamlogistic) in Sangli, Maharashtra. ` +
+      `Founder ${settings.legalName}. GSTIN ${settings.gstin}. ` +
+      `Book at www.shyamlogistic.online. Not affiliated with similarly named firms in other cities. ` +
+      settings.description,
     url: site,
     logo: absoluteUrl(settings.logoUrl || "/brand/shyam-logo.png"),
     image: absoluteUrl("/brand/hero.jpg"),
     email: settings.email,
     telephone: [`+91${settings.phone.replace(/\D/g, "")}`],
+    identifier: [
+      {
+        "@type": "PropertyValue",
+        name: "GSTIN",
+        value: settings.gstin,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Official website",
+        value: "https://www.shyamlogistic.online",
+      },
+    ],
     ...(settings.phone2
       ? {
           contactPoint: [
@@ -88,31 +102,61 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
           addressCountry: "IN",
         }
       : undefined,
-    areaServed: {
-      "@type": "Country",
-      name: "India",
+    geo: {
+      "@type": "GeoCoordinates",
+      // Approx. coordinates for Sangli city area (local SEO signal)
+      latitude: 16.8524,
+      longitude: 74.5815,
     },
+    areaServed: [
+      {
+        "@type": "City",
+        name: "Sangli",
+      },
+      {
+        "@type": "State",
+        name: "Maharashtra",
+      },
+      {
+        "@type": "Country",
+        name: "India",
+      },
+    ],
     priceRange: "$$",
-    openingHours: "Mo-Sa 09:00-19:00",
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ],
+        opens: "09:00",
+        closes: "19:00",
+      },
+    ],
     slogan: settings.slogan,
     knowsAbout: [
       "shyamlogistic",
-      "SHYAM LOGISTIC",
+      "SHYAM LOGISTIC Sangli",
       "Full Truck Load",
       "Part Truck Load",
       "Express Delivery",
       "Supply Chain Solutions",
-      "Warehousing",
       "Road Freight India",
       "Sangli logistics",
     ],
     sameAs: [
       "https://www.shyamlogistic.online",
       "https://shyamlogistic.online",
+      absoluteUrl("/shyamlogistic"),
     ],
     hasOfferCatalog: {
       "@type": "OfferCatalog",
-      name: "Logistics Services by shyamlogistic",
+      name: "Logistics Services by shyamlogistic (SHYAM LOGISTIC Sangli)",
       itemListElement: settings.services.map((s) => ({
         "@type": "Offer",
         itemOffered: {
@@ -121,8 +165,8 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
           description: s.description,
           provider: {
             "@type": "Organization",
-            name: "shyamlogistic",
-            alternateName: settings.companyName,
+            name: "SHYAM LOGISTIC",
+            alternateName: "shyamlogistic",
           },
           areaServed: "IN",
         },
@@ -137,11 +181,15 @@ export function buildWebsiteJsonLd(settings: SiteSettings) {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "@id": `${site}/#website`,
-    name: "shyamlogistic",
-    alternateName: ["SHYAM LOGISTIC", "shyam logistic", "Shyam Logistics"],
+    name: "shyamlogistic.online",
+    alternateName: [
+      "shyamlogistic",
+      "SHYAM LOGISTIC",
+      "SHYAM LOGISTIC Sangli",
+    ],
     url: site,
     description:
-      "Official website of shyamlogistic (SHYAM LOGISTIC). Book freight online at www.shyamlogistic.online",
+      "Official website of shyamlogistic (SHYAM LOGISTIC, Sangli). Book freight at www.shyamlogistic.online",
     inLanguage: ["en-IN", "hi-IN"],
     publisher: {
       "@id": `${site}/#organization`,

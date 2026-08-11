@@ -85,7 +85,10 @@ export default async function HomePage() {
 
           <div className="mt-10 w-full max-w-md rounded-xl border border-white/15 bg-navy-deep/75 p-3.5 backdrop-blur-md sm:mt-14 sm:p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gold sm:text-[11px] sm:tracking-[0.16em]">
-              Founder · {settings.legalName}
+              Founder · {settings.legalName} · Sangli
+            </p>
+            <p className="mt-1 text-xs text-white/70">
+              Official site: www.shyamlogistic.online
             </p>
             <p className="mt-1 break-all text-sm text-white/85 sm:break-normal">
               <a
@@ -195,16 +198,20 @@ export default async function HomePage() {
             </p>
             <p>
               Search for{" "}
-              <strong className="text-navy">shyamlogistic</strong> to find our
-              official website and book your next shipment with confidence.
+              <strong className="text-navy">shyamlogistic.online</strong> or{" "}
+              <strong className="text-navy">shyamlogistic Sangli</strong> to
+              reach our official website only. Other firms may share similar
+              names in different cities — always match GSTIN{" "}
+              <strong className="text-navy">{settings.gstin}</strong> and office
+              address in Sangli.
             </p>
           </div>
           <div className="btn-stack-mobile mt-8 justify-center">
             <Link href="/quote" className="btn-primary">
               Get a free quote
             </Link>
-            <Link href="/contact" className="btn-navy">
-              Contact us
+            <Link href="/shyamlogistic" className="btn-navy">
+              About shyamlogistic brand
             </Link>
           </div>
         </div>

@@ -35,6 +35,12 @@ export async function GET() {
         priority: "1.0",
       },
       {
+        loc: `${site}/shyamlogistic`,
+        lastmod: today,
+        changefreq: "weekly",
+        priority: "1.0",
+      },
+      {
         loc: `${site}/about`,
         lastmod: today,
         changefreq: "monthly",
