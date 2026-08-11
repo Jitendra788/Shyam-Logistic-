@@ -22,7 +22,7 @@ export async function getSettings(): Promise<SiteSettings> {
   return {
     ...settingsDefaults,
     ...data,
-    logoUrl: data.logoUrl ?? "/brand/shyam-logo.png",
+    logoUrl: data.logoUrl?.trim() || "/brand/shyam-logo.png",
     founderImageUrl: data.founderImageUrl || "/brand/mohanlal.jpg",
   };
 }

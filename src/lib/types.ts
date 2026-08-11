@@ -40,7 +40,7 @@ export type SiteSettings = {
   companyName: string;
   legalName: string;
   brandShort: string;
-  /** Custom logo image URL (empty = built-in SB mark) */
+  /** Custom logo image URL (empty = official Shyam logo) */
   logoUrl: string;
   /** Founder portrait shown on About page */
   founderImageUrl: string;

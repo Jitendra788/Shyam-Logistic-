@@ -217,14 +217,14 @@ export default function AdminSettingsPage() {
         <div className="mt-4 grid gap-6 lg:grid-cols-2">
           <ImageUploadCard
             title="Company logo"
-            help="Shows in header, footer, and blog. Default is the Shyam monogram logo. Square or wide PNG works best."
+            help="Shows in header, footer, and blog. Transparent PNG works best. Reset restores the official Shyam logo."
             preview={settings.logoUrl || "/brand/shyam-logo.png"}
             fallbackLabel="Shyam"
-            rounded="rounded-md"
+            rounded="rounded-xl"
             uploading={uploading === "logo"}
             onPick={(file) => uploadBrandImage("logo", file)}
             onReset={() => update("logoUrl", "/brand/shyam-logo.png")}
-            resetLabel="Use default Shyam logo"
+            resetLabel="Use official Shyam logo"
           />
           <ImageUploadCard
             title="Founder photo"
@@ -544,9 +544,7 @@ function ImageUploadCard({
             <img
               src={preview}
               alt={title}
-              className={`h-full w-full ${
-                rounded.includes("full") ? "object-cover" : "object-contain p-1"
-              }`}
+              className="h-full w-full object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-navy text-sm font-bold text-white">
