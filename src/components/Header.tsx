@@ -47,7 +47,7 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur-md">
-      <div className="site-container flex h-14 items-center justify-between gap-2 sm:h-[4.5rem] sm:gap-4">
+      <div className="site-container flex h-16 items-center justify-between gap-2 sm:h-[4.75rem] sm:gap-4">
         <div className="min-w-0 flex-1">
           <BrandLogo
             companyName={companyName}

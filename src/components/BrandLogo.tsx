@@ -1,14 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** Full Shyam logo with mor pankh (peacock) + wordmark */
+/** Full Shyam logo art (peacock + flute + Shyam word) */
 export const DEFAULT_LOGO_URL = "/brand/shyam-brand-logo.png";
-/** Compact circular mark for badges */
+/** Compact circular mark for clear header display */
 export const DEFAULT_MARK_URL = "/brand/shyam-mark.png";
 
 type BrandLogoProps = {
   companyName?: string;
-  /** Custom uploaded logo; empty uses official Shyam logo */
+  /** Custom uploaded logo; empty uses official Shyam mark */
   logoUrl?: string;
   size?: "sm" | "md" | "lg";
   variant?: "light" | "dark";
@@ -17,22 +17,25 @@ type BrandLogoProps = {
 
 const sizes = {
   sm: {
-    logoH: 52,
-    logoW: 50,
-    text: "text-[0.95rem] xs:text-base sm:text-[1.15rem]",
-    gap: "gap-2 sm:gap-2.5",
-  },
-  md: {
-    logoH: 72,
-    logoW: 68,
-    text: "text-lg sm:text-2xl",
+    mark: 46,
+    markSm: 48,
+    first: "text-[0.95rem] sm:text-[1.1rem]",
+    second: "text-[1.05rem] sm:text-[1.25rem]",
     gap: "gap-2.5 sm:gap-3",
   },
+  md: {
+    mark: 58,
+    markSm: 62,
+    first: "text-lg sm:text-xl",
+    second: "text-xl sm:text-2xl",
+    gap: "gap-3",
+  },
   lg: {
-    logoH: 88,
-    logoW: 84,
-    text: "text-xl sm:text-3xl",
-    gap: "gap-3 sm:gap-3.5",
+    mark: 70,
+    markSm: 76,
+    first: "text-xl sm:text-2xl",
+    second: "text-2xl sm:text-3xl",
+    gap: "gap-3.5",
   },
 };
 
@@ -40,7 +43,7 @@ const sizes = {
 export function LogoMark({ size }: { size: number }) {
   return (
     <span
-      className="relative inline-block shrink-0 overflow-hidden rounded-full bg-white"
+      className="relative inline-block shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-line/80"
       style={{ width: size, height: size }}
       aria-hidden
     >
@@ -48,13 +51,17 @@ export function LogoMark({ size }: { size: number }) {
         src={DEFAULT_MARK_URL}
         alt=""
         fill
-        className="object-contain p-[6%]"
+        className="object-contain p-[5%]"
         sizes={`${size}px`}
       />
     </span>
   );
 }
 
+/**
+ * Header brand: peacock mark (clear) + SHYAM / LOGISTIC text.
+ * LOGISTIC is larger so it stays readable on mobile.
+ */
 export function BrandLogo({
   companyName = "SHYAM LOGISTIC",
   logoUrl = "",
@@ -66,12 +73,13 @@ export function BrandLogo({
   const parts = companyName.trim().split(/\s+/);
   const first = parts[0] || "SHYAM";
   const second = parts.slice(1).join(" ") || "LOGISTIC";
-  const src = logoUrl?.trim() || DEFAULT_LOGO_URL;
-  // Full brand art already has Shyam / LOGISTIC — avoid duplicate text
-  const hasBuiltInWordmark =
-    /shyam-logo|shyam-brand|\/brand\/logo/i.test(src) &&
-    !/shyam-mark/i.test(src);
-  const showText = showWordmark && !hasBuiltInWordmark;
+  const custom = logoUrl?.trim() || "";
+  const isDefaultBrand =
+    !custom ||
+    /shyam-logo|shyam-brand|shyam-mark|\/brand\/logo/i.test(custom);
+  // Use crisp circular mark for default brand so feathers stay visible at small size
+  const markSrc = isDefaultBrand ? DEFAULT_MARK_URL : custom;
+  const useSquareCustom = Boolean(custom && !isDefaultBrand);
 
   return (
     <Link
@@ -80,31 +88,45 @@ export function BrandLogo({
       aria-label={companyName}
     >
       <span
-        className="relative shrink-0"
-        style={{ width: s.logoW, height: s.logoH }}
+        className={`relative shrink-0 overflow-hidden bg-white shadow-[0_1px_3px_rgba(10,31,61,0.1)] ${
+          useSquareCustom ? "rounded-lg" : "rounded-full ring-1 ring-navy/10"
+        }`}
+        style={{
+          width: useSquareCustom ? s.markSm * 1.15 : s.markSm,
+          height: s.markSm,
+          minWidth: s.mark,
+          minHeight: s.mark,
+        }}
       >
         <Image
-          src={src}
-          alt={companyName}
+          src={markSrc}
+          alt=""
           fill
           priority={size === "sm"}
-          className="object-contain object-left"
-          sizes={`${s.logoW * 2}px`}
+          className={
+            useSquareCustom
+              ? "object-contain p-0.5"
+              : "object-contain p-[4%]"
+          }
+          sizes={`${s.markSm * 2}px`}
         />
       </span>
 
-      {showText && (
-        <span
-          className={`min-w-0 truncate font-display font-bold uppercase leading-[1.05] tracking-[0.02em] sm:tracking-[0.03em] ${s.text}`}
-        >
-          <span className={variant === "dark" ? "text-white" : "text-navy"}>
+      {showWordmark && (
+        <span className="flex min-w-0 flex-col leading-none">
+          <span
+            className={`truncate font-display font-bold uppercase tracking-[0.04em] ${s.first} ${
+              variant === "dark" ? "text-white" : "text-navy"
+            }`}
+          >
             {first}
           </span>
           {second ? (
-            <>
-              {" "}
-              <span className="text-red">{second}</span>
-            </>
+            <span
+              className={`mt-0.5 truncate font-display font-extrabold uppercase tracking-[0.12em] text-red sm:tracking-[0.14em] ${s.second}`}
+            >
+              {second}
+            </span>
           ) : null}
         </span>
       )}
