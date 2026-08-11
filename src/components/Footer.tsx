@@ -8,7 +8,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 
   return (
     <footer className="mt-auto bg-navy-deep text-white">
-      <div className="site-container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
+      <div className="site-container grid gap-8 py-10 sm:gap-10 sm:py-14 md:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-1">
           <BrandLogo
             companyName={settings.companyName}
@@ -41,6 +41,11 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             <li>
               <Link href="/services" className="hover:text-white">
                 Services
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog" className="hover:text-white">
+                Blog
               </Link>
             </li>
             <li>
@@ -106,12 +111,12 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="site-container flex flex-col gap-2 py-4 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
-          <p>
+        <div className="site-container flex flex-col gap-2 py-4 text-xs leading-relaxed text-white/45 sm:flex-row sm:items-center sm:justify-between">
+          <p className="break-words">
             © {new Date().getFullYear()} {settings.companyName}. All rights
             reserved. Prop. {settings.legalName}.
           </p>
-          <p className="text-white/70">
+          <p className="text-white/70 sm:max-w-md sm:text-right">
             {settings.slogan}
           </p>
         </div>

@@ -1,0 +1,7 @@
+# Placeholder for Google Search Console HTML verification file.
+# When Google asks you to upload e.g. google1234567890abcdef.html:
+# 1. Copy that file name into public/ (this folder)
+# 2. Paste the verification content Google gives you
+# 3. Or set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION in .env.local (meta tag method)
+#
+# After verification, delete this note or leave for team reference.

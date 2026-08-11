@@ -3,18 +3,32 @@ import Link from "next/link";
 type BrandLogoProps = {
   companyName?: string;
   size?: "sm" | "md" | "lg";
-  /** light = navy/red on white header; dark = white/red on navy footer */
   variant?: "light" | "dark";
   showWordmark?: boolean;
 };
 
 const sizes = {
-  sm: { mark: 42, text: "text-lg sm:text-[1.25rem]", gap: "gap-2.5" },
-  md: { mark: 54, text: "text-xl sm:text-2xl", gap: "gap-3" },
-  lg: { mark: 68, text: "text-2xl sm:text-3xl", gap: "gap-3.5" },
+  sm: {
+    mark: 36,
+    markSm: 42,
+    text: "text-[0.95rem] xs:text-base sm:text-[1.2rem]",
+    gap: "gap-2 sm:gap-2.5",
+  },
+  md: {
+    mark: 44,
+    markSm: 54,
+    text: "text-lg sm:text-2xl",
+    gap: "gap-2.5 sm:gap-3",
+  },
+  lg: {
+    mark: 52,
+    markSm: 68,
+    text: "text-xl sm:text-3xl",
+    gap: "gap-3 sm:gap-3.5",
+  },
 };
 
-function LogoMark({ size }: { size: number }) {
+export function LogoMark({ size }: { size: number }) {
   return (
     <svg
       width={size}
@@ -23,7 +37,7 @@ function LogoMark({ size }: { size: number }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
-      className="block"
+      className="block h-full w-full"
     >
       <circle cx="60" cy="60" r="58" fill="#ffffff" />
       <circle
@@ -42,7 +56,6 @@ function LogoMark({ size }: { size: number }) {
         strokeWidth="1.5"
         fill="none"
       />
-      {/* S — navy */}
       <text
         x="28"
         y="78"
@@ -54,7 +67,6 @@ function LogoMark({ size }: { size: number }) {
       >
         S
       </text>
-      {/* B — red */}
       <text
         x="62"
         y="78"
@@ -84,19 +96,19 @@ export function BrandLogo({
   return (
     <Link
       href="/"
-      className={`group inline-flex items-center ${s.gap}`}
+      className={`group inline-flex max-w-full min-w-0 items-center ${s.gap}`}
       aria-label={companyName}
     >
       <span
-        className="shrink-0 rounded-full shadow-[0_1px_3px_rgba(10,31,61,0.12)] transition group-hover:shadow-[0_2px_8px_rgba(198,40,40,0.2)]"
-        style={{ width: s.mark, height: s.mark }}
+        className="relative shrink-0 overflow-hidden rounded-full shadow-[0_1px_3px_rgba(10,31,61,0.12)] transition group-hover:shadow-[0_2px_8px_rgba(198,40,40,0.2)]"
+        style={{ width: s.markSm, height: s.markSm, maxWidth: "12vw", maxHeight: "12vw", minWidth: s.mark, minHeight: s.mark }}
       >
-        <LogoMark size={s.mark} />
+        <LogoMark size={s.markSm} />
       </span>
 
       {showWordmark && (
         <span
-          className={`font-display font-bold uppercase leading-[1.05] tracking-[0.03em] ${s.text}`}
+          className={`min-w-0 truncate font-display font-bold uppercase leading-[1.05] tracking-[0.02em] sm:tracking-[0.03em] ${s.text}`}
         >
           <span className={variant === "dark" ? "text-white" : "text-navy"}>
             {first}

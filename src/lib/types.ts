@@ -85,3 +85,17 @@ export type Enquiry = {
   status: EnquiryStatus;
   createdAt: string;
 };
+
+export type BlogPost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  author: string;
+  coverImage: string;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+};

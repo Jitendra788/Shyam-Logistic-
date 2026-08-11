@@ -1,41 +1,62 @@
-# SHYAM LOGISTICS
+# SHYAM LOGISTIC
 
-Next.js website for **SHYAM LOGISTICS** (GSTIN: 27AXGPL2293R1ZP) with public pages, enquiry form, and admin panel.
+Next.js website for **SHYAM LOGISTIC** (GSTIN: 27AXGPL2293R1ZP) — public site, enquiry form, blog, admin panel, SEO-ready for Google.
 
 ## Pages
 
-- `/` — Home
-- `/about` — About Us
-- `/services` — Services
-- `/contact` — Contact Us + locations map
-- `/quote` — Get a Quote / Enquiry form
-- `/admin` — Admin panel (enquiries)
-- `/admin/settings` — Edit company info, locations, services
+| Route | Page |
+|--------|------|
+| `/` | Home |
+| `/about` | About Us |
+| `/services` | Services |
+| `/blog` | Blog |
+| `/blog/[slug]` | Blog post |
+| `/contact` | Contact + locations |
+| `/quote` | Get a Quote |
+| `/admin` | Enquiries |
+| `/admin/blog` | Manage blog |
+| `/admin/settings` | Site content & locations |
+
+## SEO & Google (marketing)
+
+After domain/hosting go live:
+
+1. Set in `.env.local`:
+   ```
+   NEXT_PUBLIC_SITE_URL=https://your-domain.com
+   ```
+2. Open Google Search Console → add property → submit:
+   - `https://your-domain.com/robots.txt`
+   - `https://your-domain.com/sitemap.xml`
+3. Optional verification:
+   - Meta tag: `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=...`  
+   - Or upload Google’s HTML file to `public/`
+
+**What is already wired:**
+
+- Dynamic `robots.txt` (`src/app/robots.ts`) — allows public pages, blocks `/admin` & `/api`
+- Dynamic `sitemap.xml` (`src/app/sitemap.ts`) — home, about, services, blog posts, contact, quote
+- SEO meta titles/descriptions + keywords on all pages
+- Open Graph + Twitter cards (WhatsApp/Facebook share previews)
+- JSON-LD: Organization / LocalBusiness + WebSite schema (rich results)
+- Canonical URLs & geo tags (Sangli / Maharashtra)
+
+Helper notes: `public/google-seo-readme.txt`
 
 ## Setup
 
 ```bash
 npm install
+cp .env.example .env.local   # edit secrets + domain
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+### Admin
 
-### Admin login
+Default: **admin** / **admin123** (change in production)
 
-Configured in `.env.local`:
+## Data files
 
-```
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-ADMIN_SESSION_SECRET=change-this-in-production
-```
-
-Default: **admin** / **admin123**
-
-## Data
-
-- `data/settings.json` — company name, GSTIN, phone, locations, services (editable from admin)
-- `data/enquiries.json` — quote form submissions
-
-All location and content fields can be changed from **Admin → Site Settings**.
+- `data/settings.json` — company, phones, locations, services (admin editable)
+- `data/posts.json` — blog posts
+- `data/enquiries.json` — quote form leads (not committed)

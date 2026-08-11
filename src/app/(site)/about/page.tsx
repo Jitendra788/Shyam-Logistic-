@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/PageHero";
 import { FeatureGrid } from "@/components/ServiceGrid";
+import { pageMeta } from "@/lib/page-meta";
 import { getSettings } from "@/lib/store";
 
-export const metadata: Metadata = {
-  title: "About Us",
-};
+export const metadata: Metadata = pageMeta({
+  title: "About Us — Trusted Logistics Partner in Sangli",
+  description:
+    "About SHYAM LOGISTIC, proprietorship of Mohanlal (GSTIN 27AXGPL2293R1ZP). Reliable FTL, PTL and pan-India freight from Sangli, Maharashtra.",
+  path: "/about",
+  keywords: ["about Shyam Logistic", "Mohanlal transport", "GST logistics Sangli"],
+});
 
 export default async function AboutPage() {
   const settings = await getSettings();
@@ -20,11 +25,11 @@ export default async function AboutPage() {
         subtitle="From humble beginnings to becoming a trusted logistics partner — discover our journey of reliability and service."
       />
 
-      <section className="py-16 sm:py-20">
-        <div className="site-container grid gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+      <section className="py-12 sm:py-16 md:py-20">
+        <div className="site-container grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:gap-12">
           <div className="prose-like max-w-2xl">
             <p className="section-label">About {settings.companyName}</p>
-            <h2 className="section-title mt-2 text-3xl sm:text-4xl">
+            <h2 className="section-title mt-2 ">
               Building Trust Through Excellence
             </h2>
             {paragraphs.map((p) => (
@@ -91,11 +96,11 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-sand py-16 sm:py-20">
+      <section className="bg-sand py-12 sm:py-16 md:py-20">
         <div className="site-container">
           <div className="max-w-2xl">
             <p className="section-label">Why Choose Us</p>
-            <h2 className="section-title mt-2 text-4xl sm:text-5xl">
+            <h2 className="section-title mt-2 ">
               Experience, dedication & delivery
             </h2>
             <p className="mt-4 text-muted">
@@ -109,10 +114,10 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-20">
+      <section className="py-12 sm:py-16 md:py-20">
         <div className="site-container">
           <p className="section-label">Our Achievements</p>
-          <h2 className="section-title mt-2 text-4xl sm:text-5xl">
+          <h2 className="section-title mt-2 ">
             Numbers that reflect trust
           </h2>
           <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-4">

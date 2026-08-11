@@ -10,12 +10,12 @@ export function PageHero({
   return (
     <section className="page-hero">
       <div className="site-container relative z-10">
-        <p className="section-label !text-gold/90 animate-fade-in">{eyebrow}</p>
-        <h1 className="animate-fade-up mt-3 max-w-3xl font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+        <p className="section-label animate-fade-in !text-gold/90">{eyebrow}</p>
+        <h1 className="animate-fade-up mt-2 max-w-3xl font-display font-bold leading-[1.1] tracking-tight sm:mt-3">
           {title}
         </h1>
         {subtitle && (
-          <p className="animate-fade-up-delay mt-4 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
+          <p className="animate-fade-up-delay mt-3 max-w-2xl text-sm leading-relaxed text-white/75 sm:mt-4 sm:text-base md:text-lg">
             {subtitle}
           </p>
         )}

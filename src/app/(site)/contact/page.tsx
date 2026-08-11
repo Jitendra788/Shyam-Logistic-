@@ -3,11 +3,20 @@ import Link from "next/link";
 import { LocationCard } from "@/components/LocationCard";
 import { PageHero } from "@/components/PageHero";
 import { QuoteForm } from "@/components/QuoteForm";
+import { pageMeta } from "@/lib/page-meta";
 import { getSettings } from "@/lib/store";
 
-export const metadata: Metadata = {
-  title: "Contact Us",
-};
+export const metadata: Metadata = pageMeta({
+  title: "Contact Us — Call 8459858242 | Sangli Office",
+  description:
+    "Contact SHYAM LOGISTIC for freight booking. Phone 8459858242 / 9057420562. Office: Shalini Nagar, Sangli, Maharashtra 416416. GST 27AXGPL2293R1ZP.",
+  path: "/contact",
+  keywords: [
+    "contact logistics Sangli",
+    "8459858242",
+    "transport office Sangli",
+  ],
+});
 
 export default async function ContactPage() {
   const settings = await getSettings();
@@ -20,8 +29,8 @@ export default async function ContactPage() {
         subtitle="Call, email, or visit our office. All location details are managed from the admin panel and stay current for customers."
       />
 
-      <section className="py-16 sm:py-20">
-        <div className="site-container grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+      <section className="py-12 sm:py-16 md:py-20">
+        <div className="site-container grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
           <div className="space-y-5">
             <div className="card-grid-item">
               <p className="section-label">Phone</p>

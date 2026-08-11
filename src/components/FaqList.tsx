@@ -17,13 +17,15 @@ export function FaqList({ faqs }: { faqs: FaqItem[] }) {
           >
             <button
               type="button"
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+              className="flex w-full items-start justify-between gap-3 px-3.5 py-3.5 text-left sm:items-center sm:gap-4 sm:px-5 sm:py-4"
               onClick={() => setOpen(isOpen ? null : faq.id)}
               aria-expanded={isOpen}
             >
-              <span className="font-semibold text-navy">{faq.question}</span>
+              <span className="min-w-0 text-sm font-semibold leading-snug text-navy sm:text-base">
+                {faq.question}
+              </span>
               <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-lg font-bold text-navy transition ${
+                className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-lg font-bold text-navy transition ${
                   isOpen ? "bg-red text-white" : ""
                 }`}
               >
@@ -31,7 +33,7 @@ export function FaqList({ faqs }: { faqs: FaqItem[] }) {
               </span>
             </button>
             {isOpen && (
-              <div className="border-t border-line px-5 py-4 text-sm leading-relaxed text-muted">
+              <div className="border-t border-line px-3.5 py-3.5 text-sm leading-relaxed text-muted sm:px-5 sm:py-4">
                 {faq.answer}
               </div>
             )}
