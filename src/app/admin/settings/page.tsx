@@ -181,7 +181,7 @@ export default function AdminSettingsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Company name" value={settings.companyName} onChange={(v) => update("companyName", v)} />
           <Field label="Brand short (logo letters)" value={settings.brandShort} onChange={(v) => update("brandShort", v)} />
-          <Field label="Proprietor / legal name" value={settings.legalName} onChange={(v) => update("legalName", v)} />
+          <Field label="Founder / legal name" value={settings.legalName} onChange={(v) => update("legalName", v)} />
           <Field label="GSTIN" value={settings.gstin} onChange={(v) => update("gstin", v)} />
           <Field label="Phone 1" value={settings.phone} onChange={(v) => update("phone", v)} />
           <Field label="Phone 2" value={settings.phone2} onChange={(v) => update("phone2", v)} />

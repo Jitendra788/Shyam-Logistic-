@@ -9,7 +9,7 @@ import { getSettings } from "@/lib/store";
 export const metadata: Metadata = pageMeta({
   title: "About Us | SHYAM LOGISTIC Transport Company in Sangli",
   description:
-    "About SHYAM LOGISTIC (shyamlogistic)—proprietorship of Mohanlal, GSTIN 27AXGPL2293R1ZP. Reliable FTL, PTL, and pan-India freight from Sangli. Visit www.shyamlogistic.online.",
+    "About SHYAM LOGISTIC (shyamlogistic)—founded by Mohanlal, GSTIN 27AXGPL2293R1ZP. Reliable FTL, PTL, and pan-India freight from Sangli. Visit www.shyamlogistic.online.",
   path: "/about",
   keywords: [
     "about SHYAM LOGISTIC",
@@ -58,7 +58,7 @@ export default async function AboutPage() {
             <div className="relative mx-auto h-40 w-40 overflow-hidden rounded-full border-4 border-sand shadow-sm sm:h-44 sm:w-44">
               <Image
                 src="/brand/mohanlal.jpg"
-                alt={`${settings.legalName}, proprietor of ${settings.companyName}`}
+                alt={`${settings.legalName}, founder of ${settings.companyName}`}
                 fill
                 className="object-cover object-[center_18%]"
                 sizes="176px"
@@ -69,7 +69,7 @@ export default async function AboutPage() {
               {settings.legalName}
             </p>
             <p className="mt-1 text-center text-sm font-semibold uppercase tracking-[0.14em] text-red sm:text-left">
-              Proprietor · {settings.companyName}
+              Founder · {settings.companyName}
             </p>
             <p className="mt-4 text-sm leading-relaxed text-muted">
               At {settings.companyName}, logistics is not just about moving

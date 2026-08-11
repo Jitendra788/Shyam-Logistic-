@@ -78,7 +78,7 @@ export default async function ContactPage() {
                 GST No: {settings.gstin}
               </p>
               <p className="mt-2 text-sm text-muted">
-                Proprietor: {settings.legalName}
+                Founder: {settings.legalName}
               </p>
             </div>
 

@@ -85,7 +85,7 @@ export default async function HomePage() {
 
           <div className="mt-10 w-full max-w-md rounded-xl border border-white/15 bg-navy-deep/75 p-3.5 backdrop-blur-md sm:mt-14 sm:p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gold sm:text-[11px] sm:tracking-[0.16em]">
-              Proprietor · {settings.legalName}
+              Founder · {settings.legalName}
             </p>
             <p className="mt-1 break-all text-sm text-white/85 sm:break-normal">
               <a
@@ -188,7 +188,7 @@ export default async function HomePage() {
                   </a>
                 </>
               ) : null}
-              . Proprietor: {settings.legalName}. GSTIN: {settings.gstin}.
+              . Founder: {settings.legalName}. GSTIN: {settings.gstin}.
             </p>
             <p>
               Search for{" "}
