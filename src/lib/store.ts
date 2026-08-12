@@ -12,7 +12,7 @@ async function ensureDataDir() {
 }
 
 const settingsDefaults: Partial<SiteSettings> = {
-  logoUrl: "/brand/shyam-brand-logo.png",
+  logoUrl: "/brand/shyam-brand-logo.webp",
   founderImageUrl: "/brand/mohanlal.jpg",
   heroImageUrl: "/brand/hero.jpg",
   alsoKnownAs: ["Shree Shyam Logistics", "Shree Shyam Logistic"],
@@ -57,10 +57,11 @@ export async function getSettings(): Promise<SiteSettings> {
   if (
     !logoUrl ||
     logoUrl === "/brand/shyam-logo.png" ||
+    logoUrl === "/brand/shyam-brand-logo.png" ||
     logoUrl === "/brand/logo.png" ||
     logoUrl === "/brand/logo.svg"
   ) {
-    logoUrl = "/brand/shyam-brand-logo.png";
+    logoUrl = "/brand/shyam-brand-logo.webp";
   }
   return {
     ...settingsDefaults,

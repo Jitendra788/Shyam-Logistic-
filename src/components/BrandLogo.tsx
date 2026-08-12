@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 /** Full Shyam logo art (peacock + flute + Shyam word) */
-export const DEFAULT_LOGO_URL = "/brand/shyam-brand-logo.png";
+export const DEFAULT_LOGO_URL = "/brand/shyam-brand-logo.webp";
 /** Compact circular peacock mark (rich colours) */
-export const DEFAULT_MARK_URL = "/brand/shyam-peacock-mark.png";
+export const DEFAULT_MARK_URL = "/brand/shyam-peacock-mark.webp";
 
 type BrandLogoProps = {
   companyName?: string;
@@ -108,7 +108,7 @@ export function BrandLogo({
           src={markSrc}
           alt=""
           fill
-          priority={size === "sm"}
+          quality={75}
           className={
             useSquareCustom
               ? "object-contain p-0.5"

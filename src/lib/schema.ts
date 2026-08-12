@@ -29,7 +29,7 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
         "shyamlogistic.online",
         ...(settings.alsoKnownAs || []).slice(0, 3),
       ],
-      logo: absoluteUrl(settings.logoUrl || "/brand/shyam-brand-logo.png"),
+      logo: absoluteUrl(settings.logoUrl || "/brand/shyam-brand-logo.webp"),
       url: site,
     },
     description:
@@ -39,7 +39,7 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
       `Book only at www.shyamlogistic.online. ` +
       settings.description,
     url: site,
-    logo: absoluteUrl(settings.logoUrl || "/brand/shyam-brand-logo.png"),
+    logo: absoluteUrl(settings.logoUrl || "/brand/shyam-brand-logo.webp"),
     image: absoluteUrl("/brand/hero.jpg"),
     email: settings.email,
     telephone: [

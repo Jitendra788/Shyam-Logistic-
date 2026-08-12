@@ -213,6 +213,7 @@ canvas {
 }
 
 .section-label {
+  font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-size: 0.68rem;

@@ -45,7 +45,8 @@ export function BlogCover({
           src={src}
           alt={title}
           fill
-          priority={priority}
+          preload={priority}
+          quality={70}
           unoptimized={src.startsWith("/uploads/")}
           className="object-cover object-center"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

@@ -223,12 +223,12 @@ export default function AdminSettingsPage() {
           <ImageUploadCard
             title="Company logo"
             help="Header & footer brand mark."
-            preview={settings.logoUrl || "/brand/shyam-brand-logo.png"}
+            preview={settings.logoUrl || "/brand/shyam-brand-logo.webp"}
             fallbackLabel="Logo"
             rounded="rounded-xl"
             uploading={uploading === "logo"}
             onPick={(file) => uploadBrandImage("logo", file)}
-            onReset={() => update("logoUrl", "/brand/shyam-brand-logo.png")}
+            onReset={() => update("logoUrl", "/brand/shyam-brand-logo.webp")}
             resetLabel="Default logo"
           />
           <ImageUploadCard

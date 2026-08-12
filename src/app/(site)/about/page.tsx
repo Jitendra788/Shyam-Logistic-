@@ -62,7 +62,7 @@ export default async function AboutPage() {
                 fill
                 className="object-cover object-[center_18%]"
                 sizes="176px"
-                priority
+                quality={70}
               />
             </div>
             <p className="mt-5 text-center font-display text-2xl font-bold text-navy sm:text-left">

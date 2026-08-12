@@ -1,10 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FaqList } from "@/components/FaqList";
+import dynamic from "next/dynamic";
 import { IconBadge } from "@/components/IconBadge";
-import { QuoteForm } from "@/components/QuoteForm";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import { BlogCard } from "@/components/BlogCard";
+
+const FaqList = dynamic(
+  () => import("@/components/FaqList").then((m) => m.FaqList),
+  { loading: () => <div className="min-h-48 rounded-xl border border-line bg-white" /> }
+);
+
+const QuoteForm = dynamic(
+  () => import("@/components/QuoteForm").then((m) => m.QuoteForm),
+  { loading: () => <div className="min-h-64 rounded-xl border border-line bg-white" /> }
+);
 import {
   formatLocation,
   getPrimaryLocation,
@@ -24,7 +33,8 @@ export default async function HomePage() {
           src={settings.heroImageUrl || "/brand/hero.jpg"}
           alt={`${settings.companyName} freight logistics`}
           fill
-          priority
+          preload
+          quality={70}
           className="object-cover object-center"
           sizes="100vw"
         />
@@ -39,24 +49,24 @@ export default async function HomePage() {
 
         <div className="site-container relative z-10 flex min-h-[min(92vh,820px)] flex-col justify-center py-14 sm:min-h-[88vh] sm:py-20">
           <div className="max-w-2xl">
-            <p className="animate-fade-in section-label !text-gold">
+            <p className="section-label !text-gold">
               {settings.heroEyebrow}
             </p>
-            <h1 className="animate-fade-up mt-3 font-display text-[2.1rem] font-bold leading-[1.08] tracking-tight sm:mt-4 sm:text-5xl md:text-6xl lg:text-[4.1rem]">
+            <h1 className="mt-3 font-display text-[2.1rem] font-bold leading-[1.08] tracking-tight sm:mt-4 sm:text-5xl md:text-6xl lg:text-[4.1rem]">
               {settings.heroHeadline.split(" ").slice(0, 2).join(" ")}
               <span className="text-red">
                 {" "}
                 {settings.heroHeadline.split(" ").slice(2).join(" ")}
               </span>
             </h1>
-            <p className="animate-fade-up-delay mt-3 text-sm font-medium text-white/95 sm:mt-4 sm:text-base md:text-lg">
+            <p className="mt-3 text-sm font-medium text-white/95 sm:mt-4 sm:text-base md:text-lg">
               {settings.hindiTagline}
             </p>
-            <p className="animate-fade-up-delay mt-3 max-w-xl text-sm leading-relaxed text-white/75 sm:mt-4 sm:text-base md:text-lg">
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75 sm:mt-4 sm:text-base md:text-lg">
               {settings.heroSubtext}
             </p>
 
-            <div className="animate-fade-up-delay-2 btn-stack-mobile mt-7 sm:mt-8">
+            <div className="btn-stack-mobile mt-7 sm:mt-8">
               <Link href="/quote" className="btn-primary">
                 Get Free Quote
               </Link>
@@ -65,11 +75,11 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="animate-fade-up-delay-2 mt-8 flex flex-wrap gap-2.5 sm:mt-10 sm:gap-4">
+            <div className="mt-8 flex flex-wrap gap-2.5 sm:mt-10 sm:gap-4">
               {settings.attributes.map((attr) => (
                 <div
                   key={attr.title}
-                  className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-2.5 py-1.5 backdrop-blur-sm sm:gap-2.5 sm:px-3 sm:py-2"
+                  className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 sm:gap-2.5 sm:px-3 sm:py-2"
                 >
                   <IconBadge
                     icon={attr.icon}
@@ -83,7 +93,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="mt-10 w-full max-w-md rounded-xl border border-white/15 bg-navy-deep/75 p-3.5 backdrop-blur-md sm:mt-14 sm:p-4">
+          <div className="mt-10 w-full max-w-md rounded-xl border border-white/15 bg-navy-deep/90 p-3.5 sm:mt-14 sm:p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gold sm:text-[11px] sm:tracking-[0.16em]">
               Founder · {settings.legalName} · Sangli
             </p>
