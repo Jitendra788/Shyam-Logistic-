@@ -30,6 +30,28 @@ export function enquiryLines(
     .join("\n");
 }
 
+export function mailtoEnquiryUrl(
+  to: string,
+  enquiry: Pick<
+    Enquiry,
+    | "name"
+    | "phone"
+    | "email"
+    | "company"
+    | "fromCity"
+    | "toCity"
+    | "cargoType"
+    | "weight"
+    | "message"
+  >
+) {
+  const email = to.trim();
+  if (!email) return "";
+  return `mailto:${email}?subject=${encodeURIComponent(
+    `Freight enquiry from ${enquiry.name}`
+  )}&body=${encodeURIComponent(enquiryLines(enquiry))}`;
+}
+
 export function whatsappEnquiryUrl(
   whatsappDigits: string,
   enquiry: Pick<

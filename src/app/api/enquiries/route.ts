@@ -50,17 +50,8 @@ export async function POST(request: Request) {
     const settings = await getSettings();
     const emailed = await notifyEnquiry(enquiry, settings.email);
 
-    if (!saved && !emailed) {
-      return NextResponse.json(
-        {
-          error:
-            "Could not send enquiry online. Please call or WhatsApp us instead.",
-          enquiry,
-        },
-        { status: 503 }
-      );
-    }
-
+    // Vercel cannot write data/*.json; FormSubmit often blocks cloud IPs.
+    // Always 201 so the browser can finish delivery via WhatsApp.
     return NextResponse.json(
       { ok: true, enquiry, saved, emailed },
       { status: 201 }

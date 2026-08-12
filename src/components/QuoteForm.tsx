@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { whatsappEnquiryUrl } from "@/lib/enquiry-format";
+import { FormEvent, useMemo, useState } from "react";
+import { mailtoEnquiryUrl, whatsappEnquiryUrl } from "@/lib/enquiry-format";
 
 const initial = {
   name: "",
@@ -32,30 +32,38 @@ function digitsPhone(raw: string) {
 
 export function QuoteForm({
   compact = false,
-  notifyEmail = "",
-  phone = "",
-  phone2 = "",
-  whatsapp = "",
+  notifyEmail = "shyamlogisticscompany535@gmail.com",
+  phone = "8459858242",
+  phone2 = "9057420562",
+  whatsapp = "8459858242",
 }: QuoteFormProps) {
   const [form, setForm] = useState(initial);
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">(
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "ok-wa">(
     "idle"
   );
-  const [error, setError] = useState("");
+  const [sentWaUrl, setSentWaUrl] = useState("");
 
   const tel1 = digitsPhone(phone);
   const tel2 = digitsPhone(phone2);
   const wa = digitsPhone(whatsapp || phone);
 
+  const draft = useMemo(
+    () => ({
+      ...form,
+      phone: digitsPhone(form.phone) || form.phone,
+    }),
+    [form]
+  );
+
   function set(field: keyof typeof initial, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  async function postEnquiry() {
+  async function postEnquiry(): Promise<{ saved?: boolean; emailed?: boolean }> {
     const res = await fetch("/api/enquiries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, phone: digitsPhone(form.phone) || form.phone }),
+      body: JSON.stringify(draft),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -63,81 +71,113 @@ export function QuoteForm({
         typeof data.error === "string" ? data.error : "Submission failed"
       );
     }
-    return data;
+    return data as { saved?: boolean; emailed?: boolean };
   }
 
   async function postFormSubmitFallback() {
     const to = notifyEmail.trim();
     if (!to) return false;
-    const res = await fetch(
-      `https://formsubmit.co/ajax/${encodeURIComponent(to)}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          _subject: `New enquiry from ${form.name} — shyamlogistic`,
-          _template: "box",
-          _captcha: "false",
-          name: form.name,
-          phone: digitsPhone(form.phone) || form.phone,
-          email: form.email || "not provided",
-          company: form.company || "—",
-          fromCity: form.fromCity || "—",
-          toCity: form.toCity || "—",
-          cargoType: form.cargoType || "—",
-          weight: form.weight || "—",
-          message: form.message || "—",
-        }),
-      }
-    );
-    if (!res.ok) return false;
-    const data = (await res.json().catch(() => null)) as
-      | { success?: boolean | string }
-      | null;
-    return Boolean(
-      data && (data.success === true || data.success === "true" || res.ok)
-    );
+    try {
+      const res = await fetch(
+        `https://formsubmit.co/ajax/${encodeURIComponent(to)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            _subject: `New enquiry from ${draft.name} — shyamlogistic`,
+            _template: "box",
+            _captcha: "false",
+            _replyto: draft.email || to,
+            name: draft.name,
+            phone: draft.phone,
+            email: draft.email || "not provided",
+            company: draft.company || "—",
+            fromCity: draft.fromCity || "—",
+            toCity: draft.toCity || "—",
+            cargoType: draft.cargoType || "—",
+            weight: draft.weight || "—",
+            message: draft.message || "—",
+          }),
+        }
+      );
+      if (!res.ok) return false;
+      const data = (await res.json().catch(() => null)) as
+        | { success?: boolean | string }
+        | null;
+      return data?.success === true || data?.success === "true";
+    } catch {
+      return false;
+    }
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setStatus("loading");
-    setError("");
+
+    const waUrl = whatsappEnquiryUrl(wa, draft);
+    let delivered = false;
+
     try {
-      try {
-        await postEnquiry();
-      } catch {
-        const fallbackOk = await postFormSubmitFallback();
-        if (!fallbackOk) throw new Error("Could not send enquiry online.");
-      }
+      const result = await postEnquiry();
+      delivered = Boolean(result.saved || result.emailed);
+    } catch {
+      delivered = false;
+    }
+
+    if (!delivered) {
+      delivered = await postFormSubmitFallback();
+    }
+
+    if (delivered) {
+      setSentWaUrl("");
       setStatus("ok");
       setForm(initial);
-    } catch (err) {
-      setStatus("error");
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not send enquiry online. Please call or WhatsApp us."
-      );
+      return;
     }
+
+    if (waUrl) {
+      setSentWaUrl(waUrl);
+      window.open(waUrl, "_blank", "noopener,noreferrer");
+      setStatus("ok-wa");
+      setForm(initial);
+      return;
+    }
+
+    setSentWaUrl("");
+    setStatus("ok-wa");
   }
 
-  if (status === "ok") {
+  if (status === "ok" || status === "ok-wa") {
     return (
       <div className="rounded-md border border-success/30 bg-success/5 p-6 text-center">
         <p className="font-display text-xl font-semibold text-success">
-          Enquiry submitted
+          {status === "ok-wa" ? "Send on WhatsApp to finish" : "Enquiry submitted"}
         </p>
         <p className="mt-2 text-sm text-muted">
-          Thank you. Our team will contact you shortly with a quote.
+          {status === "ok-wa"
+            ? "WhatsApp should open with your enquiry. Tap Send so our team receives it."
+            : "Thank you. Our team will contact you shortly with a quote."}
         </p>
+        {status === "ok-wa" && sentWaUrl ? (
+          <a
+            href={sentWaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-[#128c7e] px-4 text-sm font-semibold text-white"
+          >
+            Open WhatsApp
+          </a>
+        ) : null}
         <button
           type="button"
-          className="btn-navy mt-5"
-          onClick={() => setStatus("idle")}
+          className="btn-navy mt-4 block w-full sm:inline-flex sm:w-auto"
+          onClick={() => {
+            setStatus("idle");
+            setSentWaUrl("");
+          }}
         >
           Send another enquiry
         </button>
@@ -145,20 +185,8 @@ export function QuoteForm({
     );
   }
 
-  const waUrl =
-    status === "error" && wa
-      ? whatsappEnquiryUrl(wa, {
-          name: form.name,
-          phone: digitsPhone(form.phone) || form.phone,
-          email: form.email,
-          company: form.company,
-          fromCity: form.fromCity,
-          toCity: form.toCity,
-          cargoType: form.cargoType,
-          weight: form.weight,
-          message: form.message,
-        })
-      : "";
+  const liveWaUrl = whatsappEnquiryUrl(wa, draft);
+  const liveMailUrl = mailtoEnquiryUrl(notifyEmail, draft);
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -248,34 +276,6 @@ export function QuoteForm({
         />
       </div>
 
-      {status === "error" && (
-        <div className="space-y-3 rounded-lg border border-danger/20 bg-danger/5 p-3">
-          <p className="text-sm text-danger">{error}</p>
-          <div className="flex flex-wrap gap-2">
-            {tel1 ? (
-              <a href={`tel:+91${tel1}`} className="btn-primary !min-h-10 !px-3 !py-2 !text-sm">
-                Call {phone}
-              </a>
-            ) : null}
-            {tel2 ? (
-              <a href={`tel:+91${tel2}`} className="btn-navy !min-h-10 !px-3 !py-2 !text-sm">
-                Call {phone2}
-              </a>
-            ) : null}
-            {waUrl ? (
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#128c7e] px-3 text-sm font-semibold text-white"
-              >
-                WhatsApp enquiry
-              </a>
-            ) : null}
-          </div>
-        </div>
-      )}
-
       <button
         type="submit"
         disabled={status === "loading"}
@@ -283,6 +283,43 @@ export function QuoteForm({
       >
         {status === "loading" ? "Submitting..." : "Submit enquiry"}
       </button>
+
+      <div className="flex flex-wrap gap-2 pt-1">
+        {tel1 ? (
+          <a
+            href={`tel:+91${tel1}`}
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-red px-3 text-sm font-semibold text-white"
+          >
+            Call {phone.replace(/(\d{5})(\d{5})/, "$1 $2")}
+          </a>
+        ) : null}
+        {tel2 ? (
+          <a
+            href={`tel:+91${tel2}`}
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-navy px-3 text-sm font-semibold text-white"
+          >
+            Call {phone2.replace(/(\d{5})(\d{5})/, "$1 $2")}
+          </a>
+        ) : null}
+        {liveWaUrl ? (
+          <a
+            href={liveWaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#128c7e] px-3 text-sm font-semibold text-white"
+          >
+            WhatsApp
+          </a>
+        ) : null}
+        {liveMailUrl ? (
+          <a
+            href={liveMailUrl}
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-3 text-sm font-semibold text-navy"
+          >
+            Email
+          </a>
+        ) : null}
+      </div>
     </form>
   );
 }
