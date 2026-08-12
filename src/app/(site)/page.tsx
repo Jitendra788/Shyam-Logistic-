@@ -4,6 +4,12 @@ import dynamic from "next/dynamic";
 import { IconBadge } from "@/components/IconBadge";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import { BlogCard } from "@/components/BlogCard";
+import {
+  formatLocation,
+  getPrimaryLocation,
+  getPublishedPosts,
+  getSettings,
+} from "@/lib/store";
 
 const FaqList = dynamic(
   () => import("@/components/FaqList").then((m) => m.FaqList),
@@ -14,12 +20,6 @@ const QuoteForm = dynamic(
   () => import("@/components/QuoteForm").then((m) => m.QuoteForm),
   { loading: () => <div className="min-h-64 rounded-xl border border-line bg-white" /> }
 );
-import {
-  formatLocation,
-  getPrimaryLocation,
-  getPublishedPosts,
-  getSettings,
-} from "@/lib/store";
 
 export default async function HomePage() {
   const settings = await getSettings();
@@ -333,7 +333,13 @@ export default async function HomePage() {
           <p className="section-label">Get Quote</p>
           <h2 className="section-title mt-2">Request an enquiry</h2>
           <div className="mt-5 rounded-xl border border-line bg-white p-4 sm:mt-6 sm:rounded-2xl sm:p-5">
-            <QuoteForm compact />
+            <QuoteForm
+              compact
+              notifyEmail={settings.email}
+              phone={settings.phone}
+              phone2={settings.phone2}
+              whatsapp={settings.whatsapp}
+            />
           </div>
         </div>
       </section>

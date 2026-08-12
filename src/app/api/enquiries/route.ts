@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { addEnquiry, getEnquiries } from "@/lib/store";
+import { notifyEnquiry } from "@/lib/enquiry-notify";
+import { addEnquiry, getEnquiries, getSettings } from "@/lib/store";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function digitsPhone(raw: string) {
+  let d = raw.replace(/\D/g, "");
+  if (d.startsWith("91") && d.length === 12) d = d.slice(2);
+  if (d.startsWith("0") && d.length === 11) d = d.slice(1);
+  return d;
+}
 
 export async function GET() {
   if (!(await isAuthenticated())) {
@@ -15,16 +26,16 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const name = String(body.name || "").trim();
-    const phone = String(body.phone || "").trim();
+    const phone = digitsPhone(String(body.phone || ""));
 
-    if (!name || !phone) {
+    if (!name || phone.length < 10) {
       return NextResponse.json(
-        { error: "Name and phone are required" },
+        { error: "Please enter your name and a valid 10-digit phone number" },
         { status: 400 }
       );
     }
 
-    const enquiry = await addEnquiry({
+    const { enquiry, saved } = await addEnquiry({
       name,
       phone,
       email: String(body.email || "").trim(),
@@ -36,10 +47,31 @@ export async function POST(request: Request) {
       message: String(body.message || "").trim(),
     });
 
-    return NextResponse.json({ ok: true, enquiry }, { status: 201 });
-  } catch {
+    const settings = await getSettings();
+    const emailed = await notifyEnquiry(enquiry, settings.email);
+
+    if (!saved && !emailed) {
+      return NextResponse.json(
+        {
+          error:
+            "Could not send enquiry online. Please call or WhatsApp us instead.",
+          enquiry,
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to submit enquiry" },
+      { ok: true, enquiry, saved, emailed },
+      { status: 201 }
+    );
+  } catch (err) {
+    console.error("enquiry POST", err);
+    return NextResponse.json(
+      {
+        error:
+          "Could not send enquiry online. Please call or WhatsApp us instead.",
+      },
       { status: 500 }
     );
   }

@@ -110,7 +110,12 @@ export default async function ContactPage() {
             Send us a message
           </h2>
           <div className="mt-8 rounded-2xl border border-line bg-white p-6 sm:p-8">
-            <QuoteForm />
+            <QuoteForm
+              notifyEmail={settings.email}
+              phone={settings.phone}
+              phone2={settings.phone2}
+              whatsapp={settings.whatsapp}
+            />
           </div>
         </div>
       </section>

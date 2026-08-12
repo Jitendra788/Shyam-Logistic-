@@ -90,24 +90,34 @@ export async function getEnquiries(): Promise<Enquiry[]> {
   }
 }
 
-export async function saveEnquiries(enquiries: Enquiry[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(enquiriesPath, JSON.stringify(enquiries, null, 2), "utf-8");
+export async function saveEnquiries(enquiries: Enquiry[]): Promise<boolean> {
+  try {
+    await ensureDataDir();
+    await fs.writeFile(enquiriesPath, JSON.stringify(enquiries, null, 2), "utf-8");
+    return true;
+  } catch {
+    // Vercel serverless FS is read-only — email notify still delivers the lead.
+    return false;
+  }
 }
 
 export async function addEnquiry(
   input: Omit<Enquiry, "id" | "status" | "createdAt">
-): Promise<Enquiry> {
-  const enquiries = await getEnquiries();
+): Promise<{ enquiry: Enquiry; saved: boolean }> {
   const enquiry: Enquiry = {
     ...input,
     id: `enq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     status: "new",
     createdAt: new Date().toISOString(),
   };
-  enquiries.unshift(enquiry);
-  await saveEnquiries(enquiries);
-  return enquiry;
+  try {
+    const enquiries = await getEnquiries();
+    enquiries.unshift(enquiry);
+    const saved = await saveEnquiries(enquiries);
+    return { enquiry, saved };
+  } catch {
+    return { enquiry, saved: false };
+  }
 }
 
 export function formatLocation(loc: SiteSettings["locations"][number]): string {

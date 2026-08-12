@@ -31,7 +31,12 @@ export default async function QuotePage() {
       <section className="py-10 sm:py-14 md:py-16">
         <div className="site-container max-w-3xl">
           <div className="rounded-2xl border border-line bg-white p-6 sm:p-8">
-            <QuoteForm />
+            <QuoteForm
+              notifyEmail={settings.email}
+              phone={settings.phone}
+              phone2={settings.phone2}
+              whatsapp={settings.whatsapp}
+            />
           </div>
           <p className="mt-6 text-sm text-muted">
             Prefer speaking directly? Call{" "}
