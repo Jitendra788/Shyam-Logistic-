@@ -31,6 +31,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           <div className="mt-3 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-3">
             <a
               href={`tel:+91${settings.phone.replace(/\D/g, "")}`}
+              aria-label={`Call ${settings.phone}`}
               className="inline-flex min-h-10 items-center justify-center rounded-md bg-red px-3 text-sm font-bold tabular-nums text-white sm:justify-start"
             >
               {settings.phone.replace(/(\d{5})(\d{5})/, "$1 $2")}
@@ -38,6 +39,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             {settings.phone2 ? (
               <a
                 href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}
+                aria-label={`Call ${settings.phone2}`}
                 className="inline-flex min-h-10 items-center justify-center rounded-md bg-white/10 px-3 text-sm font-bold tabular-nums text-white ring-1 ring-white/20 sm:justify-start"
               >
                 {settings.phone2.replace(/(\d{5})(\d{5})/, "$1 $2")}
@@ -50,43 +52,45 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           <p className="text-sm font-bold uppercase tracking-[0.14em] text-white/90">
             Quick Links
           </p>
-          <ul className="mt-4 space-y-2 text-sm text-white/65">
-            <li>
-              <Link href="/" className="hover:text-white">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="/shyamlogistic" className="hover:text-white">
-                shyamlogistic official
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="hover:text-white">
-                About Us
-              </Link>
-            </li>
-            <li>
-              <Link href="/services" className="hover:text-white">
-                Services
-              </Link>
-            </li>
-            <li>
-              <Link href="/blog" className="hover:text-white">
-                Blog
-              </Link>
-            </li>
-            <li>
-              <Link href="/contact" className="hover:text-white">
-                Contact Us
-              </Link>
-            </li>
-            <li>
-              <Link href="/quote" className="hover:text-white">
-                Get Quote
-              </Link>
-            </li>
-          </ul>
+          <nav aria-label="Footer" className="mt-4">
+            <ul className="space-y-2 text-sm text-white/65">
+              <li>
+                <Link href="/" className="hover:text-white">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/shyamlogistic" className="hover:text-white">
+                  shyamlogistic official
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-white">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/services" className="hover:text-white">
+                  Services
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="hover:text-white">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-white">
+                  Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/quote" className="hover:text-white">
+                  Get Quote
+                </Link>
+              </li>
+            </ul>
+          </nav>
         </div>
 
         <div>
@@ -112,7 +116,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             {primary && <li>{formatLocation(primary)}</li>}
             <li>
               <a
-                href={`tel:${settings.phone.replace(/\s/g, "")}`}
+                href={`tel:+91${settings.phone.replace(/\D/g, "")}`}
+                aria-label={`Call ${settings.phone}`}
                 className="hover:text-white"
               >
                 {settings.phone}
@@ -121,7 +126,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
                 <>
                   {" / "}
                   <a
-                    href={`tel:${settings.phone2.replace(/\s/g, "")}`}
+                    href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}
+                    aria-label={`Call ${settings.phone2}`}
                     className="hover:text-white"
                   >
                     {settings.phone2}

@@ -96,6 +96,7 @@ export function IconBadge({
   return (
     <span
       className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-navy text-white ${className}`}
+      aria-hidden
     >
       <svg
         viewBox="0 0 24 24"
@@ -103,7 +104,9 @@ export function IconBadge({
         stroke="currentColor"
         strokeWidth="1.7"
         className="h-6 w-6"
+        role="presentation"
         aria-hidden
+        focusable="false"
       >
         {path}
       </svg>

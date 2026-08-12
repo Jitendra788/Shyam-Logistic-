@@ -20,6 +20,7 @@ export function BlogCard({
     <article className="card-grid-item group flex h-full flex-col overflow-hidden !p-0">
       <Link
         href={`/blog/${post.slug}`}
+        aria-label={`Read article: ${post.title}`}
         className="relative block aspect-[16/10] w-full overflow-hidden bg-[#0a1f3d]"
       >
         <BlogCover

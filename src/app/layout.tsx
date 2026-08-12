@@ -100,6 +100,7 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [absoluteUrl("/brand/hero.jpg")],
     },
     other: {
+      "llms-txt": "/llms.txt",
       "geo.region": "IN-MH",
       "geo.placename": address || "Sangli, Maharashtra",
       "business:contact_data:street_address": address,

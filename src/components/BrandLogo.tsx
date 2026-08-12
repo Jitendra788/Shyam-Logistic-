@@ -88,9 +88,10 @@ export function BrandLogo({
     <Link
       href="/"
       className={`group inline-flex max-w-full min-w-0 items-center ${s.gap}`}
-      aria-label={companyName}
+      aria-label={`${companyName} home`}
     >
       <span
+        aria-hidden
         className={`relative shrink-0 overflow-hidden shadow-[0_1px_5px_rgba(10,31,61,0.12)] ${
           useSquareCustom
             ? "rounded-lg bg-white ring-1 ring-line"

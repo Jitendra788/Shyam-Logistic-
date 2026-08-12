@@ -5,7 +5,6 @@ function digits(phone: string) {
   return phone.replace(/\D/g, "");
 }
 
-/** Format 10-digit Indian mobile for compact display */
 function displayPhone(phone: string) {
   const d = digits(phone);
   if (d.length === 10) {
@@ -21,14 +20,14 @@ export function MobileCallBar({ settings }: { settings: SiteSettings }) {
   if (!tel1) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/98 pb-[max(0.4rem,env(safe-area-inset-bottom))] shadow-[0_-6px_24px_rgba(10,31,61,0.12)] backdrop-blur-md lg:hidden">
-      <div
-        className={`site-container grid gap-1.5 py-2 ${
-          tel2 ? "grid-cols-2" : "grid-cols-2"
-        }`}
-      >
+    <nav
+      aria-label="Call SHYAM LOGISTIC"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/98 pb-[max(0.4rem,env(safe-area-inset-bottom))] shadow-[0_-6px_24px_rgba(10,31,61,0.12)] backdrop-blur-md lg:hidden"
+    >
+      <div className={`site-container grid gap-1.5 py-2 ${tel2 ? "grid-cols-2" : "grid-cols-2"}`}>
         <a
           href={`tel:+91${tel1}`}
+          aria-label={`Call ${displayPhone(settings.phone)}`}
           className="flex min-h-12 min-w-0 flex-col items-center justify-center rounded-lg bg-red px-1.5 py-1.5 text-center text-white active:scale-[0.98] sm:px-2"
         >
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/85">
@@ -42,6 +41,7 @@ export function MobileCallBar({ settings }: { settings: SiteSettings }) {
         {tel2 ? (
           <a
             href={`tel:+91${tel2}`}
+            aria-label={`Call ${displayPhone(settings.phone2)}`}
             className="flex min-h-12 min-w-0 flex-col items-center justify-center rounded-lg bg-navy px-1.5 py-1.5 text-center text-white active:scale-[0.98] sm:px-2"
           >
             <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/85">
@@ -60,6 +60,6 @@ export function MobileCallBar({ settings }: { settings: SiteSettings }) {
           </Link>
         )}
       </div>
-    </div>
+    </nav>
   );
 }

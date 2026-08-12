@@ -64,7 +64,7 @@ export function Header({
           />
         </div>
 
-        <nav className="hidden min-w-0 items-center gap-0.5 lg:flex">
+        <nav className="hidden min-w-0 items-center gap-0.5 lg:flex" aria-label="Primary">
           {links.map((link) => {
             const active =
               link.href === "/"
@@ -89,6 +89,7 @@ export function Header({
             <div className="ml-1.5 flex min-w-0 max-w-[10rem] flex-col items-end border-l border-line pl-2.5 text-right leading-tight xl:ml-2 xl:max-w-none xl:pl-3">
               <a
                 href={`tel:+91${tel1}`}
+                aria-label={`Call ${displayPhone(phone)}`}
                 className="truncate text-sm font-bold tabular-nums text-navy hover:text-red"
               >
                 {displayPhone(phone)}
@@ -96,6 +97,7 @@ export function Header({
               {tel2 ? (
                 <a
                   href={`tel:+91${tel2}`}
+                  aria-label={`Call ${displayPhone(phone2)}`}
                   className="truncate text-xs font-semibold tabular-nums text-muted hover:text-red"
                 >
                   {displayPhone(phone2)}
@@ -124,9 +126,10 @@ export function Header({
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-line"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls={open ? "mobile-nav" : undefined}
             onClick={() => setOpen((v) => !v)}
           >
-            <div className="relative h-4 w-5">
+            <div className="relative h-4 w-5" aria-hidden>
               <span
                 className={`absolute left-0 block h-0.5 w-5 bg-navy transition ${
                   open ? "top-1.5 rotate-45" : "top-0"
@@ -149,11 +152,16 @@ export function Header({
 
       {open && (
         <div className="max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-line bg-white lg:hidden">
-          <nav className="site-container flex flex-col gap-1 py-3 pb-28 sm:pb-8">
+          <nav
+            id="mobile-nav"
+            className="site-container flex flex-col gap-1 py-3 pb-28 sm:pb-8"
+            aria-label="Mobile"
+          >
             {tel1 ? (
               <div className="mb-2 grid grid-cols-1 gap-2 rounded-xl border border-line bg-sand/60 p-3 min-[380px]:grid-cols-2">
                 <a
                   href={`tel:+91${tel1}`}
+                  aria-label={`Call ${displayPhone(phone)}`}
                   className="flex min-h-12 flex-col items-center justify-center rounded-lg bg-red px-2 py-2 text-center text-white"
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-white/80">
@@ -166,6 +174,7 @@ export function Header({
                 {tel2 ? (
                   <a
                     href={`tel:+91${tel2}`}
+                    aria-label={`Call ${displayPhone(phone2)}`}
                     className="flex min-h-12 flex-col items-center justify-center rounded-lg bg-navy px-2 py-2 text-center text-white"
                   >
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-white/80">

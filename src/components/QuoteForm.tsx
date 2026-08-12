@@ -78,10 +78,15 @@ export function QuoteForm({ compact = false }: { compact?: boolean }) {
         <Field label="Approx. weight" value={form.weight} onChange={(v) => set("weight", v)} placeholder="e.g. 5 ton" />
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-ink">
+        <label
+          htmlFor="quote-message"
+          className="mb-1.5 block text-sm font-medium text-ink"
+        >
           Message
         </label>
         <textarea
+          id="quote-message"
+          name="message"
           className="input-field min-h-28 resize-y"
           value={form.message}
           onChange={(e) => set("message", e.target.value)}
@@ -119,15 +124,21 @@ function Field({
   type?: string;
   placeholder?: string;
 }) {
+  const id = `quote-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-ink">{label}</label>
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-ink">
+        {label}
+      </label>
       <input
+        id={id}
+        name={id}
         className="input-field"
         type={type}
         value={value}
         required={required}
         placeholder={placeholder}
+        autoComplete={type === "tel" ? "tel" : type === "email" ? "email" : "on"}
         onChange={(e) => onChange(e.target.value)}
       />
     </div>

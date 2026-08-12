@@ -1,13 +1,18 @@
 # shyamlogistic
 
-> Official website of **shyamlogistic** (SHYAM LOGISTIC) — logistics and road freight company based in Sangli, Maharashtra, India.
+> Official website of shyamlogistic (SHYAM LOGISTIC) — GST-registered road logistics and freight company in Sangli, Maharashtra, India. Founder Mohanlal. Book FTL, PTL, express cargo, and pan-India transport.
 
-- Website: https://www.shyamlogistic.online
-- Brand keyword: shyamlogistic
-- Company: SHYAM LOGISTIC
-- Services: FTL, PTL, express cargo, supply chain, warehousing support
-- Contact / quote: https://www.shyamlogistic.online/quote
-- About: https://www.shyamlogistic.online/about
-- Services: https://www.shyamlogistic.online/services
-- Blog: https://www.shyamlogistic.online/blog
-- Contact: https://www.shyamlogistic.online/contact
+## Pages
+
+- [Home](https://www.shyamlogistic.online/): Official shyamlogistic homepage
+- [About](https://www.shyamlogistic.online/about): Company story, founder, GST and office
+- [Services](https://www.shyamlogistic.online/services): FTL, PTL, express delivery and supply chain
+- [Get a quote](https://www.shyamlogistic.online/quote): Request freight pricing
+- [Contact](https://www.shyamlogistic.online/contact): Phone, email and Sangli office map
+- [Blog](https://www.shyamlogistic.online/blog): Freight and logistics guides
+- [Brand](https://www.shyamlogistic.online/shyamlogistic): shyamlogistic official brand page
+
+## Optional
+
+- [Sitemap](https://www.shyamlogistic.online/sitemap.xml): XML sitemap for crawlers
+- [Robots](https://www.shyamlogistic.online/robots.txt): Crawler rules

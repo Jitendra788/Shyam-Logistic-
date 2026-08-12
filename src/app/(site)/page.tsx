@@ -93,6 +93,7 @@ export default async function HomePage() {
             <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
               <a
                 href={`tel:+91${settings.phone.replace(/\D/g, "")}`}
+                aria-label={`Call ${settings.phone}`}
                 className="flex min-h-11 items-center justify-center rounded-lg bg-red px-2 text-center text-sm font-bold tabular-nums text-white"
               >
                 {settings.phone.replace(/(\d{5})(\d{5})/, "$1 $2")}
@@ -100,6 +101,7 @@ export default async function HomePage() {
               {settings.phone2 ? (
                 <a
                   href={`tel:+91${settings.phone2.replace(/\D/g, "")}`}
+                  aria-label={`Call ${settings.phone2}`}
                   className="flex min-h-11 items-center justify-center rounded-lg bg-white/15 px-2 text-center text-sm font-bold tabular-nums text-white ring-1 ring-white/20"
                 >
                   {settings.phone2.replace(/(\d{5})(\d{5})/, "$1 $2")}
