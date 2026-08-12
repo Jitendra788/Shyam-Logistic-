@@ -129,9 +129,9 @@ export function buildOrganizationJsonLd(settings: SiteSettings) {
       : undefined,
     geo: {
       "@type": "GeoCoordinates",
-      // Approx. coordinates for Sangli city area (local SEO signal)
-      latitude: 16.8524,
-      longitude: 74.5815,
+      // Exact office pin (16°36'39.7"N 74°18'40.0"E)
+      latitude: 16.6110187,
+      longitude: 74.3111073,
     },
     areaServed: [
       {
