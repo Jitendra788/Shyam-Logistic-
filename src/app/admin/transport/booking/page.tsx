@@ -15,13 +15,17 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
-import type { Booking, Masters, Party } from "@/lib/tbs/types";
+import type { Bill, Booking, Challan, Masters, Party } from "@/lib/tbs/types";
 
 type Payload = {
   bookings: Booking[];
   parties: Party[];
   masters: Masters;
   nextLr: string;
+  bills?: Bill[];
+  challans?: Challan[];
+  billNoByLr?: Record<string, string>;
+  challanNoByLr?: Record<string, string>;
 };
 
 function blank(nextLr: string): Booking {
@@ -109,6 +113,26 @@ export default function BookingPage() {
     if (!q) return list;
     return list.filter((b) => b.lrNo.includes(q) || b.billingParty.toLowerCase().includes(q));
   }, [data, search]);
+
+  const billNoByLr = useMemo(() => {
+    const map: Record<string, string> = { ...(data?.billNoByLr || {}) };
+    for (const bill of data?.bills || []) {
+      for (const id of bill.lrIds || []) {
+        if (!map[id]) map[id] = bill.billNo;
+      }
+    }
+    return map;
+  }, [data]);
+
+  const challanNoByLr = useMemo(() => {
+    const map: Record<string, string> = { ...(data?.challanNoByLr || {}) };
+    for (const c of data?.challans || []) {
+      for (const id of c.lrIds || []) {
+        if (!map[id]) map[id] = c.challanNo;
+      }
+    }
+    return map;
+  }, [data]);
 
   function patch(partial: Partial<Booking>) {
     setForm(withTotals({ ...current, ...partial }));
@@ -666,6 +690,8 @@ export default function BookingPage() {
           { key: "particulars", label: "Particulars" },
           { key: "weight", label: "Weight" },
           { key: "freight", label: "Freight" },
+          { key: "billNo", label: "Bill No" },
+          { key: "challanNo", label: "Challan No" },
           { key: "print", label: "Print" },
         ]}
         rows={filtered}
@@ -676,6 +702,8 @@ export default function BookingPage() {
           if (key === "lrDate") return fmtDate(row.lrDate);
           if (key === "weight") return row.chargedWt || row.actualWt;
           if (key === "freight") return row.freight;
+          if (key === "billNo") return billNoByLr[row.id] || "—";
+          if (key === "challanNo") return challanNoByLr[row.id] || "—";
           if (key === "print")
             return <PrintCellButton onClick={() => openPrint("booking", row.id)} />;
           return (row as unknown as Record<string, string>)[key];

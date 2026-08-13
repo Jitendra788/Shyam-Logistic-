@@ -1,6 +1,8 @@
 import { bad, failSave, ok, requireAuth } from "@/lib/tbs/api";
 import {
+  getBills,
   getBookings,
+  getChallans,
   getMasters,
   getParties,
   nextCode,
@@ -82,15 +84,33 @@ export async function GET() {
   const denied = await requireAuth();
   if (denied) return denied;
   try {
-    const [bookings, parties, masters] = await Promise.all([
+    const [bookings, parties, masters, bills, challans] = await Promise.all([
       getBookings(),
       getParties(),
       getMasters(),
+      getBills(),
+      getChallans(),
     ]);
+    const billNoByLr: Record<string, string> = {};
+    for (const bill of bills) {
+      for (const id of bill.lrIds || []) {
+        if (!billNoByLr[id]) billNoByLr[id] = bill.billNo;
+      }
+    }
+    const challanNoByLr: Record<string, string> = {};
+    for (const c of challans) {
+      for (const id of c.lrIds || []) {
+        if (!challanNoByLr[id]) challanNoByLr[id] = c.challanNo;
+      }
+    }
     return ok({
       bookings,
       parties,
       masters,
+      bills,
+      challans,
+      billNoByLr,
+      challanNoByLr,
       nextLr: nextCode(bookings, "lrNo", 1),
     });
   } catch (e) {
