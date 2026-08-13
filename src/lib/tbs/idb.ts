@@ -1,9 +1,9 @@
 "use client";
 
-const DB_NAME = "shyam-tbs-v3";
+const DB_NAME = "shyam-tbs-v4";
 const STORE = "kv";
 
-const OLD_DBS = ["shyam-tbs", "shyam-tbs-v2"];
+const OLD_DBS = ["shyam-tbs", "shyam-tbs-v2", "shyam-tbs-v3"];
 
 function wipeOldDbs() {
   if (typeof indexedDB === "undefined") return;
@@ -54,6 +54,20 @@ export async function idbSet(key: string, rec: Rec): Promise<void> {
       const req = tx.objectStore(STORE).put(rec, key);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function idbClearAll(): Promise<void> {
+  try {
+    if (typeof indexedDB === "undefined") return;
+    await new Promise<void>((resolve, reject) => {
+      const req = indexedDB.deleteDatabase(DB_NAME);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+      req.onblocked = () => resolve();
     });
   } catch {
     /* ignore */

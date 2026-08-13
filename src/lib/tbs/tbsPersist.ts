@@ -1,6 +1,6 @@
 "use client";
 
-import { idbGet, idbSet } from "@/lib/tbs/idb";
+import { idbClearAll, idbGet, idbSet } from "@/lib/tbs/idb";
 
 const COLLECTIONS = [
   "bookings",
@@ -194,6 +194,7 @@ async function tbsHandle(
   }
 
   const persistent = res.headers.get("x-tbs-persistent") === "1";
+  const path = pathnameOf(url);
 
   if (method === "GET") {
     if (res.ok) {
@@ -212,6 +213,16 @@ async function tbsHandle(
     return res;
   }
 
+  // After full wipe, drop local IndexedDB so browser does not resurrect old rows
+  if (
+    res.ok &&
+    (method === "POST" || method === "DELETE") &&
+    path.includes("/api/tbs/wipe")
+  ) {
+    await idbClearAll();
+    return res;
+  }
+
   if (res.ok) {
     if (!persistent) {
       const applied = await applyMutation(url, method, init);
@@ -223,6 +234,26 @@ async function tbsHandle(
   }
 
   if (res.status === 503) {
+    if (path.includes("/api/tbs/wipe")) {
+      await idbClearAll();
+      for (const name of COLLECTIONS) {
+        if (name === "masters") {
+          await setCol(name, {
+            stations: ["Sangli", "KAGAL", "PANVAL", "shirwal", "SURAT", "Pune", "Mumbai", "Kolhapur"],
+            vehicles: [],
+            brokers: ["All"],
+            particulars: [],
+            partyTypes: ["Consigner/Consignee", "Broker"],
+            gstPaidBy: ["Consignor", "Consignee", "Broker", "Company", "Transporter"],
+            lrTypes: ["Paid", "ToPay", "To Pay", "TBB", "Cancel"],
+            gstLabels: ["GST @ 0%", "GST @ 5%", "GST @ 12%", "GST @ 18%"],
+          });
+        } else {
+          await setCol(name, []);
+        }
+      }
+      return jsonResponse({ ok: true, local: true, message: "All local data cleared" });
+    }
     const applied = await applyMutation(url, method, init);
     if (applied && "row" in applied && applied.row) {
       return jsonResponse(applied.row, 201);

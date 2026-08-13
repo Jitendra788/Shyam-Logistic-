@@ -126,6 +126,7 @@ export default function AdminMasterPage() {
   const [data, setData] = useState<Dash | null>(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [wiping, setWiping] = useState(false);
 
   async function loadDash() {
     setLoading(true);
@@ -195,6 +196,36 @@ export default function AdminMasterPage() {
       );
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function wipeAllData() {
+    if (
+      !confirm(
+        "Delete ALL admin data?\n\nParties, bookings, bills, challans, receipts, and notes will be cleared. This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+    if (!confirm("Final confirm: wipe everything?")) return;
+    setWiping(true);
+    setErr("");
+    try {
+      const res = await fetch("/api/tbs/wipe", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error || `Wipe failed (${res.status})`);
+      }
+      await loadDash();
+      alert("All TBS data cleared. Page will reload.");
+      window.location.reload();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Wipe failed");
+    } finally {
+      setWiping(false);
     }
   }
 
@@ -277,9 +308,17 @@ export default function AdminMasterPage() {
               type="button"
               className="tbs-dash-refresh"
               onClick={() => void loadDash()}
-              disabled={loading}
+              disabled={loading || wiping}
             >
               {loading ? "Refreshing…" : "Refresh"}
+            </button>
+            <button
+              type="button"
+              className="tbs-dash-wipe"
+              onClick={() => void wipeAllData()}
+              disabled={loading || wiping}
+            >
+              {wiping ? "Deleting…" : "Clear all data"}
             </button>
           </div>
         </div>

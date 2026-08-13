@@ -263,3 +263,19 @@ export function nextCode(
 export function uid(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }
+
+/** Wipe all TBS transport data (keeps default masters lists). */
+export async function wipeAllTbsData() {
+  mem.clear();
+  await Promise.all([
+    writeJson("parties.json", [] as Party[]),
+    writeJson("bookings.json", [] as Booking[]),
+    writeJson("challans.json", [] as Challan[]),
+    writeJson("lhp-payments.json", [] as LhpPayment[]),
+    writeJson("bills.json", [] as Bill[]),
+    writeJson("money-receipts.json", [] as MoneyReceipt[]),
+    writeJson("notes.json", [] as NoteVoucher[]),
+    writeJson("masters.json", { ...defaultMasters }),
+  ]);
+  return { ok: true as const };
+}

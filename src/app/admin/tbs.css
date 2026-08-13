@@ -528,6 +528,28 @@
   cursor: wait;
 }
 
+.tbs-dash-wipe {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(254, 202, 202, 0.55);
+  background: rgba(198, 40, 40, 0.35);
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tbs-dash-wipe:hover:not(:disabled) {
+  background: rgba(198, 40, 40, 0.55);
+}
+
+.tbs-dash-wipe:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .tbs-dash-hero-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
