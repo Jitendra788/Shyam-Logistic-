@@ -425,12 +425,24 @@ export default function BookingPage() {
               />
             </div>
             <div className="tbs-field" style={{ flex: 1 }}>
+              <label>Inv No. & Date</label>
+              <input
+                className="tbs-input w-full"
+                value={current.invNoDate}
+                onChange={(e) => patch({ invNoDate: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
               <label>Particulars</label>
               <input
                 className="tbs-input w-full"
                 value={current.particulars}
                 onChange={(e) => patch({ particulars: e.target.value })}
                 placeholder="Type or select…"
+                autoComplete="off"
                 list="booking-particulars"
               />
               <datalist id="booking-particulars">
@@ -442,14 +454,6 @@ export default function BookingPage() {
           </div>
 
           <div className="tbs-row">
-            <div className="tbs-field" style={{ flex: 1 }}>
-              <label>Inv No. & Date</label>
-              <input
-                className="tbs-input w-full"
-                value={current.invNoDate}
-                onChange={(e) => patch({ invNoDate: e.target.value })}
-              />
-            </div>
             <div className="tbs-field">
               <label>Actual Wt.</label>
               <ManualAmountInput
