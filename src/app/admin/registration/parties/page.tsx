@@ -25,7 +25,7 @@ const empty = (code: string): Party => ({
   contactNo: "",
   address: "",
   gstTin: "",
-  partyType: "Customer",
+  partyType: "Consigner/Consignee",
   panNo: "",
   opBalance: 0,
   accountStartFrom: todayISO(),
@@ -196,7 +196,11 @@ export default function PartyCreationPage() {
                 autoComplete="off"
               />
               <datalist id="party-type-suggestions">
-                {(data?.masters.partyTypes || []).map((t) => (
+                {(
+                  data?.masters.partyTypes?.length
+                    ? data.masters.partyTypes
+                    : ["Consigner/Consignee", "Broker"]
+                ).map((t) => (
                   <option key={t} value={t} />
                 ))}
               </datalist>

@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       contactNo: body.contactNo || "",
       address: body.address || "",
       gstTin: body.gstTin || "",
-      partyType: body.partyType || "Customer",
+      partyType: body.partyType || "Consigner/Consignee",
       panNo: body.panNo || "",
       opBalance: Number(body.opBalance) || 0,
       accountStartFrom:
