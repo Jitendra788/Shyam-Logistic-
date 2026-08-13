@@ -249,10 +249,15 @@ export default function PartyCreationPage() {
       <DataGrid
         columns={[
           { key: "sr", label: "Sr No" },
-          { key: "partyName", label: "Party Name", width: "220px" },
-          { key: "address", label: "Address", width: "180px" },
+          { key: "partyName", label: "Party Name", width: "180px" },
+          { key: "address", label: "Address", width: "160px" },
           { key: "contactNo", label: "Contact No" },
-          { key: "opBalance", label: "OP" },
+          { key: "gstTin", label: "GST TIN" },
+          { key: "opBalance", label: "OP Bal" },
+          { key: "partyType", label: "Party Type" },
+          { key: "accountStartFrom", label: "Start Date" },
+          { key: "partyCode", label: "Party Code" },
+          { key: "panNo", label: "PAN No." },
           { key: "print", label: "Print" },
         ]}
         rows={filtered}
@@ -261,6 +266,12 @@ export default function PartyCreationPage() {
         renderCell={(row, key, i) => {
           if (key === "sr") return i + 1;
           if (key === "opBalance") return row.opBalance;
+          if (key === "accountStartFrom") {
+            const d = row.accountStartFrom || "";
+            if (!d) return "";
+            const [y, m, day] = d.split("-");
+            return y && m && day ? `${day}-${m}-${y}` : d;
+          }
           if (key === "print")
             return <PrintCellButton onClick={() => openPrint("party", row.id)} />;
           return (row as unknown as Record<string, string>)[key];
