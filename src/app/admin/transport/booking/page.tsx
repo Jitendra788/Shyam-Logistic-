@@ -157,10 +157,17 @@ export default function BookingPage() {
   }
 
   function pickBillingParty(name: string) {
-    // Billing party only — do not overwrite Address with billing party data
-    patch({
-      billingParty: name,
-      consignor: current.consignor || name,
+    setForm((prev) => {
+      const base = prev || blank(data?.nextLr || "1");
+      // Never touch consignor / consignee / address when editing billing party
+      return withTotals({
+        ...base,
+        billingParty: name,
+        consignor: base.consignor,
+        consignee: base.consignee,
+        address: base.address,
+        gstNo: base.gstNo,
+      });
     });
   }
 
@@ -381,18 +388,24 @@ export default function BookingPage() {
 
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
-              <label>BILLING PARTY</label>
+              <label htmlFor="fld-billing-party">BILLING PARTY</label>
               <input
+                id="fld-billing-party"
+                name="tbs-billing-party"
                 className="tbs-input w-full"
                 value={current.billingParty}
                 onChange={(e) => pickBillingParty(e.target.value)}
                 placeholder="Type or select…"
                 list="booking-billing-party"
                 autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-1p-ignore="true"
               />
               <datalist id="booking-billing-party">
                 {partyNames.map((n) => (
-                  <option key={n} value={n} />
+                  <option key={`bp-${n}`} value={n} />
                 ))}
               </datalist>
             </div>
@@ -403,17 +416,24 @@ export default function BookingPage() {
 
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
-              <label>Consignor</label>
+              <label htmlFor="fld-consignor">Consignor</label>
               <input
+                id="fld-consignor"
+                name="tbs-consignor"
                 className="tbs-input w-full"
                 value={current.consignor}
                 onChange={(e) => pickConsignor(e.target.value)}
                 placeholder="Type or select…"
                 list="booking-consignor"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-1p-ignore="true"
               />
               <datalist id="booking-consignor">
                 {partyNames.map((n) => (
-                  <option key={n} value={n} />
+                  <option key={`cr-${n}`} value={n} />
                 ))}
               </datalist>
             </div>
