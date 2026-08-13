@@ -26,10 +26,12 @@ export default async function SiteLayout({
         phone={settings.phone}
         phone2={settings.phone2}
       />
-      <main id="main-content" className="flex-1 pb-[5.5rem] lg:pb-0">
-        {children}
-      </main>
-      <Footer settings={settings} />
+      <div className="flex min-w-0 flex-1 flex-col pb-[max(5.5rem,env(safe-area-inset-bottom,0px)+4.75rem)] lg:pb-0">
+        <main id="main-content" className="min-w-0 flex-1">
+          {children}
+        </main>
+        <Footer settings={settings} />
+      </div>
       <MobileCallBar settings={settings} />
     </>
   );

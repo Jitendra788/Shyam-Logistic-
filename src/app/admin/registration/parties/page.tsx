@@ -1,0 +1,258 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  ActionButtons,
+  DataGrid,
+  FormWindow,
+  PrintCellButton,
+  todayISO,
+} from "@/components/tbs/FormPrimitives";
+import { useTbsApi } from "@/components/tbs/useTbs";
+import { needSelectAlert, openPrint } from "@/lib/tbs/print";
+import type { Masters, Party } from "@/lib/tbs/types";
+
+type Payload = { parties: Party[]; masters: Masters; nextCode: string };
+
+const empty = (code: string): Party => ({
+  id: "",
+  partyCode: code,
+  partyName: "",
+  contactNo: "",
+  address: "",
+  gstTin: "",
+  partyType: "Customer",
+  panNo: "",
+  opBalance: 0,
+  accountStartFrom: todayISO(),
+});
+
+export default function PartyCreationPage() {
+  const { data, loading, error, reload } = useTbsApi<Payload>("/api/tbs/parties");
+  const [form, setForm] = useState<Party | null>(null);
+  const [search, setSearch] = useState("");
+  const [msg, setMsg] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const parties = data?.parties || [];
+  const current = form || empty(data?.nextCode || "1047");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return parties;
+    return parties.filter(
+      (p) =>
+        p.partyName.toLowerCase().includes(q) ||
+        p.partyCode.includes(q) ||
+        p.contactNo.includes(q),
+    );
+  }, [parties, search]);
+
+  function set<K extends keyof Party>(key: K, value: Party[K]) {
+    setForm({ ...current, [key]: value });
+  }
+
+  async function save() {
+    setSaving(true);
+    setMsg("");
+    const res = await fetch("/api/tbs/parties", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(current),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      setMsg((await res.json()).error || "Save failed");
+      return;
+    }
+    setMsg("Party saved successfully");
+    setForm(null);
+    await reload();
+  }
+
+  async function update() {
+    if (!current.id) return;
+    setSaving(true);
+    setMsg("");
+    const res = await fetch("/api/tbs/parties", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(current),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      setMsg((await res.json()).error || "Update failed");
+      return;
+    }
+    setMsg("Party updated");
+    await reload();
+  }
+
+  async function remove() {
+    if (!current.id || !confirm("Delete this party?")) return;
+    setSaving(true);
+    await fetch(`/api/tbs/parties?id=${current.id}`, { method: "DELETE" });
+    setSaving(false);
+    setForm(null);
+    setMsg("Party deleted");
+    await reload();
+  }
+
+  if (!data && loading) return <div className="tbs-empty">Loading…</div>;
+
+  return (
+    <FormWindow title="Frm_PartyCreation">
+      {msg && <div className={`tbs-msg ${msg.includes("fail") ? "err" : ""}`}>{msg}</div>}
+      {error && <div className="tbs-msg err">{error}</div>}
+
+      <div className="tbs-split-3">
+        <div>
+          <div className="tbs-row">
+            <div className="tbs-field w-full" style={{ flex: 1 }}>
+              <label style={{ width: 120 }}>Party Name</label>
+              <input
+                className="tbs-input w-full"
+                value={current.partyName}
+                onChange={(e) => set("partyName", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label style={{ width: 120 }}>Contact No</label>
+              <input
+                className="tbs-input w-full"
+                value={current.contactNo}
+                onChange={(e) => set("contactNo", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label style={{ width: 120 }}>OP.Balance</label>
+              <input
+                className="tbs-input w-full"
+                type="number"
+                value={current.opBalance}
+                onChange={(e) => set("opBalance", Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label style={{ width: 120 }}>Account Start From</label>
+              <input
+                className="tbs-input w-md"
+                type="date"
+                value={current.accountStartFrom}
+                onChange={(e) => set("accountStartFrom", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1, alignItems: "flex-start" }}>
+              <label style={{ width: 90 }}>Address</label>
+              <textarea
+                className="tbs-textarea w-full"
+                value={current.address}
+                onChange={(e) => set("address", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label style={{ width: 90 }}>GST TIN</label>
+              <input
+                className="tbs-input w-full"
+                value={current.gstTin}
+                onChange={(e) => set("gstTin", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field">
+              <label style={{ width: 90 }}>Party Type</label>
+              <select
+                className="tbs-select w-md"
+                value={current.partyType}
+                onChange={(e) => set("partyType", e.target.value)}
+              >
+                {(data?.masters.partyTypes || []).map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field">
+              <label style={{ width: 90 }}>Party Code</label>
+              <input className="tbs-input w-sm" value={current.partyCode} readOnly />
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label style={{ width: 90 }}>PAN No.</label>
+              <input
+                className="tbs-input w-full"
+                value={current.panNo}
+                onChange={(e) => set("panNo", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="tbs-actions">
+        <ActionButtons
+          onSave={save}
+          onUpdate={update}
+          onDelete={remove}
+          onPrint={() => {
+            if (!current.id) return needSelectAlert("party");
+            openPrint("party", current.id);
+          }}
+          onPrintList={() => openPrint("parties")}
+          canUpdate={!!current.id}
+          canDelete={!!current.id}
+          canPrint={!!current.id}
+          saving={saving}
+          extra={
+            <div className="tbs-search">
+              <span>🔍</span>
+              <span>Search for Updation</span>
+              <input
+                className="tbs-input w-xl"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search party…"
+              />
+            </div>
+          }
+        />
+      </div>
+
+      <DataGrid
+        columns={[
+          { key: "sr", label: "Sr No" },
+          { key: "partyName", label: "Party Name", width: "220px" },
+          { key: "address", label: "Address", width: "180px" },
+          { key: "contactNo", label: "Contact No" },
+          { key: "opBalance", label: "OP" },
+          { key: "print", label: "Print" },
+        ]}
+        rows={filtered}
+        selectedId={current.id || null}
+        onSelect={(row) => setForm(row)}
+        renderCell={(row, key, i) => {
+          if (key === "sr") return i + 1;
+          if (key === "opBalance") return row.opBalance;
+          if (key === "print")
+            return <PrintCellButton onClick={() => openPrint("party", row.id)} />;
+          return (row as unknown as Record<string, string>)[key];
+        }}
+      />
+    </FormWindow>
+  );
+}

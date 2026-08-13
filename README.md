@@ -51,9 +51,22 @@ cp .env.example .env.local   # edit secrets + domain
 npm run dev
 ```
 
-### Admin
+### Admin — Transport Billing Management System
 
-Default: **admin** / **admin123** (change in production)
+Open **http://localhost:3000/admin** (login: `admin` / `admin123`).
+
+Desktop-style Master Page matching transport software screenshots:
+
+| Menu | Screens |
+|------|---------|
+| Registration | Party Creation (`Frm_PartyCreation`) |
+| Transport | Booking, LHC (Part Challan), LHP New/Update, Bill Preparation, Money Receipt, Debit/Credit Note, Expense Voucher |
+| Reports | Links to registers |
+| Website | Public-site Enquiries / Blog / Settings |
+| Generate Backup & Exit | Downloads JSON backup |
+
+Data files live under `data/tbs/` (auto-seeded on first use).
+
 
 ## Data files
 

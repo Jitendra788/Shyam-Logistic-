@@ -1,0 +1,137 @@
+/* Shared document print styles */
+
+.doc-print-page {
+  background: #e8e8e8;
+  min-height: 100vh;
+  padding: 12px;
+}
+
+.doc-print-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.doc-sheet {
+  max-width: 210mm;
+  margin: 0 auto 16px;
+  background: #fff;
+  border: 2px solid #000;
+  padding: 12px 14px;
+  color: #000;
+  font-family: Arial, Tahoma, sans-serif;
+  font-size: 12px;
+}
+
+.doc-head {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.doc-logo {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.doc-co {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #0a1f3d;
+}
+
+.doc-meta {
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.doc-title {
+  font-size: 16px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.doc-no {
+  font-size: 18px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.doc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  margin-bottom: 10px;
+}
+
+.doc-grid .full {
+  grid-column: 1 / -1;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+
+.doc-table th,
+.doc-table td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  text-align: left;
+  font-size: 11px;
+}
+
+.doc-table th {
+  background: #f0f0f0;
+}
+
+.doc-total {
+  margin-top: 10px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.doc-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  border-top: 1px dashed #666;
+  padding-top: 8px;
+  font-size: 10px;
+}
+
+.doc-sign {
+  text-align: right;
+  font-weight: 700;
+  min-width: 160px;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+  .doc-print-toolbar {
+    display: none !important;
+  }
+  .doc-print-page {
+    background: #fff;
+    padding: 0;
+  }
+  .doc-sheet {
+    border-width: 1px;
+    max-width: none;
+    break-inside: avoid;
+  }
+}

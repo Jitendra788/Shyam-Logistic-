@@ -135,7 +135,7 @@ export default async function AboutPage() {
                 key={stat.label}
                 className="rounded-2xl border border-line bg-white p-6 text-center"
               >
-                <p className="font-display text-4xl font-bold text-red">
+                <p className="font-display text-2xl font-bold text-red sm:text-3xl md:text-4xl">
                   {stat.value}
                 </p>
                 <p className="mt-2 text-sm font-semibold text-navy">

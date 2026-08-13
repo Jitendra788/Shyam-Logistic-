@@ -82,8 +82,8 @@ export default async function ServicesPage() {
             <ServiceGrid services={settings.services} />
           </div>
 
-          <div className="mt-14 rounded-2xl bg-navy px-8 py-10 text-white sm:px-10">
-            <h3 className="font-display text-3xl font-bold">
+          <div className="mt-14 rounded-2xl bg-navy px-5 py-8 text-white sm:px-10 sm:py-10">
+            <h3 className="font-display text-2xl font-bold sm:text-3xl">
               Need a custom service plan?
             </h3>
             <p className="mt-3 max-w-xl text-white/70">
