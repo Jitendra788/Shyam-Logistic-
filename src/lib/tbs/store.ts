@@ -18,18 +18,19 @@ const DATA_DIR = path.join(process.cwd(), "data", "tbs");
 const mem = new Map<string, unknown>();
 
 function redisClient(): Redis | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  const url =
+    process.env.UPSTASH_REDIS_REST_URL?.trim() ||
+    process.env.KV_REST_API_URL?.trim();
+  const token =
+    process.env.UPSTASH_REDIS_REST_TOKEN?.trim() ||
+    process.env.KV_REST_API_TOKEN?.trim();
   if (!url || !token) return null;
   return new Redis({ url, token });
 }
 
-/** True when writes survive across deploys / cold starts (Upstash). */
+/** True when writes survive across deploys / cold starts (Upstash / Vercel KV). */
 export function isTbsPersistent(): boolean {
-  return Boolean(
-    process.env.UPSTASH_REDIS_REST_URL?.trim() &&
-      process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
-  );
+  return Boolean(redisClient());
 }
 
 function redisKey(file: string) {
@@ -129,7 +130,7 @@ async function writeJson<T>(file: string, data: T): Promise<void> {
   const ok = await writeToFs(file, data);
   if (!ok) {
     throw new Error(
-      "Server cannot save TBS data. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN on Vercel.",
+      "Server cannot save/delete data. Vercel → Settings → Environment Variables me UPSTASH_REDIS_REST_URL aur UPSTASH_REDIS_REST_TOKEN set karke Redeploy karo.",
     );
   }
 }

@@ -9,6 +9,7 @@ import {
   StatusBanner,
   fmtDate,
   readApiError,
+  apiDelete,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -125,11 +126,22 @@ export default function BillPage() {
   }
 
   async function remove() {
-    if (!editId || !confirm("Delete bill?")) return;
-    await fetch(`/api/tbs/bills?id=${editId}`, { method: "DELETE" });
-    setEditId(null);
-    setMsg("Deleted successfully");
-    await reload();
+    if (!editId) {
+      setMsg("Pehle list se bill select karo, phir Delete dabao");
+      return;
+    }
+    if (!confirm("Delete bill?")) return;
+    setSaving(true);
+    try {
+      await apiDelete(`/api/tbs/bills?id=${editId}`);
+      setEditId(null);
+      setMsg("Deleted successfully");
+      await reload();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;

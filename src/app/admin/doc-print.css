@@ -39,7 +39,7 @@
   width: 68px;
   height: 68px;
   object-fit: contain;
-  border-radius: 50%;
+  background: #fff;
 }
 
 .doc-co {
@@ -112,15 +112,311 @@
 }
 
 .doc-sign {
-  text-align: right;
+  text-align: center;
   font-weight: 700;
-  min-width: 160px;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Shared stamp — all print documents */
+.shyam-stamp {
+  object-fit: contain;
+  display: block;
+  background: #fff;
+}
+
+.shyam-stamp-sm {
+  width: 72px;
+  height: 72px;
+}
+
+.shyam-stamp-md {
+  width: 88px;
+  height: 88px;
+}
+
+.shyam-stamp-lg {
+  width: 110px;
+  height: 110px;
+}
+
+.shyam-sign-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.shyam-sign-label {
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.shyam-sign-line {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* Tax Invoice — matches SHYAM LOGISTICS sample bill */
+.tax-inv {
+  max-width: 297mm;
+  margin: 0 auto 16px;
+  background: #fff;
+  border: 2px solid #000;
+  padding: 8px 10px 12px;
+  color: #000;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.tax-inv-bless {
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.tax-inv-brand {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.tax-inv-logo {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.tax-inv-brand-mid {
+  text-align: center;
+}
+
+.tax-inv-co {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #c00000;
+  line-height: 1.05;
+}
+
+.tax-inv-addr {
+  font-size: 11px;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.tax-inv-contact {
+  font-size: 11px;
+  margin-top: 1px;
+}
+
+.tax-inv-sep {
+  margin: 0 8px;
+  opacity: 0.5;
+}
+
+.tax-inv-gst {
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.tax-inv-title-bar {
+  border: 2px solid #000;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 3px 8px;
+  margin: 6px 0 0;
+}
+
+.tax-inv-party {
+  display: grid;
+  grid-template-columns: 1.45fr 0.85fr;
+  gap: 0;
+  border: 1px solid #000;
+  border-top: none;
+  padding: 6px 8px;
+  margin-bottom: 0;
+}
+
+.tax-inv-line {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 6px;
+  margin-bottom: 3px;
+  align-items: start;
+}
+
+.tax-inv-lab {
+  font-weight: 700;
+}
+
+.tax-inv-val {
+  font-weight: 600;
+}
+
+.tax-inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 2px solid #000;
+}
+
+.tax-inv-table th,
+.tax-inv-table td {
+  border: 1px solid #000;
+  padding: 4px 3px;
+  font-size: 10px;
+  text-align: center;
+  vertical-align: middle;
+  word-break: break-word;
+}
+
+.tax-inv-table th {
+  background: #fff;
+  font-weight: 800;
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+.tax-inv-pad td {
+  height: 22px;
+  border-top: none;
+  border-bottom: none;
+}
+
+.tax-inv-pad:last-child td {
+  border-bottom: 1px solid #000;
+}
+
+.tax-inv-total-bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  border: 1px solid #000;
+  border-top: none;
+  min-height: 28px;
+}
+
+.tax-inv-total-l {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.tax-inv-amt {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.tax-inv-total-r {
+  display: grid;
+  grid-template-columns: 70px 90px;
+  border-left: 1px solid #000;
+  text-align: center;
+  font-weight: 800;
+}
+
+.tax-inv-freight-lab,
+.tax-inv-freight-val {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  font-size: 13px;
+}
+
+.tax-inv-freight-val {
+  border-left: 1px solid #000;
+  font-size: 15px;
+}
+
+.tax-inv-words {
+  border: 1px solid #000;
+  border-top: none;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.tax-inv-bank {
+  margin-top: 10px;
+  border: 1px solid #000;
+  padding: 6px 10px 8px;
+}
+
+.tax-inv-bank-title {
+  font-weight: 800;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.tax-inv-bank-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 24px;
+  font-size: 12.5px;
+}
+
+.tax-inv-remark {
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.tax-inv-signs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: end;
+  gap: 12px;
+  margin-top: 28px;
+  min-height: 120px;
+}
+
+.tax-inv-sign-l,
+.tax-inv-sign-c,
+.tax-inv-sign-r {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tax-inv-sign-r {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 120px;
+}
+
+.tax-inv-stamp,
+.tax-inv-sign-r .shyam-stamp {
+  margin-bottom: -4px;
+}
+
+.tax-inv-for {
+  font-weight: 800;
+  margin-top: 2px;
 }
 
 @media print {
   @page {
     size: A4;
     margin: 8mm;
+  }
+  @page taxinvoice {
+    size: A4 landscape;
+    margin: 6mm;
   }
   .doc-print-toolbar {
     display: none !important;
@@ -133,5 +429,10 @@
     border-width: 1px;
     max-width: none;
     break-inside: avoid;
+  }
+  .tax-inv {
+    max-width: none;
+    margin: 0;
+    page: taxinvoice;
   }
 }

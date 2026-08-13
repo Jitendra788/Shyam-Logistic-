@@ -10,6 +10,7 @@ import {
   StatusBanner,
   fmtDate,
   readApiError,
+  apiDelete,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -29,7 +30,7 @@ function blank(nextLr: string): Booking {
     bookingFrom: "Sangli",
     lrNo: nextLr,
     lrDate: todayISO(),
-    from: "",
+    from: "Sangli",
     to: "",
     vehicleNo: "",
     deliveryAt: "",
@@ -74,6 +75,13 @@ function calcTotal(b: Booking) {
     Number(b.barrier) +
     Number(b.otherChrg)
   );
+}
+
+function normalizeBooking(b: Booking): Booking {
+  return {
+    ...b,
+    from: b.from || b.bookingFrom,
+  };
 }
 
 export default function BookingPage() {
@@ -169,7 +177,7 @@ export default function BookingPage() {
     const res = await fetch("/api/tbs/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(current),
+      body: JSON.stringify(normalizeBooking(current)),
     });
     setSaving(false);
     if (!res.ok) {
@@ -192,7 +200,7 @@ export default function BookingPage() {
     const res = await fetch("/api/tbs/bookings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(current),
+      body: JSON.stringify(normalizeBooking(current)),
     });
     setSaving(false);
     if (!res.ok) {
@@ -204,11 +212,22 @@ export default function BookingPage() {
   }
 
   async function remove() {
-    if (!current.id || !confirm("Delete booking?")) return;
-    await fetch(`/api/tbs/bookings?id=${current.id}`, { method: "DELETE" });
-    setForm(null);
-    setMsg("Deleted successfully");
-    await reload();
+    if (!current.id) {
+      setMsg("Pehle list se booking select karo, phir Delete dabao");
+      return;
+    }
+    if (!confirm("Delete booking?")) return;
+    setSaving(true);
+    try {
+      await apiDelete(`/api/tbs/bookings?id=${current.id}`);
+      setForm(null);
+      setMsg("Deleted successfully");
+      await reload();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;

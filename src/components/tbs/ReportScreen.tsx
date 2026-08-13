@@ -8,6 +8,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useAdminAuth } from "@/components/tbs/useTbs";
 import { downloadAsExcel } from "@/lib/tbs/excel";
+import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 
 type ReportKind =
   | "booking"
@@ -198,7 +199,7 @@ export function ReportScreen({
       <div className="rpt-print-area">
         <div className="rpt-head">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/shyam-peacock-mark.webp" alt="" width={48} height={48} />
+          <img src="/brand/shyam-peacock-mark-print.png" alt="" width={48} height={48} />
           <div>
             <div style={{ fontWeight: 800, fontSize: 16 }}>SHYAM LOGISTICS</div>
             <div style={{ fontSize: 12 }}>{title}</div>
@@ -416,6 +417,11 @@ export function ReportScreen({
         {!loading && rows.length === 0 && kind !== "profit" && (
           <div className="tbs-empty">No records for selected filters</div>
         )}
+
+        <div className="rpt-sign">
+          <div>For Shyam Logistics</div>
+          <ShyamStamp size="sm" />
+        </div>
       </div>
     </FormWindow>
   );

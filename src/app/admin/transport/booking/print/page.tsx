@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import { LrPrintSheet, DEFAULT_LR_COMPANY } from "@/components/tbs/LrPrintSheet";
+import { BookingBillPrint } from "@/components/tbs/DocPrint";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import type { Booking, Party } from "@/lib/tbs/types";
-import "@/app/admin/lr-print.css";
+import "@/app/admin/doc-print.css";
 
 type Payload = {
   bookings: Booking[];
@@ -32,40 +32,36 @@ function PrintInner() {
   if (error) return <div className="tbs-msg err">{error}</div>;
   if (!booking) {
     return (
-      <div className="lr-print-page lr-print-standalone">
-        <div className="lr-print-toolbar lr-no-print">
+      <div className="doc-print-page">
+        <div className="doc-print-toolbar">
           <Link href="/admin/transport/booking" className="tbs-btn">
             ← Back to Booking
           </Link>
         </div>
-        <div className="tbs-empty">LR / booking not found. Save the booking first, then print.</div>
+        <div className="tbs-empty">Booking not found. Save first, then print.</div>
       </div>
     );
   }
 
   return (
-    <div className="lr-print-page lr-print-standalone">
-      <div className="lr-print-toolbar lr-no-print">
+    <div className="doc-print-page">
+      <div className="doc-print-toolbar">
         <Link href="/admin/transport/booking" className="tbs-btn">
           ← Back
         </Link>
-        <button type="button" className="tbs-btn" onClick={() => window.print()}>
+        <button type="button" className="tbs-btn tbs-btn-print" onClick={() => window.print()}>
           🖨 Print Bill
         </button>
         <span style={{ fontSize: 12, color: "#333" }}>
-          LR No. {booking.lrNo} — use browser Print → Save as PDF if needed
+          LR No. {booking.lrNo} — Tax Invoice
         </span>
       </div>
-      <LrPrintSheet
-        booking={booking}
-        parties={data?.parties || []}
-        company={DEFAULT_LR_COMPANY}
-      />
+      <BookingBillPrint booking={booking} parties={data?.parties || []} />
     </div>
   );
 }
 
-export default function LrPrintPage() {
+export default function BookingPrintPage() {
   return (
     <Suspense fallback={<div className="tbs-empty">Loading…</div>}>
       <PrintInner />

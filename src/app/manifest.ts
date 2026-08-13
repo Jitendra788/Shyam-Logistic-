@@ -14,15 +14,15 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       {
         src: "/brand/shyam-peacock-mark.png",
-        sizes: "256x256",
+        sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/brand/shyam-brand-logo.png",
-        sizes: "567x640",
+        src: "/brand/shyam-peacock-mark.png",
+        sizes: "512x512",
         type: "image/png",
-        purpose: "any",
+        purpose: "maskable",
       },
     ],
   };

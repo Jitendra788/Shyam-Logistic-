@@ -2,8 +2,9 @@
 
 import type { Booking, Party } from "@/lib/tbs/types";
 import { fmtDate } from "@/components/tbs/FormPrimitives";
+import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 
-const LOGO_SRC = "/brand/shyam-peacock-mark.webp";
+const LOGO_SRC = "/brand/shyam-peacock-mark-print.png";
 const BRAND_LOGO = "/brand/shyam-brand-logo.webp";
 
 export type LrCompany = {
@@ -45,29 +46,10 @@ function Copy({
   const consignor = partyOf(parties, booking.consignor);
   const consignee = partyOf(parties, booking.consignee);
   const lrType = (booking.lrType || "").toLowerCase();
+  const fromStation = booking.from || booking.bookingFrom || "—";
 
   return (
     <div className="lr-copy">
-      <div className="lr-topbar">
-        <span>GST : {company.gstin}</span>
-        <span className="lr-bless">{company.blessing}</span>
-        <span className="lr-mob">
-          Mob :{company.phone}
-          <br />
-          {company.phone2}
-        </span>
-      </div>
-
-      <div className="lr-brand">
-        <img src={LOGO_SRC} alt="" className="lr-logo-mark" />
-        <div className="lr-brand-mid">
-          <div className="lr-title">{company.companyName}</div>
-          <div className="lr-addr">{company.address}</div>
-          <div className="lr-email">E-mail :{company.email}</div>
-        </div>
-        <img src={BRAND_LOGO} alt="SHYAM LOGISTIC" className="lr-logo-full" />
-      </div>
-
       <div className="lr-row lr-meta">
         <div>
           <b>Lorry No</b> {booking.vehicleNo || "—"}
@@ -108,7 +90,7 @@ function Copy({
           <tr>
             <td>
               <b>From</b>
-              <div>{booking.from}</div>
+              <div>{fromStation}</div>
             </td>
             <td>
               <b>To</b>
@@ -132,7 +114,7 @@ function Copy({
             </td>
             <td colSpan={2}>
               <b>Consignee</b>
-              <div className="lr-strong">{booking.consignee}</div>
+              <div className="lr-strong">{booking.consignee || "—"}</div>
               <div className="lr-small">{consignee?.address || "—"}</div>
               <div className="lr-small">GST No. {consignee?.gstTin || "—"}</div>
             </td>
@@ -227,16 +209,36 @@ function Copy({
           </div>
         </div>
         <div className="lr-sign">
-          For Shyam Logistics
-          <br />
-          <br />
-          _________________
+          <ShyamStamp size="md" />
+          <div>For Shyam Logistics</div>
         </div>
       </div>
 
       <div className="lr-disclaimer">
         Subject To Sangli Jurisdiction, Leakage &amp; Breakage carries not responsible.
         Do Not Pay Cash to Lorry Driver, Payble Check RTGS Only {company.companyName}
+      </div>
+
+      <div className="lr-brand-footer">
+        <div className="lr-topbar">
+          <span>GST : {company.gstin}</span>
+          <span className="lr-bless">{company.blessing}</span>
+          <span className="lr-mob">
+            Mob :{company.phone}
+            <br />
+            {company.phone2}
+          </span>
+        </div>
+
+        <div className="lr-brand">
+          <img src={LOGO_SRC} alt="" className="lr-logo-mark" />
+          <div className="lr-brand-mid">
+            <div className="lr-title">{company.companyName}</div>
+            <div className="lr-addr">{company.address}</div>
+            <div className="lr-email">E-mail :{company.email}</div>
+          </div>
+          <img src={BRAND_LOGO} alt="SHYAM LOGISTIC" className="lr-logo-full" />
+        </div>
       </div>
     </div>
   );

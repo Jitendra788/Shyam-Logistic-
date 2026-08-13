@@ -230,11 +230,37 @@ export default function AdminMasterPage() {
       </section>
 
       {data && data.persistent === false && (
-        <div className="tbs-msg err">
-          Server pe data save ke liye Vercel pe{" "}
-          <strong>UPSTASH_REDIS_REST_URL</strong> aur{" "}
-          <strong>UPSTASH_REDIS_REST_TOKEN</strong> set karo (Upstash free Redis).
-          Abhi sirf bundled seed data load ho rahi hai.
+        <div className="tbs-msg err tbs-setup-banner">
+          <span className="tbs-msg-icon" aria-hidden>
+            !
+          </span>
+          <div className="tbs-msg-text">
+            <strong>Save / Delete server pe tabhi chalega jab Redis set ho.</strong>
+            <ol className="tbs-setup-steps">
+              <li>
+                Open{" "}
+                <a
+                  href="https://console.upstash.com"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  console.upstash.com
+                </a>{" "}
+                → Create Redis DB (free)
+              </li>
+              <li>
+                Copy <code>UPSTASH_REDIS_REST_URL</code> +{" "}
+                <code>UPSTASH_REDIS_REST_TOKEN</code>
+              </li>
+              <li>
+                Vercel → Project → Settings → Environment Variables → dono add
+                (Production)
+              </li>
+              <li>Deployments → latest → Redeploy</li>
+            </ol>
+            Abhi sirf seed data dikh rahi hai — Add/Delete fail hoga jab tak
+            Redis set nahi hota.
+          </div>
         </div>
       )}
 

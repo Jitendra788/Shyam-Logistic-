@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <rect width="240" height="240" fill="#fff"/>
+  <g fill="none" stroke="#6b2d8b" stroke-width="2.4">
+    <circle cx="120" cy="120" r="108"/>
+    <circle cx="120" cy="120" r="100"/>
+  </g>
+  <defs>
+    <path id="topArc" d="M 36,120 A 84,84 0 0 1 204,120"/>
+    <path id="botArc" d="M 204,120 A 84,84 0 0 1 36,120"/>
+  </defs>
+  <text fill="#6b2d8b" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="2">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">SHYAM LOGISTICS</textPath>
+  </text>
+  <text fill="#6b2d8b" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">
+    <textPath href="#botArc" startOffset="50%" text-anchor="middle">KOLHAPUR 416234</textPath>
+  </text>
+  <text x="28" y="126" fill="#6b2d8b" font-size="14"></text>
+  <text x="198" y="126" fill="#6b2d8b" font-size="14"></text>
+  <text x="120" y="138" fill="#6b2d8b" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-style="italic" font-weight="700" text-anchor="middle">SL</text>
+</svg>

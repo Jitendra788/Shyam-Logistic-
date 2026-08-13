@@ -10,6 +10,7 @@ import {
   StatusBanner,
   fmtDate,
   readApiError,
+  apiDelete,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
@@ -41,11 +42,22 @@ export default function MoneyReceiptEditPage() {
   }
 
   async function remove() {
-    if (!selected || !confirm("Delete receipt?")) return;
-    await fetch(`/api/tbs/money-receipts?id=${selected.id}`, { method: "DELETE" });
-    setSelected(null);
-    setMsg("Deleted successfully");
-    await reload();
+    if (!selected) {
+      setMsg("Pehle receipt select karo, phir Delete dabao");
+      return;
+    }
+    if (!confirm("Delete receipt?")) return;
+    setSaving(true);
+    try {
+      await apiDelete(`/api/tbs/money-receipts?id=${selected.id}`);
+      setSelected(null);
+      setMsg("Deleted successfully");
+      await reload();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;

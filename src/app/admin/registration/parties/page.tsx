@@ -9,6 +9,7 @@ import {
   PrintCellButton,
   StatusBanner,
   readApiError,
+  apiDelete,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -92,13 +93,22 @@ export default function PartyCreationPage() {
   }
 
   async function remove() {
-    if (!current.id || !confirm("Delete this party?")) return;
+    if (!current.id) {
+      setMsg("Pehle list se party select karo, phir Delete dabao");
+      return;
+    }
+    if (!confirm("Delete this party?")) return;
     setSaving(true);
-    await fetch(`/api/tbs/parties?id=${current.id}`, { method: "DELETE" });
-    setSaving(false);
-    setForm(null);
-    setMsg("Deleted successfully");
-    await reload();
+    try {
+      await apiDelete(`/api/tbs/parties?id=${current.id}`);
+      setForm(null);
+      setMsg("Deleted successfully");
+      await reload();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;

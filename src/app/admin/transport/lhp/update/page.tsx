@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import {
   DataGrid,
   FormWindow,
+  StatusBanner,
+  apiDelete,
   fmtDate,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
@@ -13,18 +15,21 @@ import type { Challan, LhpPayment, Masters } from "@/lib/tbs/types";
 
 type Payload = { payments: LhpPayment[]; challans: Challan[]; masters: Masters };
 
+type Row = LhpPayment & { _kind: "payment" | "challan" };
+
 export default function LhpUpdatePage() {
-  const { data, loading, error } = useTbsApi<Payload>("/api/tbs/lhp");
+  const { data, loading, error, reload } = useTbsApi<Payload>("/api/tbs/lhp");
   const [fromDate, setFromDate] = useState(todayISO());
   const [toDate, setToDate] = useState(todayISO());
   const [vehicle, setVehicle] = useState("");
   const [broker, setBroker] = useState("All");
   const [filterOn, setFilterOn] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [busyId, setBusyId] = useState("");
 
   const rows = useMemo(() => {
-    let list = data?.payments || [];
+    let list: Row[] = [];
     if (!filterOn) {
-      // show outstanding challans as in screenshot details view when filtering
       list = (data?.challans || []).map((c) => ({
         id: c.id,
         transactionDate: c.challanDate,
@@ -37,6 +42,12 @@ export default function LhpUpdatePage() {
         deduction: 0,
         balance: c.balance,
         narration: "",
+        _kind: "challan" as const,
+      }));
+    } else {
+      list = (data?.payments || []).map((p) => ({
+        ...p,
+        _kind: "payment" as const,
       }));
     }
     return list.filter((r) => {
@@ -48,11 +59,31 @@ export default function LhpUpdatePage() {
     });
   }, [data, fromDate, toDate, vehicle, broker, filterOn]);
 
+  async function removeRow(row: Row) {
+    if (!confirm(`Delete ${row._kind === "payment" ? "payment" : "challan"} ${row.challanNo}?`))
+      return;
+    setBusyId(row.id);
+    try {
+      const url =
+        row._kind === "payment"
+          ? `/api/tbs/lhp?id=${row.id}`
+          : `/api/tbs/challans?id=${row.id}`;
+      await apiDelete(url);
+      setMsg("Deleted successfully");
+      await reload();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setBusyId("");
+    }
+  }
+
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;
 
   return (
     <FormWindow title="Frm_BhadachittiDetails">
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-row">
         <div className="tbs-field">
@@ -103,14 +134,18 @@ export default function LhpUpdatePage() {
             ))}
           </select>
         </div>
-        <button type="button" className="tbs-btn" onClick={() => setFilterOn(true)}>
+        <button
+          type="button"
+          className="tbs-btn"
+          onClick={() => setFilterOn(true)}
+        >
           Show
         </button>
         <button
           type="button"
           className="tbs-btn"
           onClick={() => {
-            setFilterOn(false);
+            setFilterOn(true);
             setVehicle("");
             setBroker("All");
           }}
@@ -140,7 +175,22 @@ export default function LhpUpdatePage() {
         ]}
         rows={rows}
         renderCell={(row, key, i) => {
-          if (key === "del") return "🗑";
+          if (key === "del")
+            return (
+              <button
+                type="button"
+                className="tbs-btn"
+                style={{ height: 26, padding: "0 8px" }}
+                disabled={busyId === row.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void removeRow(row);
+                }}
+                title="Delete"
+              >
+                🗑
+              </button>
+            );
           if (key === "sr") return i + 1;
           if (key === "date") return fmtDate(row.date);
           return (row as unknown as Record<string, string | number>)[key];

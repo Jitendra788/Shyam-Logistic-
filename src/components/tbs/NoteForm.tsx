@@ -10,6 +10,7 @@ import {
   StatusBanner,
   fmtDate,
   readApiError,
+  apiDelete,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -75,11 +76,29 @@ export function NoteForm({
   }
 
   async function remove() {
-    if (!form.id || !confirm("Delete?")) return;
-    await fetch(`/api/tbs/notes?id=${form.id}`, { method: "DELETE" });
-    setForm({ id: "", date: todayISO(), partyName: "", amount: 0, narration: "", voucherNo: "" });
-    setMsg("Deleted successfully");
-    await reload();
+    if (!form.id) {
+      setMsg("Pehle list se row select karo, phir Delete dabao");
+      return;
+    }
+    if (!confirm("Delete?")) return;
+    setSaving(true);
+    try {
+      await apiDelete(`/api/tbs/notes?id=${form.id}`);
+      setForm({
+        id: "",
+        date: todayISO(),
+        partyName: "",
+        amount: 0,
+        narration: "",
+        voucherNo: "",
+      });
+      setMsg("Deleted successfully");
+      await reload();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;

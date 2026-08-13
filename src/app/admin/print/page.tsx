@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo } from "react";
 import {
   BillPrint,
+  BookingBillPrint,
   ChallanPrint,
   LhpPrint,
   MrPrint,
@@ -12,7 +13,6 @@ import {
   PartiesListPrint,
   PartyPrint,
   RegisterPrint,
-  LrPrintSheet,
 } from "@/components/tbs/DocPrint";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { fmtDate } from "@/components/tbs/FormPrimitives";
@@ -101,7 +101,7 @@ function PrintInner() {
     if (type === "booking" && id) {
       const b = data.bookings?.find((x) => x.id === id || x.lrNo === id);
       if (!b) return null;
-      return <LrPrintSheet booking={b} parties={data.parties || []} />;
+      return <BookingBillPrint booking={b} parties={data.parties || []} />;
     }
     if (type === "bookings") {
       return (
@@ -152,7 +152,13 @@ function PrintInner() {
     if (type === "bill" && id) {
       const b = data.bills?.find((x) => x.id === id || x.billNo === id);
       if (!b) return null;
-      return <BillPrint bill={b} bookings={data.bookings || []} />;
+      return (
+        <BillPrint
+          bill={b}
+          bookings={data.bookings || []}
+          parties={data.parties || []}
+        />
+      );
     }
     if (type === "bills") {
       return (

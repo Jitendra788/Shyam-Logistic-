@@ -129,6 +129,15 @@ export async function readApiError(res: Response, fallback: string) {
   }
 }
 
+/** DELETE helper — throws with readable message when save storage is missing. */
+export async function apiDelete(url: string) {
+  const res = await fetch(url, { method: "DELETE", cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(await readApiError(res, "Delete failed"));
+  }
+  return true;
+}
+
 export function ActionButtons({
   onSave,
   onUpdate,

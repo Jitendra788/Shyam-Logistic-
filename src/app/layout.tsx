@@ -122,6 +122,16 @@ export async function generateMetadata(): Promise<Metadata> {
     verification: {
       google: verification,
     },
+    icons: {
+      icon: [
+        { url: "/brand/shyam-peacock-mark.png", type: "image/png", sizes: "512x512" },
+        { url: "/brand/shyam-peacock-mark.webp", type: "image/webp", sizes: "512x512" },
+      ],
+      apple: [
+        { url: "/brand/shyam-peacock-mark.png", sizes: "180x180", type: "image/png" },
+      ],
+      shortcut: "/brand/shyam-peacock-mark.png",
+    },
   };
 }
 

@@ -10,6 +10,7 @@ import {
   StatusBanner,
   fmtDate,
   readApiError,
+  apiDelete,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -128,12 +129,23 @@ export default function LhcPage() {
   }
 
   async function remove() {
-    if (!current.id || !confirm("Delete challan?")) return;
-    await fetch(`/api/tbs/challans?id=${current.id}`, { method: "DELETE" });
-    setForm(null);
-    setSelectedLrs([]);
-    setMsg("Deleted successfully");
-    await reload();
+    if (!current.id) {
+      setMsg("Pehle list se challan select karo, phir Delete dabao");
+      return;
+    }
+    if (!confirm("Delete challan?")) return;
+    setSaving(true);
+    try {
+      await apiDelete(`/api/tbs/challans?id=${current.id}`);
+      setForm(null);
+      setSelectedLrs([]);
+      setMsg("Deleted successfully");
+      await reload();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;
