@@ -23,6 +23,7 @@ const PATH_COL: Record<string, Col> = {
   "/api/tbs/lhp": "payments",
   "/api/tbs/money-receipts": "receipts",
   "/api/tbs/notes": "notes",
+  "/api/tbs/masters": "masters",
 };
 
 function colKey(name: Col) {
@@ -131,6 +132,19 @@ async function applyMutation(url: string, method: string, init?: RequestInit) {
 
   if (method === "POST") {
     const prefix = arrayKey.slice(0, 3);
+    if (arrayKey === "masters") {
+      const masters = ((await getCol("masters")) as Record<string, unknown>) || {};
+      const particulars = Array.isArray(masters.particulars)
+        ? [...(masters.particulars as string[])]
+        : [];
+      const p = String((body as { particulars?: string }).particulars || "").trim();
+      if (p && !particulars.some((x) => x.toLowerCase() === p.toLowerCase())) {
+        particulars.unshift(p);
+      }
+      const next = { ...masters, particulars };
+      await setCol("masters", next);
+      return { ok: true, row: { masters: next } };
+    }
     if (
       body &&
       typeof body === "object" &&

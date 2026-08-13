@@ -174,6 +174,26 @@ export default function BookingPage() {
     );
   }
 
+  async function addParticular() {
+    const p = current.particulars.trim();
+    if (!p) {
+      setMsg("Type Particulars first");
+      return;
+    }
+    patch({ particulars: p });
+    const res = await fetch("/api/tbs/masters", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ particulars: p }),
+    });
+    if (!res.ok) {
+      setMsg(await readApiError(res, "Could not add particulars"));
+      return;
+    }
+    setMsg("Added successfully");
+    await reload();
+  }
+
   async function save() {
     setSaving(true);
     setMsg("");
@@ -338,6 +358,7 @@ export default function BookingPage() {
                 onChange={(e) => pickBillingParty(e.target.value)}
                 placeholder="Type or select…"
                 list="booking-billing-party"
+                autoComplete="off"
               />
               <datalist id="booking-billing-party">
                 {partyNames.map((n) => (
@@ -424,14 +445,6 @@ export default function BookingPage() {
                 onChange={(e) => patch({ noOfArticles: e.target.value })}
               />
             </div>
-            <div className="tbs-field" style={{ flex: 1 }}>
-              <label>Inv No. & Date</label>
-              <input
-                className="tbs-input w-full"
-                value={current.invNoDate}
-                onChange={(e) => patch({ invNoDate: e.target.value })}
-              />
-            </div>
           </div>
 
           <div className="tbs-row">
@@ -442,8 +455,8 @@ export default function BookingPage() {
                 value={current.particulars}
                 onChange={(e) => patch({ particulars: e.target.value })}
                 placeholder="Type or select…"
-                autoComplete="off"
                 list="booking-particulars"
+                autoComplete="off"
               />
               <datalist id="booking-particulars">
                 {(data?.masters.particulars || []).map((p) => (
@@ -451,9 +464,20 @@ export default function BookingPage() {
                 ))}
               </datalist>
             </div>
+            <button type="button" className="tbs-btn" onClick={() => void addParticular()}>
+              Add
+            </button>
           </div>
 
           <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label>Inv No. & Date</label>
+              <input
+                className="tbs-input w-full"
+                value={current.invNoDate}
+                onChange={(e) => patch({ invNoDate: e.target.value })}
+              />
+            </div>
             <div className="tbs-field">
               <label>Actual Wt.</label>
               <ManualAmountInput
