@@ -295,15 +295,14 @@ export default function BookingPage() {
           <div className="tbs-row">
             <div className="tbs-field">
               <label>Booking From</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-md"
                 value={current.bookingFrom}
                 onChange={(e) => patch({ bookingFrom: e.target.value })}
-              >
-                {(data?.masters.stations || []).map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
+                placeholder="Type or select…"
+                list="booking-station-suggestions"
+                autoComplete="off"
+              />
             </div>
             <div className="tbs-field">
               <label>LR No</label>
@@ -327,29 +326,30 @@ export default function BookingPage() {
           <div className="tbs-row">
             <div className="tbs-field">
               <label>From</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-md"
                 value={current.from}
                 onChange={(e) => patch({ from: e.target.value })}
-              >
-                <option value="">Select</option>
-                {(data?.masters.stations || []).map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
+                placeholder="Type or select…"
+                list="booking-station-suggestions"
+                autoComplete="off"
+              />
             </div>
             <div className="tbs-field">
               <label>To</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-md"
                 value={current.to}
                 onChange={(e) => patch({ to: e.target.value })}
-              >
-                <option value="">Select</option>
+                placeholder="Type or select…"
+                list="booking-station-suggestions"
+                autoComplete="off"
+              />
+              <datalist id="booking-station-suggestions">
                 {(data?.masters.stations || []).map((s) => (
-                  <option key={s}>{s}</option>
+                  <option key={s} value={s} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
 

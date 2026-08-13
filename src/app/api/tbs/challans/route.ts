@@ -34,6 +34,20 @@ async function rememberVehicle(vehicleNo: string) {
   }
 }
 
+async function rememberStation(...stations: string[]) {
+  const masters = await getMasters();
+  let changed = false;
+  for (const raw of stations) {
+    const s = raw.trim();
+    if (!s) continue;
+    if (!masters.stations.some((x) => x.toLowerCase() === s.toLowerCase())) {
+      masters.stations = [s, ...masters.stations];
+      changed = true;
+    }
+  }
+  if (changed) await saveMasters(masters);
+}
+
 export async function GET() {
   const denied = await requireAuth();
   if (denied) return denied;
@@ -93,6 +107,7 @@ export async function POST(req: Request) {
     await saveChallans(challans);
     await rememberVehicle(challan.vehicleNo);
     await rememberBroker(challan.brokerOwner);
+    await rememberStation(challan.fromStation, challan.toStation);
     return ok(challan, 201);
   } catch (e) {
     return failSave(e);
@@ -122,6 +137,7 @@ export async function PUT(req: Request) {
     await saveChallans(challans);
     await rememberVehicle(challans[idx].vehicleNo);
     await rememberBroker(challans[idx].brokerOwner);
+    await rememberStation(challans[idx].fromStation, challans[idx].toStation);
     return ok(challans[idx]);
   } catch (e) {
     return failSave(e);

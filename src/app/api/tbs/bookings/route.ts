@@ -35,6 +35,20 @@ async function rememberParticular(particulars: string) {
   }
 }
 
+async function rememberStation(...stations: string[]) {
+  const masters = await getMasters();
+  let changed = false;
+  for (const raw of stations) {
+    const s = raw.trim();
+    if (!s) continue;
+    if (!masters.stations.some((x) => x.toLowerCase() === s.toLowerCase())) {
+      masters.stations = [s, ...masters.stations];
+      changed = true;
+    }
+  }
+  if (changed) await saveMasters(masters);
+}
+
 async function rememberListValue(
   key: "gstPaidBy" | "lrTypes" | "gstLabels",
   value: string,
@@ -160,6 +174,7 @@ export async function POST(req: Request) {
     await saveBookings(bookings);
     await rememberVehicle(booking.vehicleNo);
     await rememberParticular(booking.particulars);
+    await rememberStation(booking.bookingFrom, booking.from, booking.to);
     await rememberListValue("gstPaidBy", booking.gstPaidBy);
     await rememberListValue("lrTypes", booking.lrType);
     await rememberListValue("gstLabels", booking.gstLabel || "");
@@ -193,6 +208,7 @@ export async function PUT(req: Request) {
     await saveBookings(bookings);
     await rememberVehicle(vehicleNo);
     await rememberParticular(body.particulars);
+    await rememberStation(body.bookingFrom, body.from, body.to);
     await rememberListValue("gstPaidBy", body.gstPaidBy);
     await rememberListValue("lrTypes", body.lrType);
     await rememberListValue("gstLabels", body.gstLabel || "");

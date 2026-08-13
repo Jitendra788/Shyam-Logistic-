@@ -246,29 +246,30 @@ export default function LhcPage() {
           <div className="tbs-row">
             <div className="tbs-field">
               <label>From Station</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-md"
                 value={current.fromStation}
                 onChange={(e) => patch({ fromStation: e.target.value })}
-              >
-                <option value="">Select</option>
-                {(data?.masters.stations || []).map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
+                placeholder="Type or select…"
+                list="lhc-station-suggestions"
+                autoComplete="off"
+              />
             </div>
             <div className="tbs-field">
               <label>To Station</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-md"
                 value={current.toStation}
                 onChange={(e) => patch({ toStation: e.target.value })}
-              >
-                <option value="">Select</option>
+                placeholder="Type or select…"
+                list="lhc-station-suggestions"
+                autoComplete="off"
+              />
+              <datalist id="lhc-station-suggestions">
                 {(data?.masters.stations || []).map((s) => (
-                  <option key={s}>{s}</option>
+                  <option key={s} value={s} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <div className="tbs-field">
               <label>Challan No.</label>
