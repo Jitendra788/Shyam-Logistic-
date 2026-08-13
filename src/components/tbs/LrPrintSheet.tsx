@@ -27,7 +27,9 @@ export const DEFAULT_LR_COMPANY: LrCompany = {
 };
 
 function partyOf(parties: Party[], name: string) {
-  return parties.find((p) => p.partyName === name);
+  return parties.find(
+    (p) => p.partyName.trim().toLowerCase() === name.trim().toLowerCase(),
+  );
 }
 
 function dmy(iso: string) {
@@ -56,7 +58,18 @@ function Copy({
   const lrType = (booking.lrType || "").toLowerCase();
   const gstBy = (booking.gstPaidBy || "").toLowerCase();
   const fromStation = booking.from || booking.bookingFrom || "";
-  const remark = booking.lrType || "";
+  const rateLabel = booking.rate ? String(booking.rate) : "";
+  const charges: [string, string][] = [
+    ["Freight Rs.", amt(booking.freight)],
+    ["Door Coll.", amt(booking.doorColle)],
+    ["Door Del.", amt(booking.doorDelivery)],
+    ["Hamali", amt(booking.hamali)],
+    ["St.Chgs.", amt(booking.stCharges)],
+    ["Total Amt", amt(booking.total || booking.grandTotal)],
+    ["GST", ""],
+    ["Advance", ""],
+    ["Balance", amt(booking.grandTotal || booking.total)],
+  ];
 
   return (
     <div className="lr-copy">
@@ -64,7 +77,6 @@ function Copy({
         <div className="lr-head-left">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={LOGO_SRC} alt="" className="lr-logo-mark" />
-          <div className="lr-gst">GST : {company.gstin}</div>
         </div>
         <div className="lr-head-mid">
           <div className="lr-bless">{company.blessing}</div>
@@ -73,10 +85,14 @@ function Copy({
           <div className="lr-email">E-mail :{company.email}</div>
         </div>
         <div className="lr-head-right">
-          <b>Mob :</b>
-          {company.phone}
-          <br />
-          {company.phone2}
+          <div>
+            GST : {company.gstin}
+          </div>
+          <div>
+            Mob :{company.phone}
+            <br />
+            {company.phone2}
+          </div>
         </div>
       </header>
 
@@ -86,23 +102,33 @@ function Copy({
         </div>
         <div className="lr-risk">OWNER&apos;S RISK</div>
         <div className="lr-gst-pay">
-          <b>GST Tax Payble by</b>
-          <label>
-            <input
-              type="checkbox"
-              readOnly
-              checked={/consign?or|consigner/.test(gstBy)}
-            />{" "}
-            Consigner
-          </label>
-          <label>
-            <input type="checkbox" readOnly checked={gstBy.includes("consignee")} />{" "}
-            Consignee
-          </label>
-          <label>
-            <input type="checkbox" readOnly checked={gstBy.includes("transport")} />{" "}
-            Transporter
-          </label>
+          GST Tax Payble by Consigner/Consignee/Transporter
+          <span className="lr-gst-ticks">
+            <label>
+              <input
+                type="checkbox"
+                readOnly
+                checked={/consign?or|consigner/.test(gstBy)}
+              />
+              Consigner
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                readOnly
+                checked={gstBy.includes("consignee")}
+              />
+              Consignee
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                readOnly
+                checked={gstBy.includes("transport")}
+              />
+              Transporter
+            </label>
+          </span>
         </div>
       </div>
 
@@ -136,23 +162,28 @@ function Copy({
               <div>{dmy(booking.lrDate)}</div>
             </td>
           </tr>
+        </tbody>
+      </table>
+
+      <table className="lr-table lr-parties">
+        <tbody>
           <tr>
             <td>
               <b>Consigner</b>
               <div className="lr-strong">{booking.consignor}</div>
+              <div className="lr-small">{consignor?.address || ""}</div>
               <div className="lr-small">
-                {consignor?.address || booking.address || ""}
-              </div>
-              <div className="lr-small">
-                GST No. {consignor?.gstTin || booking.gstNo || ""}
+                GST No. {consignor?.gstTin || ""}
               </div>
             </td>
-            <td colSpan={2}>
+            <td>
               <b>Consignee</b>
               <div className="lr-strong">{booking.consignee || ""}</div>
-              <div className="lr-small">{consignee?.address || ""}</div>
               <div className="lr-small">
-                GST No. {consignee?.gstTin || ""}
+                {consignee?.address || booking.address || ""}
+              </div>
+              <div className="lr-small">
+                GST No. {consignee?.gstTin || booking.gstNo || ""}
               </div>
             </td>
           </tr>
@@ -160,6 +191,15 @@ function Copy({
       </table>
 
       <table className="lr-table lr-goods">
+        <colgroup>
+          <col className="c-art" />
+          <col className="c-desc" />
+          <col className="c-inv" />
+          <col className="c-rate" />
+          <col className="c-ch" />
+          <col className="c-fr" />
+          <col className="c-rm" />
+        </colgroup>
         <thead>
           <tr>
             <th>No.of Art</th>
@@ -176,102 +216,101 @@ function Copy({
             <td rowSpan={2}>{booking.noOfArticles || ""}</td>
             <td rowSpan={2}>{booking.particulars || ""}</td>
             <td rowSpan={2}>{booking.invNoDate || ""}</td>
-            <td rowSpan={2}>{booking.rate || ""}</td>
-            <td>Freight Rs.</td>
-            <td className="num">{amt(booking.freight)}</td>
-            <td rowSpan={11} className="lr-remark">
-              {remark}
+            <td rowSpan={9} className="lr-rate-cell">
+              <div className="lr-rate-val">{rateLabel}</div>
+              <div>
+                <b>Act.Weight</b>
+                <span>{booking.actualWt || ""}</span>
+              </div>
+              <div>
+                <b>Chg.Weight</b>
+                <span>{booking.chargedWt || booking.actualWt || ""}</span>
+              </div>
             </td>
+            <td>{charges[0][0]}</td>
+            <td className="num">{charges[0][1]}</td>
+            <td rowSpan={9} className="lr-remark"></td>
           </tr>
           <tr>
-            <td>Door Coll.</td>
-            <td className="num">{amt(booking.doorColle)}</td>
+            <td>{charges[1][0]}</td>
+            <td className="num">{charges[1][1]}</td>
           </tr>
           <tr>
-            <td colSpan={4} rowSpan={9} className="lr-value">
-              Value Rs.{" "}
-              {booking.valueRs ? `${Number(booking.valueRs)} ` : ""}
-              AS PER INVOICE
+            <td colSpan={3} rowSpan={7} className="lr-value">
+              Value Rs. AS PER INVOICE
+              {booking.valueRs ? ` ${Number(booking.valueRs)}` : ""}
             </td>
-            <td>Act.Weight</td>
-            <td className="num">{booking.actualWt || ""}</td>
+            <td>{charges[2][0]}</td>
+            <td className="num">{charges[2][1]}</td>
           </tr>
-          <tr>
-            <td>Door Del.</td>
-            <td className="num">{amt(booking.doorDelivery)}</td>
-          </tr>
-          <tr>
-            <td>Hamali</td>
-            <td className="num">{amt(booking.hamali)}</td>
-          </tr>
-          <tr>
-            <td>St.Chgs.</td>
-            <td className="num">{amt(booking.stCharges)}</td>
-          </tr>
-          <tr>
-            <td>Chg.Weight</td>
-            <td className="num">
-              {booking.chargedWt || booking.actualWt || ""}
-            </td>
-          </tr>
-          <tr>
-            <td>Total Amt</td>
-            <td className="num">{amt(booking.total || booking.grandTotal)}</td>
-          </tr>
-          <tr>
-            <td>GST</td>
-            <td className="num"></td>
-          </tr>
-          <tr>
-            <td>Advance</td>
-            <td className="num"></td>
-          </tr>
-          <tr>
-            <td>Balance</td>
-            <td className="num">{amt(booking.grandTotal || booking.total)}</td>
-          </tr>
+          {charges.slice(3).map(([label, val]) => (
+            <tr key={label}>
+              <td>{label}</td>
+              <td className="num">{val}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
-      <div className="lr-eway">
-        <span>
-          <b>Eway Bill No.</b> {booking.ewayBillNo || ""}
-        </span>
-        <span>
-          <b>Valid Date</b> {booking.validDate ? dmy(booking.validDate) : ""}
-        </span>
-        <span className="lr-paytypes">
-          <label>
-            <input
-              type="checkbox"
-              readOnly
-              checked={lrType.includes("to pay") || lrType.includes("topay")}
-            />{" "}
-            Topay
-          </label>
-          <label>
-            <input type="checkbox" readOnly checked={lrType === "paid"} /> Paid
-          </label>
-          <label>
-            <input type="checkbox" readOnly checked={lrType.includes("tbb")} /> TBB
-          </label>
-        </span>
-      </div>
-
-      <div className="lr-legal">
-        Subject To Sangli Jurisdiction, Leakage &amp; Breakage carries not
-        responsible.
-      </div>
-
-      <div className="lr-bottom">
-        <div className="lr-warn">
-          Do Not Pay Cash to Lorry Driver, Payble Check RTGS Only Shyam Logistics
-        </div>
-        <div className="lr-sign">
-          <ShyamStamp size="sm" />
-          <div>For Shyam Logistics</div>
-        </div>
-      </div>
+      <table className="lr-table lr-foot">
+        <tbody>
+          <tr>
+            <td>
+              <b>Eway Bill No.</b> {booking.ewayBillNo || ""}
+            </td>
+            <td>
+              <b>Valid Date</b>{" "}
+              {booking.validDate ? dmy(booking.validDate) : ""}
+            </td>
+            <td className="lr-sign-cell" rowSpan={3}>
+              <div>For Shyam Logistics</div>
+              <ShyamStamp size="sm" />
+            </td>
+          </tr>
+          <tr>
+            <td colSpan={2}>
+              <span className="lr-paytypes">
+                <label>
+                  <input
+                    type="checkbox"
+                    readOnly
+                    checked={
+                      lrType.includes("to pay") || lrType.includes("topay")
+                    }
+                  />{" "}
+                  Topay
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    readOnly
+                    checked={lrType === "paid"}
+                  />{" "}
+                  Paid
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    readOnly
+                    checked={lrType.includes("tbb")}
+                  />{" "}
+                  TBB
+                </label>
+              </span>
+              <span className="lr-legal">
+                Subject To Sangli Jurisdiction, Leakage &amp; Breakage carries
+                not responsible.
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td colSpan={2} className="lr-warn">
+              Do Not Pay Cash to Lorry Driver, Payble Check RTGS Only Shyam
+              Logistics
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }
