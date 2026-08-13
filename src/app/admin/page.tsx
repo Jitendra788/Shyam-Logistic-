@@ -17,6 +17,7 @@ type BookingRow = {
 };
 
 type Dash = {
+  persistent?: boolean;
   counts: {
     parties: number;
     bookings: number;
@@ -227,6 +228,15 @@ export default function AdminMasterPage() {
           </div>
         )}
       </section>
+
+      {data && data.persistent === false && (
+        <div className="tbs-msg err">
+          Server pe data save ke liye Vercel pe{" "}
+          <strong>UPSTASH_REDIS_REST_URL</strong> aur{" "}
+          <strong>UPSTASH_REDIS_REST_TOKEN</strong> set karo (Upstash free Redis).
+          Abhi sirf bundled seed data load ho rahi hai.
+        </div>
+      )}
 
       {err && (
         <div className="tbs-msg err" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>

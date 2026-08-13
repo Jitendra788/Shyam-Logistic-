@@ -1,0 +1,58 @@
+{
+  "stations": [
+    "Sangli",
+    "KAGAL",
+    "PANVAL",
+    "shirwal",
+    "SURAT",
+    "Pune",
+    "Mumbai",
+    "Kolhapur"
+  ],
+  "vehicles": [
+    "MH10AB1234",
+    "RJ11GD4197",
+    "MH45AF7861",
+    "WB25N3925",
+    "MH09CD5678"
+  ],
+  "brokers": [
+    "All",
+    "OMSAI CHICODI NISSAR MULLA",
+    "DIRECT LORRY BY VANDER",
+    "SHREE GAJENDARA",
+    "GS TARANSPOT KOP",
+    "OMKAR LOGISTICS",
+    "DELHI PANJAB ROADLINES",
+    "GURUKARPPA PATIL",
+    "MAHARVEER TARANSPOT",
+    "NEW RAVI TRANSPOT SERVICES",
+    "JAY HANUMANGARH",
+    "NAMOKAR TRANSPORT",
+    "ODC ROADLINES",
+    "VINOD AGRAVAL"
+  ],
+  "particulars": [
+    "PUMPS",
+    "CASNUB",
+    "6R1080TA 6H.2",
+    "MACHINERY",
+    "SPARE PARTS"
+  ],
+  "partyTypes": [
+    "Customer",
+    "Consignor",
+    "Consignee",
+    "Both"
+  ],
+  "gstPaidBy": [
+    "Consignor",
+    "Consignee",
+    "Transporter"
+  ],
+  "lrTypes": [
+    "Paid",
+    "To Pay",
+    "TBB"
+  ]
+}

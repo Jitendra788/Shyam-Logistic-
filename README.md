@@ -65,7 +65,17 @@ Desktop-style Master Page matching transport software screenshots:
 | Website | Public-site Enquiries / Blog / Settings |
 | Generate Backup & Exit | Downloads JSON backup |
 
-Data files live under `data/tbs/` (auto-seeded on first use).
+Data files live under `data/tbs/` locally. On **Vercel**, disk is read-only — add free Upstash Redis so booking/bills persist:
+
+1. Create DB at [console.upstash.com](https://console.upstash.com/) (Redis)
+2. Copy REST URL + TOKEN into Vercel → Project → Settings → Environment Variables:
+   ```
+   UPSTASH_REDIS_REST_URL=https://....upstash.io
+   UPSTASH_REDIS_REST_TOKEN=...
+   ```
+3. Redeploy
+
+Without Redis, the server can still **load** committed seed JSON, but new saves will fail.
 
 
 ## Data files

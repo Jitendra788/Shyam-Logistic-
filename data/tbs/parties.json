@@ -1,0 +1,74 @@
+[
+  {
+    "id": "p_msr6mey8_20fa2",
+    "partyCode": "1050",
+    "partyName": "jitendra",
+    "contactNo": "9694184427",
+    "address": "vpo dungrana",
+    "gstTin": "54455454566565",
+    "partyType": "Customer",
+    "panNo": "5455545455",
+    "opBalance": 3000,
+    "accountStartFrom": "2026-08-13"
+  },
+  {
+    "id": "p1",
+    "partyCode": "1045",
+    "partyName": "Shanbhag Engineering Company",
+    "contactNo": "9822012345",
+    "address": "MIDC Sangli",
+    "gstTin": "27AABCS1234A1Z5",
+    "partyType": "Customer",
+    "panNo": "AABCS1234A",
+    "opBalance": 0,
+    "accountStartFrom": "2025-04-01"
+  },
+  {
+    "id": "p2",
+    "partyCode": "1046",
+    "partyName": "Vijay Engineering & Mahchinry pvt Ltd",
+    "contactNo": "9876543210",
+    "address": "Kolhapur",
+    "gstTin": "27AABCV5678B1Z2",
+    "partyType": "Customer",
+    "panNo": "AABCV5678B",
+    "opBalance": 5000,
+    "accountStartFrom": "2025-04-01"
+  },
+  {
+    "id": "p3",
+    "partyCode": "1047",
+    "partyName": "PATEL HEAT EXCHANGERS PVT LTD",
+    "contactNo": "9644747779",
+    "address": "GOVINDPURA BANGALORE",
+    "gstTin": "29AABCP9999C1Z1",
+    "partyType": "Customer",
+    "panNo": "AABCP9999C",
+    "opBalance": 0,
+    "accountStartFrom": "2025-04-01"
+  },
+  {
+    "id": "p4",
+    "partyCode": "1048",
+    "partyName": "Electromech Fire Fighters Pvt Ltd",
+    "contactNo": "9988776655",
+    "address": "Pune",
+    "gstTin": "27AABCE1111D1Z3",
+    "partyType": "Customer",
+    "panNo": "AABCE1111D",
+    "opBalance": 1200,
+    "accountStartFrom": "2025-04-01"
+  },
+  {
+    "id": "p5",
+    "partyCode": "1049",
+    "partyName": "PRIDE RUBBERS",
+    "contactNo": "9123456780",
+    "address": "Surat",
+    "gstTin": "24AABCPR222E1Z4",
+    "partyType": "Customer",
+    "panNo": "AABCPR222E",
+    "opBalance": 0,
+    "accountStartFrom": "2025-04-01"
+  }
+]

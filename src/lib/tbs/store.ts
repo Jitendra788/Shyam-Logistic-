@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { Redis } from "@upstash/redis";
 import type {
   Bill,
   Booking,
@@ -13,31 +14,46 @@ import type {
 
 const DATA_DIR = path.join(process.cwd(), "data", "tbs");
 
+/** Process-local cache (helps within one serverless instance). */
+const mem = new Map<string, unknown>();
+
+function redisClient(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (!url || !token) return null;
+  return new Redis({ url, token });
+}
+
+/** True when writes survive across deploys / cold starts (Upstash). */
+export function isTbsPersistent(): boolean {
+  return Boolean(
+    process.env.UPSTASH_REDIS_REST_URL?.trim() &&
+      process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
+  );
+}
+
+function redisKey(file: string) {
+  return `shyam:tbs:${file}`;
+}
+
 async function ensureDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
   } catch {
-    // read-only hosts (e.g. Vercel) — ignore
+    // read-only hosts
   }
 }
 
-async function readJson<T>(file: string, fallback: T): Promise<T> {
-  await ensureDir();
-  const p = path.join(DATA_DIR, file);
+async function readFromFs<T>(file: string): Promise<T | null> {
   try {
-    const raw = await fs.readFile(p, "utf8");
+    const raw = await fs.readFile(path.join(DATA_DIR, file), "utf8");
     return JSON.parse(raw) as T;
   } catch {
-    try {
-      await fs.writeFile(p, JSON.stringify(fallback, null, 2), "utf8");
-    } catch {
-      // cannot persist on read-only filesystem — use in-memory fallback
-    }
-    return fallback;
+    return null;
   }
 }
 
-async function writeJson<T>(file: string, data: T): Promise<void> {
+async function writeToFs<T>(file: string, data: T): Promise<boolean> {
   await ensureDir();
   try {
     await fs.writeFile(
@@ -45,9 +61,75 @@ async function writeJson<T>(file: string, data: T): Promise<void> {
       JSON.stringify(data, null, 2),
       "utf8",
     );
-  } catch (err) {
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readJson<T>(file: string, fallback: T): Promise<T> {
+  if (mem.has(file)) {
+    return mem.get(file) as T;
+  }
+
+  const redis = redisClient();
+  if (redis) {
+    try {
+      const val = await redis.get<T>(redisKey(file));
+      if (val !== null && val !== undefined) {
+        mem.set(file, val);
+        return val;
+      }
+    } catch (err) {
+      console.error("Upstash read failed", file, err);
+    }
+  }
+
+  const fromDisk = await readFromFs<T>(file);
+  if (fromDisk !== null) {
+    mem.set(file, fromDisk);
+    // Warm Redis so later writes/reads stay consistent
+    if (redis) {
+      try {
+        await redis.set(redisKey(file), fromDisk);
+      } catch {
+        /* ignore */
+      }
+    }
+    return fromDisk;
+  }
+
+  mem.set(file, fallback);
+  if (redis) {
+    try {
+      await redis.set(redisKey(file), fallback);
+    } catch {
+      /* ignore */
+    }
+  } else {
+    await writeToFs(file, fallback);
+  }
+  return fallback;
+}
+
+async function writeJson<T>(file: string, data: T): Promise<void> {
+  mem.set(file, data);
+
+  const redis = redisClient();
+  if (redis) {
+    try {
+      await redis.set(redisKey(file), data);
+      return;
+    } catch (err) {
+      console.error("Upstash write failed", file, err);
+      throw new Error("Server data save failed (Redis). Check Upstash env vars.");
+    }
+  }
+
+  const ok = await writeToFs(file, data);
+  if (!ok) {
     throw new Error(
-      "Data save failed — local disk required (Vercel cannot persist TBS JSON).",
+      "Server cannot save TBS data. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN on Vercel.",
     );
   }
 }
@@ -95,61 +177,37 @@ export const defaultMasters: Masters = {
 const seedParties: Party[] = [
   {
     id: "p1",
-    partyCode: "1045",
-    partyName: "Shanbhag Engineering Company",
-    contactNo: "9822012345",
-    address: "MIDC Sangli",
-    gstTin: "27AABCS1234A1Z5",
+    partyCode: "1047",
+    partyName: "Shanbhag Engineering Works",
+    contactNo: "9876543210",
+    address: "Miraj",
+    gstTin: "27AAAAA0000A1Z5",
     partyType: "Customer",
-    panNo: "AABCS1234A",
+    panNo: "",
     opBalance: 0,
     accountStartFrom: "2025-04-01",
   },
   {
     id: "p2",
-    partyCode: "1046",
+    partyCode: "1048",
     partyName: "Vijay Engineering & Mahchinry pvt Ltd",
-    contactNo: "9876543210",
+    contactNo: "9822000000",
     address: "Kolhapur",
-    gstTin: "27AABCV5678B1Z2",
+    gstTin: "",
     partyType: "Customer",
-    panNo: "AABCV5678B",
-    opBalance: 5000,
-    accountStartFrom: "2025-04-01",
-  },
-  {
-    id: "p3",
-    partyCode: "1047",
-    partyName: "PATEL HEAT EXCHANGERS PVT LTD",
-    contactNo: "9644747779",
-    address: "GOVINDPURA BANGALORE",
-    gstTin: "29AABCP9999C1Z1",
-    partyType: "Customer",
-    panNo: "AABCP9999C",
+    panNo: "",
     opBalance: 0,
     accountStartFrom: "2025-04-01",
   },
   {
-    id: "p4",
-    partyCode: "1048",
-    partyName: "Electromech Fire Fighters Pvt Ltd",
-    contactNo: "9988776655",
-    address: "Pune",
-    gstTin: "27AABCE1111D1Z3",
-    partyType: "Customer",
-    panNo: "AABCE1111D",
-    opBalance: 1200,
-    accountStartFrom: "2025-04-01",
-  },
-  {
-    id: "p5",
+    id: "p3",
     partyCode: "1049",
-    partyName: "PRIDE RUBBERS",
-    contactNo: "9123456780",
-    address: "Surat",
-    gstTin: "24AABCPR222E1Z4",
+    partyName: "jitendra",
+    contactNo: "8459858242",
+    address: "Sangli",
+    gstTin: "",
     partyType: "Customer",
-    panNo: "AABCPR222E",
+    panNo: "",
     opBalance: 0,
     accountStartFrom: "2025-04-01",
   },
@@ -161,110 +219,73 @@ const seedBookings: Booking[] = [
     bookingFrom: "Sangli",
     lrNo: "388",
     lrDate: "2026-08-13",
-    from: "KAGAL",
-    to: "PANVAL",
+    from: "Sangli",
+    to: "Pune",
     vehicleNo: "MH10AB1234",
-    deliveryAt: "Godown",
-    billingParty: "Shanbhag Engineering Company",
-    consignor: "Shanbhag Engineering Company",
-    consignee: "Vijay Engineering & Mahchinry pvt Ltd",
-    address: "MIDC Sangli",
-    gstNo: "27AABCS1234A1Z5",
+    deliveryAt: "Pune",
+    billingParty: "Shanbhag Engineering Works",
+    consignor: "Shanbhag Engineering Works",
+    consignee: "ABC Traders",
+    address: "Pune",
+    gstNo: "",
     noOfArticles: "10",
-    particulars: "6R1080TA 6H.2",
-    invNoDate: "INV-101 / 12-08-2026",
-    actualWt: 7000,
-    chargedWt: 7000,
-    rate: 2.07,
-    freight: 14500,
-    hamali: 0,
-    stCharges: 100,
-    lrCharges: 0,
-    doorDelivery: 0,
-    doorColle: 0,
-    barrier: 0,
-    otherChrg: 0,
-    total: 14600,
-    grandTotal: 14600,
-    gstPaidBy: "Consignor",
-    ewayBillNo: "",
-    validDate: "2026-08-13",
-    lrType: "TBB",
-    valueRs: 150000,
-    delivered: true,
-  },
-  {
-    id: "b2",
-    bookingFrom: "Sangli",
-    lrNo: "384",
-    lrDate: "2026-08-06",
-    from: "shirwal",
-    to: "SURAT",
-    vehicleNo: "DD01AA9862",
-    deliveryAt: "DOOR DLY CC ATT",
-    billingParty: "Shanbhag Engineering Company",
-    consignor: "KIRLOSKAR BROTHERS LTD",
-    consignee: "Shanbhag Engineering Company",
-    address: "KIRLOSKARWADI TAL.PALUS SANGLI MH 416308",
-    gstNo: "27AAACK7300E1ZZ",
-    noOfArticles: "05",
     particulars: "PUMPS",
-    invNoDate: "2603000474",
-    actualWt: 7000,
-    chargedWt: 7000,
-    rate: 0,
-    freight: 0,
+    invNoDate: "",
+    actualWt: 1000,
+    chargedWt: 1000,
+    rate: 5,
+    freight: 5000,
     hamali: 0,
     stCharges: 0,
-    lrCharges: 0,
+    lrCharges: 50,
     doorDelivery: 0,
     doorColle: 0,
     barrier: 0,
     otherChrg: 0,
-    total: 0,
-    grandTotal: 0,
+    total: 5050,
+    grandTotal: 5050,
     gstPaidBy: "Consignor",
-    ewayBillNo: "212259620838",
-    validDate: "2026-08-08",
+    ewayBillNo: "",
+    validDate: "",
     lrType: "TBB",
-    valueRs: 0,
-    delivered: false,
+    valueRs: 50000,
+    delivered: true,
   },
   {
     id: "b3",
     bookingFrom: "Sangli",
-    lrNo: "385",
-    lrDate: "2026-08-07",
-    from: "KAGAL",
-    to: "SURAT",
-    vehicleNo: "MH45AF7861",
-    deliveryAt: "Godown",
+    lrNo: "390",
+    lrDate: "2026-08-10",
+    from: "Sangli",
+    to: "Mumbai",
+    vehicleNo: "MH09CD5678",
+    deliveryAt: "Mumbai",
     billingParty: "Vijay Engineering & Mahchinry pvt Ltd",
     consignor: "Vijay Engineering & Mahchinry pvt Ltd",
-    consignee: "PATEL HEAT EXCHANGERS PVT LTD",
-    address: "Kolhapur",
-    gstNo: "27AABCV5678B1Z2",
-    noOfArticles: "6",
-    particulars: "CASNUB",
-    invNoDate: "INV-90 / 06-08-2026",
-    actualWt: 5000,
-    chargedWt: 5000,
-    rate: 2.5,
-    freight: 12500,
-    hamali: 0,
-    stCharges: 100,
-    lrCharges: 0,
-    doorDelivery: 0,
+    consignee: "XYZ",
+    address: "Mumbai",
+    gstNo: "",
+    noOfArticles: "5",
+    particulars: "MACHINERY",
+    invNoDate: "",
+    actualWt: 2000,
+    chargedWt: 2000,
+    rate: 8,
+    freight: 16000,
+    hamali: 500,
+    stCharges: 0,
+    lrCharges: 50,
+    doorDelivery: 950,
     doorColle: 0,
     barrier: 0,
     otherChrg: 0,
-    total: 12600,
-    grandTotal: 12600,
-    gstPaidBy: "Transporter",
+    total: 17500,
+    grandTotal: 17500,
+    gstPaidBy: "Consignor",
     ewayBillNo: "",
-    validDate: "2026-08-13",
-    lrType: "Paid",
-    valueRs: 60000,
+    validDate: "",
+    lrType: "TBB",
+    valueRs: 200000,
     delivered: true,
   },
 ];
@@ -273,98 +294,26 @@ const seedChallans: Challan[] = [
   {
     id: "c1",
     challanNo: "1152",
-    challanDate: "2026-08-13",
-    vehicleNo: "RJ11GD4197",
-    brokerOwner: "JAY HANUMANGARH",
-    brokerPan: "ABCDE1234F",
-    fromStation: "Sangli",
-    toStation: "SURAT",
-    freight: 20000,
-    advance: 5000,
-    transfer: 0,
-    cash: 2000,
-    fuel: 3000,
-    balance: 10000,
-    driverName: "Ramesh Patil",
-    licenceNo: "MH10-2020-123",
-    engine: "ENG9988",
-    chessy: "CHS4455",
-    insuNo: "INS-7788",
-    owner: "JAY HANUMANGARH",
-    panNo: "ABCDE1234F",
-    lrIds: ["b2", "b3"],
-  },
-  {
-    id: "c2",
-    challanNo: "1023",
-    challanDate: "2026-01-17",
-    vehicleNo: "RJ11GD4197",
-    brokerOwner: "NAMOKAR TRANSPORT",
+    challanDate: "2026-08-12",
+    vehicleNo: "MH10AB1234",
+    brokerOwner: "DIRECT LORRY BY VANDER",
     brokerPan: "",
     fromStation: "Sangli",
     toStation: "Pune",
-    freight: 8000,
-    advance: 3000,
-    transfer: 0,
-    cash: 0,
-    fuel: 0,
-    balance: 5000,
-    driverName: "",
-    licenceNo: "",
-    engine: "",
-    chessy: "",
-    insuNo: "",
-    owner: "NAMOKAR TRANSPORT",
-    panNo: "",
-    lrIds: [],
-  },
-  {
-    id: "c3",
-    challanNo: "1029",
-    challanDate: "2026-01-17",
-    vehicleNo: "MH45AF7861",
-    brokerOwner: "ODC ROADLINES",
-    brokerPan: "",
-    fromStation: "Kolhapur",
-    toStation: "Mumbai",
-    freight: 9000,
+    freight: 20000,
     advance: 5000,
     transfer: 0,
     cash: 0,
-    fuel: 0,
-    balance: 4000,
+    fuel: 5000,
+    balance: 10000,
     driverName: "",
     licenceNo: "",
     engine: "",
     chessy: "",
     insuNo: "",
-    owner: "ODC ROADLINES",
+    owner: "",
     panNo: "",
-    lrIds: [],
-  },
-  {
-    id: "c4",
-    challanNo: "1030",
-    challanDate: "2026-01-18",
-    vehicleNo: "WB25N3925",
-    brokerOwner: "VINOD AGRAVAL",
-    brokerPan: "",
-    fromStation: "Sangli",
-    toStation: "SURAT",
-    freight: 27000,
-    advance: 7000,
-    transfer: 0,
-    cash: 0,
-    fuel: 0,
-    balance: 20000,
-    driverName: "",
-    licenceNo: "",
-    engine: "",
-    chessy: "",
-    insuNo: "",
-    owner: "VINOD AGRAVAL",
-    panNo: "",
-    lrIds: [],
+    lrIds: ["b1"],
   },
 ];
 
@@ -373,7 +322,7 @@ const seedBills: Bill[] = [
   {
     id: "bill1",
     billNo: "147",
-    billDate: "2026-08-13",
+    billDate: "2026-08-11",
     partyName: "Vijay Engineering & Mahchinry pvt Ltd",
     totalAmount: 17500,
     remark: "",
@@ -440,7 +389,18 @@ export async function saveNotes(data: NoteVoucher[]) {
   return writeJson("notes.json", data);
 }
 
-export function nextCode(items: { partyCode?: string; lrNo?: string; challanNo?: string; billNo?: string; mrNo?: string; voucherNo?: string }[], key: string, start = 1000) {
+export function nextCode(
+  items: {
+    partyCode?: string;
+    lrNo?: string;
+    challanNo?: string;
+    billNo?: string;
+    mrNo?: string;
+    voucherNo?: string;
+  }[],
+  key: string,
+  start = 1000,
+) {
   const nums = items
     .map((i) => Number((i as Record<string, string>)[key]))
     .filter((n) => Number.isFinite(n));

@@ -8,6 +8,7 @@ import {
   getMoneyReceipts,
   getNotes,
   getParties,
+  isTbsPersistent,
 } from "@/lib/tbs/store";
 
 export async function GET() {
@@ -183,6 +184,7 @@ export async function GET() {
     }));
 
   return ok({
+    persistent: isTbsPersistent(),
     counts: {
       parties: parties.length,
       bookings: bookings.length,
@@ -232,6 +234,7 @@ export async function GET() {
   } catch (err) {
     console.error("dashboard failed", err);
     return ok({
+      persistent: isTbsPersistent(),
       counts: {
         parties: 0,
         bookings: 0,
