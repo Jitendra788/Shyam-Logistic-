@@ -81,21 +81,35 @@ export default function LhcPage() {
     setForm({ ...next, balance });
   }
 
+  function lrFreightSum(ids: string[]) {
+    return ids.reduce((s, id) => {
+      const b = data?.bookings.find((x) => x.id === id);
+      return s + Number(b?.freight || 0);
+    }, 0);
+  }
+
   function toggleLr(id: string) {
-    setSelectedLrs((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    const next = selectedLrs.includes(id)
+      ? selectedLrs.filter((x) => x !== id)
+      : [...selectedLrs, id];
+    setSelectedLrs(next);
+    const sum = lrFreightSum(next);
+    patch({ freight: sum });
   }
 
   function pickLr(row: Booking) {
     const fromStation = row.from || row.bookingFrom || current.fromStation;
     const toStation = row.to || current.toStation;
+    const nextIds = selectedLrs.includes(row.id)
+      ? selectedLrs
+      : [...selectedLrs, row.id];
+    setSelectedLrs(nextIds);
     patch({
       vehicleNo: row.vehicleNo || current.vehicleNo,
       fromStation,
       toStation,
+      freight: lrFreightSum(nextIds),
     });
-    setSelectedLrs((prev) => (prev.includes(row.id) ? prev : [...prev, row.id]));
   }
 
   function loadChallan(c: Challan) {

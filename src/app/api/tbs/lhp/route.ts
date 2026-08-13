@@ -1,5 +1,6 @@
 import { bad, failSave, ok, requireAuth } from "@/lib/tbs/api";
 import {
+  getBookings,
   getChallans,
   getLhpPayments,
   getMasters,
@@ -12,12 +13,13 @@ export async function GET() {
   const denied = await requireAuth();
   if (denied) return denied;
   try {
-    const [payments, challans, masters] = await Promise.all([
+    const [payments, challans, masters, bookings] = await Promise.all([
       getLhpPayments(),
       getChallans(),
       getMasters(),
+      getBookings(),
     ]);
-    return ok({ payments, challans, masters });
+    return ok({ payments, challans, masters, bookings });
   } catch (e) {
     return failSave(e);
   }
