@@ -129,18 +129,18 @@
 }
 
 .shyam-stamp-sm {
-  width: 72px;
-  height: 72px;
-}
-
-.shyam-stamp-md {
   width: 88px;
   height: 88px;
 }
 
-.shyam-stamp-lg {
+.shyam-stamp-md {
   width: 110px;
   height: 110px;
+}
+
+.shyam-stamp-lg {
+  width: 128px;
+  height: 128px;
 }
 
 .shyam-sign-block {

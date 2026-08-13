@@ -209,7 +209,7 @@ function Copy({
           </div>
         </div>
         <div className="lr-sign">
-          <ShyamStamp size="md" />
+          <ShyamStamp size="lg" />
           <div>For Shyam Logistics</div>
         </div>
       </div>

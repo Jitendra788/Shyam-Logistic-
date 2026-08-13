@@ -420,7 +420,7 @@ export function ReportScreen({
 
         <div className="rpt-sign">
           <div>For Shyam Logistics</div>
-          <ShyamStamp size="sm" />
+          <ShyamStamp size="md" />
         </div>
       </div>
     </FormWindow>

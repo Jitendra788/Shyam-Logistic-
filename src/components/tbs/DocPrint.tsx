@@ -95,7 +95,7 @@ function Shell({
           Do Not Pay Cash to Lorry Driver — Cheque / RTGS only
         </div>
         <div className="doc-sign">
-          <ShyamStamp size="sm" />
+          <ShyamStamp size="md" />
           <div>For Shyam Logistics</div>
         </div>
       </div>

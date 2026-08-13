@@ -2,6 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { installTbsPersist } from "@/lib/tbs/tbsPersist";
+
+if (typeof window !== "undefined") installTbsPersist();
 
 export function useAdminAuth() {
   const router = useRouter();

@@ -235,31 +235,30 @@ export default function AdminMasterPage() {
             !
           </span>
           <div className="tbs-msg-text">
-            <strong>Save / Delete server pe tabhi chalega jab Redis set ho.</strong>
+            <strong>Save / Delete is browser pe chalega.</strong>
             <ol className="tbs-setup-steps">
               <li>
-                Open{" "}
+                Ab Add / Update / Delete is computer ke browser me save hoga
+                (Vercel disk write nahi karti).
+              </li>
+              <li>
+                Doosre device / Chrome se data dikhana ho to Redis lagao:{" "}
                 <a
                   href="https://console.upstash.com"
                   target="_blank"
                   rel="noreferrer"
                 >
                   console.upstash.com
-                </a>{" "}
-                → Create Redis DB (free)
+                </a>
               </li>
               <li>
-                Copy <code>UPSTASH_REDIS_REST_URL</code> +{" "}
-                <code>UPSTASH_REDIS_REST_TOKEN</code>
+                Vercel → Settings → Environment Variables me{" "}
+                <code>UPSTASH_REDIS_REST_URL</code> +{" "}
+                <code>UPSTASH_REDIS_REST_TOKEN</code> (Production) → Redeploy
               </li>
-              <li>
-                Vercel → Project → Settings → Environment Variables → dono add
-                (Production)
-              </li>
-              <li>Deployments → latest → Redeploy</li>
             </ol>
-            Abhi sirf seed data dikh rahi hai — Add/Delete fail hoga jab tak
-            Redis set nahi hota.
+            Excel Backup regular lo — browser cache clear hone pe local data
+            hat sakta hai.
           </div>
         </div>
       )}

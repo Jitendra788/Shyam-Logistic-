@@ -17,14 +17,25 @@ const DATA_DIR = path.join(process.cwd(), "data", "tbs");
 /** Process-local cache (helps within one serverless instance). */
 const mem = new Map<string, unknown>();
 
+function env(name: string) {
+  const v = process.env[name]?.trim();
+  if (!v) return "";
+  return v.replace(/^["']|["']$/g, "");
+}
+
 function redisClient(): Redis | null {
   const url =
-    process.env.UPSTASH_REDIS_REST_URL?.trim() ||
-    process.env.KV_REST_API_URL?.trim();
+    env("UPSTASH_REDIS_REST_URL") ||
+    env("KV_REST_API_URL") ||
+    env("UPSTASH_REDIS_URL") ||
+    env("REDIS_URL");
   const token =
-    process.env.UPSTASH_REDIS_REST_TOKEN?.trim() ||
-    process.env.KV_REST_API_TOKEN?.trim();
+    env("UPSTASH_REDIS_REST_TOKEN") ||
+    env("KV_REST_API_TOKEN") ||
+    env("UPSTASH_REDIS_TOKEN") ||
+    env("REDIS_TOKEN");
   if (!url || !token) return null;
+  if (!url.startsWith("http")) return null;
   return new Redis({ url, token });
 }
 

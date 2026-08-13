@@ -5,6 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { downloadExcelBackup } from "@/lib/tbs/excel";
+import { installTbsPersist } from "@/lib/tbs/tbsPersist";
+
+if (typeof window !== "undefined") installTbsPersist();
 
 type NavLink = { href: string; label: string };
 type NavGroup = { id: string; label: string; links: NavLink[] };

@@ -9,6 +9,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useAdminAuth } from "@/components/tbs/useTbs";
 import { downloadAsExcel } from "@/lib/tbs/excel";
+import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 
 type StatusKey =
   | ""
@@ -319,6 +320,11 @@ export default function BookingReportPage() {
             Clear Filter
           </button>
         )}
+      </div>
+
+      <div className="rpt-sign">
+        <div>For Shyam Logistics</div>
+        <ShyamStamp size="md" />
       </div>
     </FormWindow>
   );

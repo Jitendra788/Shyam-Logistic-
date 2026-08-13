@@ -1,6 +1,6 @@
 "use client";
 
-export const SHYAM_STAMP_SRC = "/brand/shyam-stamp.svg";
+export const SHYAM_STAMP_SRC = "/brand/shyam-stamp.png";
 
 /** Company rubber-stamp image — use on all printouts. */
 export function ShyamStamp({

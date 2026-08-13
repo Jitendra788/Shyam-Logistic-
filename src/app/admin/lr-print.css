@@ -217,6 +217,28 @@
   gap: 2px;
 }
 
+.lr-sign .shyam-stamp,
+.shyam-stamp {
+  object-fit: contain;
+  display: block;
+  background: #fff;
+}
+
+.shyam-stamp-sm {
+  width: 88px;
+  height: 88px;
+}
+
+.shyam-stamp-md {
+  width: 110px;
+  height: 110px;
+}
+
+.shyam-stamp-lg {
+  width: 128px;
+  height: 128px;
+}
+
 .lr-disclaimer {
   margin-top: 4px;
   font-size: 9px;
