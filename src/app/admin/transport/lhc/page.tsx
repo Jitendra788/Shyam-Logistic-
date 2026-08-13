@@ -87,6 +87,17 @@ export default function LhcPage() {
     );
   }
 
+  function pickLr(row: Booking) {
+    const fromStation = row.from || row.bookingFrom || current.fromStation;
+    const toStation = row.to || current.toStation;
+    patch({
+      vehicleNo: row.vehicleNo || current.vehicleNo,
+      fromStation,
+      toStation,
+    });
+    setSelectedLrs((prev) => (prev.includes(row.id) ? prev : [...prev, row.id]));
+  }
+
   function loadChallan(c: Challan) {
     setForm(c);
     setSelectedLrs(c.lrIds || []);
@@ -381,6 +392,8 @@ export default function LhcPage() {
               { key: "weight", label: "Weight" },
             ]}
             rows={lrRows}
+            selectedId={selectedLrs[selectedLrs.length - 1] || null}
+            onSelect={pickLr}
             renderCell={(row, key, i) => {
               if (key === "select")
                 return (
@@ -388,6 +401,7 @@ export default function LhcPage() {
                     type="checkbox"
                     checked={selectedLrs.includes(row.id)}
                     onChange={() => toggleLr(row.id)}
+                    onClick={(e) => e.stopPropagation()}
                   />
                 );
               if (key === "sr") return i + 1;

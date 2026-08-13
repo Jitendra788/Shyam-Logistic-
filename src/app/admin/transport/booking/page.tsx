@@ -92,7 +92,24 @@ export default function BookingPage() {
   const [saving, setSaving] = useState(false);
 
   const current = form || blank(data?.nextLr || "389");
-  const partyNames = (data?.parties || []).map((p) => p.partyName);
+  const parties = data?.parties || [];
+  const partyNames = parties.map((p) => p.partyName);
+
+  function namesForRole(role: "consignor" | "consignee", selected = "") {
+    const list = parties
+      .filter((p) => {
+        const t = (p.partyType || "").toLowerCase();
+        if (t === "both") return true;
+        if (role === "consignor") return t === "consignor" || t === "consigner";
+        return t === "consignee";
+      })
+      .map((p) => p.partyName);
+    if (selected && !list.includes(selected)) list.unshift(selected);
+    return list;
+  }
+
+  const consignorNames = namesForRole("consignor", current.consignor);
+  const consigneeNames = namesForRole("consignee", current.consignee);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -354,7 +371,7 @@ export default function BookingPage() {
                 onChange={(e) => pickConsignor(e.target.value)}
               >
                 <option value="">Select</option>
-                {partyNames.map((n) => (
+                {consignorNames.map((n) => (
                   <option key={n}>{n}</option>
                 ))}
               </select>
@@ -370,7 +387,7 @@ export default function BookingPage() {
                 onChange={(e) => pickConsignee(e.target.value)}
               >
                 <option value="">Select</option>
-                {partyNames.map((n) => (
+                {consigneeNames.map((n) => (
                   <option key={n}>{n}</option>
                 ))}
               </select>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { fmtDate } from "@/components/tbs/FormPrimitives";
 import { DEFAULT_LR_COMPANY, LrPrintSheet } from "@/components/tbs/LrPrintSheet";
 import { ShyamStamp } from "@/components/tbs/ShyamStamp";
@@ -279,7 +280,20 @@ export function TaxInvoicePrint({
     Number(totalAmount) ||
     lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
 
-  const padRows = Math.max(0, 8 - lrs.length);
+  const padRows = Math.max(0, 3 - lrs.length);
+
+  useEffect(() => {
+    document.documentElement.classList.add("tax-inv-print-root");
+    const style = document.createElement("style");
+    style.id = "tax-inv-page-size";
+    style.textContent =
+      "@media print { @page { size: A4 landscape; margin: 6mm; } }";
+    document.head.appendChild(style);
+    return () => {
+      document.documentElement.classList.remove("tax-inv-print-root");
+      style.remove();
+    };
+  }, []);
 
   return (
     <div className="tax-inv">
@@ -424,7 +438,7 @@ export function TaxInvoicePrint({
         <div className="tax-inv-sign-l">Authorised Signature</div>
         <div className="tax-inv-sign-c">Reciever&apos;s Sign</div>
         <div className="tax-inv-sign-r">
-          <ShyamStamp size="lg" />
+          <ShyamStamp size="md" />
           <div className="tax-inv-for">For Shyam Logistics</div>
         </div>
       </div>
