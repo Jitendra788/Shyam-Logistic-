@@ -205,20 +205,47 @@
 
 .lr-rate-cell {
   vertical-align: top;
+  padding: 0 !important;
   font-size: 11px;
 }
 
-.lr-rate-val {
-  font-weight: 700;
-  margin-bottom: 8px;
-  min-height: 16px;
+.lr-rate-inner {
+  width: 100%;
+  height: 100%;
+  min-height: 144px;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-.lr-rate-cell div + div {
-  margin-top: 8px;
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
+.lr-rate-inner td {
+  border: none !important;
+  border-bottom: 1px solid #000 !important;
+  padding: 4px 3px !important;
+  text-align: center;
+  vertical-align: middle;
+  height: 33.33%;
+}
+
+.lr-rate-inner td.lr-rate-wt-last {
+  border-bottom: none !important;
+}
+
+.lr-rate-fix {
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.lr-rate-wt .lr-wt-label {
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.lr-rate-wt .lr-wt-val {
+  font-weight: 700;
+  font-size: 12px;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 .lr-value {

@@ -221,15 +221,31 @@ function Copy({
             <td rowSpan={2}>{booking.particulars || ""}</td>
             <td rowSpan={2}>{booking.invNoDate || ""}</td>
             <td rowSpan={9} className="lr-rate-cell">
-              <div className="lr-rate-val">{rateLabel}</div>
-              <div>
-                <b>Act.Weight</b>
-                <span>{booking.actualWt || ""}</span>
-              </div>
-              <div>
-                <b>Chg.Weight</b>
-                <span>{booking.chargedWt || booking.actualWt || ""}</span>
-              </div>
+              <table className="lr-rate-inner">
+                <tbody>
+                  <tr>
+                    <td className="lr-rate-fix">
+                      {rateLabel || "FIX"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="lr-rate-wt">
+                      <div className="lr-wt-label">Act.Weight</div>
+                      <div className="lr-wt-val">
+                        {booking.actualWt || ""}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="lr-rate-wt lr-rate-wt-last">
+                      <div className="lr-wt-label">Chg.Weight</div>
+                      <div className="lr-wt-val">
+                        {booking.chargedWt || booking.actualWt || ""}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </td>
             <td>{charges[0][0]}</td>
             <td className="num">{charges[0][1]}</td>
