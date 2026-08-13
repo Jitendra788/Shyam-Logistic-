@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   FormWindow,
+  ManualAmountInput,
   fmtDate,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
@@ -213,19 +214,19 @@ export default function MoneyReceiptNewPage() {
                   <td>{row.outstanding}</td>
                   <td>{row.mrNo}</td>
                   <td>
-                    <input
+                    <ManualAmountInput
                       className="tbs-input w-sm"
-                      type="number"
+                      syncKey={`${row.id}-paid`}
                       value={row.paidAmt}
-                      onChange={(e) => updateRow(row.id, { paidAmt: Number(e.target.value) })}
+                      onChange={(n) => updateRow(row.id, { paidAmt: n })}
                     />
                   </td>
                   <td>
-                    <input
+                    <ManualAmountInput
                       className="tbs-input w-sm"
-                      type="number"
+                      syncKey={`${row.id}-ded`}
                       value={row.deduction}
-                      onChange={(e) => updateRow(row.id, { deduction: Number(e.target.value) })}
+                      onChange={(n) => updateRow(row.id, { deduction: n })}
                     />
                   </td>
                   <td>{row.balance}</td>

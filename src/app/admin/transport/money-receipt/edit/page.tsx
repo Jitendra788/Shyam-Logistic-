@@ -5,6 +5,7 @@ import {
   ActionButtons,
   DataGrid,
   FormWindow,
+  ManualAmountInput,
   PrintCellButton,
   fmtDate,
 } from "@/components/tbs/FormPrimitives";
@@ -56,31 +57,30 @@ export default function MoneyReceiptEditPage() {
         <div className="tbs-row">
           <div className="tbs-field">
             <label>Paid Amt</label>
-            <input
+            <ManualAmountInput
               className="tbs-input w-sm"
-              type="number"
+              syncKey={`${selected.id}-paid`}
               value={selected.paidAmt}
-              onChange={(e) =>
+              onChange={(n) =>
                 setSelected({
                   ...selected,
-                  paidAmt: Number(e.target.value),
-                  balance:
-                    selected.outstanding - Number(e.target.value) - selected.deduction,
+                  paidAmt: n,
+                  balance: selected.outstanding - n - selected.deduction,
                 })
               }
             />
           </div>
           <div className="tbs-field">
             <label>Deduction</label>
-            <input
+            <ManualAmountInput
               className="tbs-input w-sm"
-              type="number"
+              syncKey={`${selected.id}-ded`}
               value={selected.deduction}
-              onChange={(e) =>
+              onChange={(n) =>
                 setSelected({
                   ...selected,
-                  deduction: Number(e.target.value),
-                  balance: selected.outstanding - selected.paidAmt - Number(e.target.value),
+                  deduction: n,
+                  balance: selected.outstanding - selected.paidAmt - n,
                 })
               }
             />

@@ -5,6 +5,7 @@ import {
   ActionButtons,
   DataGrid,
   FormWindow,
+  ManualAmountInput,
   PrintCellButton,
   fmtDate,
   todayISO,
@@ -111,11 +112,11 @@ export function NoteForm({
         </div>
         <div className="tbs-field">
           <label>Amount</label>
-          <input
+          <ManualAmountInput
             className="tbs-input w-sm"
-            type="number"
+            syncKey={form.id || form.voucherNo}
             value={form.amount}
-            onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+            onChange={(n) => setForm({ ...form, amount: n })}
           />
         </div>
       </div>

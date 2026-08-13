@@ -5,6 +5,7 @@ import {
   ActionButtons,
   DataGrid,
   FormWindow,
+  ManualAmountInput,
   PrintCellButton,
   fmtDate,
   todayISO,
@@ -354,20 +355,20 @@ export default function BookingPage() {
             </div>
             <div className="tbs-field">
               <label>Actual Wt.</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-actualWt`}
                 value={current.actualWt}
-                onChange={(e) => patch({ actualWt: Number(e.target.value) })}
+                onChange={(n) => patch({ actualWt: n })}
               />
             </div>
             <div className="tbs-field">
               <label>Charged Wt.</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-chargedWt`}
                 value={current.chargedWt}
-                onChange={(e) => patch({ chargedWt: Number(e.target.value) })}
+                onChange={(n) => patch({ chargedWt: n })}
               />
             </div>
           </div>
@@ -375,11 +376,11 @@ export default function BookingPage() {
           <div className="tbs-row">
             <div className="tbs-field">
               <label>Rate</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-rate`}
                 value={current.rate}
-                onChange={(e) => patch({ rate: Number(e.target.value) })}
+                onChange={(n) => patch({ rate: n })}
               />
             </div>
           </div>
@@ -400,11 +401,11 @@ export default function BookingPage() {
           ).map(([key, label]) => (
             <div key={key} style={{ display: "contents" }}>
               <label>{label}</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input"
-                type="number"
+                syncKey={`${current.id}-${key}`}
                 value={current[key]}
-                onChange={(e) => patch({ [key]: Number(e.target.value) })}
+                onChange={(n) => patch({ [key]: n })}
               />
             </div>
           ))}
@@ -446,11 +447,11 @@ export default function BookingPage() {
             ))}
           </select>
           <label>Value Rs.</label>
-          <input
+          <ManualAmountInput
             className="tbs-input"
-            type="number"
+            syncKey={`${current.id}-valueRs`}
             value={current.valueRs}
-            onChange={(e) => patch({ valueRs: Number(e.target.value) })}
+            onChange={(n) => patch({ valueRs: n })}
           />
           <label>Delivered</label>
           <label style={{ display: "flex", alignItems: "center", gap: 6 }}>

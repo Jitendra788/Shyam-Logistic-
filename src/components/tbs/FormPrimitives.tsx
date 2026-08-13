@@ -1,6 +1,62 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+/** Parse manually typed amount (no spinner, commas OK). */
+export function parseManualNumber(raw: string): number {
+  const s = raw.replace(/,/g, "").trim();
+  if (!s || s === "-" || s === ".") return 0;
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Text input for amounts — manual type, no up/down arrows. */
+export function ManualAmountInput({
+  className = "tbs-input",
+  value,
+  onChange,
+  syncKey = "",
+  placeholder = "0",
+  readOnly,
+}: {
+  className?: string;
+  value: number;
+  onChange: (n: number) => void;
+  /** Change when another row is selected (resets display). */
+  syncKey?: string;
+  placeholder?: string;
+  readOnly?: boolean;
+}) {
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    setText(value === 0 ? "" : String(value));
+  }, [syncKey, value]);
+
+  return (
+    <input
+      className={`${className} tbs-manual-num`}
+      type="text"
+      inputMode="decimal"
+      placeholder={placeholder}
+      readOnly={readOnly}
+      value={text}
+      onChange={(e) => {
+        const v = e.target.value;
+        if (v === "" || /^-?\d*\.?\d*$/.test(v)) {
+          setText(v);
+          onChange(parseManualNumber(v));
+        }
+      }}
+      onBlur={() => {
+        const n = parseManualNumber(text);
+        setText(n === 0 ? "" : String(n));
+        onChange(n);
+      }}
+    />
+  );
+}
 
 export function FormWindow({
   title,

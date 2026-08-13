@@ -922,6 +922,29 @@
   border-color: var(--tbs-navy);
 }
 
+/* Manual amount — no spinner arrows */
+.tbs-manual-num {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.tbs-manual-num::-webkit-outer-spin-button,
+.tbs-manual-num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input.tbs-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input.tbs-input[type="number"]::-webkit-outer-spin-button,
+input.tbs-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .tbs-input.w-sm,
 .tbs-select.w-sm {
   width: 100px;

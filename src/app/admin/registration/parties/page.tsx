@@ -5,6 +5,7 @@ import {
   ActionButtons,
   DataGrid,
   FormWindow,
+  ManualAmountInput,
   PrintCellButton,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
@@ -130,11 +131,11 @@ export default function PartyCreationPage() {
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
               <label style={{ width: 120 }}>OP.Balance</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-full"
-                type="number"
+                syncKey={current.id || current.partyCode}
                 value={current.opBalance}
-                onChange={(e) => set("opBalance", Number(e.target.value))}
+                onChange={(n) => set("opBalance", n)}
               />
             </div>
           </div>

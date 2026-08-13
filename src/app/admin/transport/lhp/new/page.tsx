@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   DataGrid,
   FormWindow,
+  ManualAmountInput,
   fmtDate,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
@@ -166,11 +167,11 @@ export default function LhpNewPage() {
           if (key === "outstanding" || key === "balance") return row[key];
           if (key === "paidAmt" || key === "deduction")
             return (
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${row.id}-${key}`}
                 value={row[key]}
-                onChange={(e) => updateRow(row.id, { [key]: Number(e.target.value) })}
+                onChange={(n) => updateRow(row.id, { [key]: n })}
               />
             );
           if (key === "narration")

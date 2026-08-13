@@ -5,6 +5,7 @@ import {
   ActionButtons,
   DataGrid,
   FormWindow,
+  ManualAmountInput,
   PrintCellButton,
   fmtDate,
   todayISO,
@@ -239,47 +240,47 @@ export default function LhcPage() {
             </div>
             <div className="tbs-field">
               <label>Freight</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-freight`}
                 value={current.freight}
-                onChange={(e) => patch({ freight: Number(e.target.value) })}
+                onChange={(n) => patch({ freight: n })}
               />
             </div>
             <div className="tbs-field">
               <label>Advance</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-advance`}
                 value={current.advance}
-                onChange={(e) => patch({ advance: Number(e.target.value) })}
+                onChange={(n) => patch({ advance: n })}
               />
             </div>
             <div className="tbs-field">
               <label>Transfer</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-transfer`}
                 value={current.transfer}
-                onChange={(e) => patch({ transfer: Number(e.target.value) })}
+                onChange={(n) => patch({ transfer: n })}
               />
             </div>
             <div className="tbs-field">
               <label>Cash</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-cash`}
                 value={current.cash}
-                onChange={(e) => patch({ cash: Number(e.target.value) })}
+                onChange={(n) => patch({ cash: n })}
               />
             </div>
             <div className="tbs-field">
               <label>Fuel</label>
-              <input
+              <ManualAmountInput
                 className="tbs-input w-sm"
-                type="number"
+                syncKey={`${current.id}-fuel`}
                 value={current.fuel}
-                onChange={(e) => patch({ fuel: Number(e.target.value) })}
+                onChange={(n) => patch({ fuel: n })}
               />
             </div>
             <div className="tbs-field">
