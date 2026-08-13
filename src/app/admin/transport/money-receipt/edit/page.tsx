@@ -7,7 +7,9 @@ import {
   FormWindow,
   ManualAmountInput,
   PrintCellButton,
+  StatusBanner,
   fmtDate,
+  readApiError,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
@@ -31,10 +33,10 @@ export default function MoneyReceiptEditPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Update failed");
+      setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Updated");
+    setMsg("Updated successfully — Money receipt update ho gaya");
     await reload();
   }
 
@@ -42,7 +44,7 @@ export default function MoneyReceiptEditPage() {
     if (!selected || !confirm("Delete receipt?")) return;
     await fetch(`/api/tbs/money-receipts?id=${selected.id}`, { method: "DELETE" });
     setSelected(null);
-    setMsg("Deleted");
+    setMsg("Deleted successfully");
     await reload();
   }
 
@@ -50,8 +52,8 @@ export default function MoneyReceiptEditPage() {
 
   return (
     <FormWindow title="Frm_MR (Edit)">
-      {msg && <div className="tbs-msg">{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       {selected && (
         <div className="tbs-row">

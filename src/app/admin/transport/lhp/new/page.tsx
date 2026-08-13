@@ -5,7 +5,9 @@ import {
   DataGrid,
   FormWindow,
   ManualAmountInput,
+  StatusBanner,
   fmtDate,
+  readApiError,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -108,10 +110,10 @@ export default function LhpNewPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Save failed");
+      setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Payment saved");
+    setMsg("Added successfully — LHP payment save ho gaya");
     setRows(null);
     await reload();
   }
@@ -120,8 +122,8 @@ export default function LhpNewPage() {
 
   return (
     <FormWindow title="Frm_BhadaChitti">
-      {msg && <div className="tbs-msg">{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-row" style={{ justifyContent: "space-between" }}>
         <div className="tbs-field">

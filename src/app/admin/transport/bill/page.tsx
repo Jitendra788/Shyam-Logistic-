@@ -6,7 +6,9 @@ import {
   DataGrid,
   FormWindow,
   PrintCellButton,
+  StatusBanner,
   fmtDate,
+  readApiError,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -85,10 +87,10 @@ export default function BillPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg((await res.json()).error || "Save failed");
+      setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Bill saved");
+    setMsg("Added successfully — Bill save ho gaya");
     setEditId(null);
     setSelected([]);
     setRemark("");
@@ -115,10 +117,10 @@ export default function BillPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Update failed");
+      setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Bill updated");
+    setMsg("Updated successfully — Bill update ho gaya");
     await reload();
   }
 
@@ -126,7 +128,7 @@ export default function BillPage() {
     if (!editId || !confirm("Delete bill?")) return;
     await fetch(`/api/tbs/bills?id=${editId}`, { method: "DELETE" });
     setEditId(null);
-    setMsg("Deleted");
+    setMsg("Deleted successfully");
     await reload();
   }
 
@@ -134,8 +136,8 @@ export default function BillPage() {
 
   return (
     <FormWindow title="Frm_Bill">
-      {msg && <div className="tbs-msg">{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-row">
         <div className="tbs-field">

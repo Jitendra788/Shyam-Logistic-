@@ -7,7 +7,9 @@ import {
   FormWindow,
   ManualAmountInput,
   PrintCellButton,
+  StatusBanner,
   fmtDate,
+  readApiError,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -99,10 +101,10 @@ export default function LhcPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Save failed");
+      setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Challan saved");
+    setMsg("Added successfully — Challan save ho gaya");
     setForm(null);
     setSelectedLrs([]);
     await reload();
@@ -118,10 +120,10 @@ export default function LhcPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Update failed");
+      setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Challan updated");
+    setMsg("Updated successfully — Challan update ho gaya");
     await reload();
   }
 
@@ -130,7 +132,7 @@ export default function LhcPage() {
     await fetch(`/api/tbs/challans?id=${current.id}`, { method: "DELETE" });
     setForm(null);
     setSelectedLrs([]);
-    setMsg("Deleted");
+    setMsg("Deleted successfully");
     await reload();
   }
 
@@ -138,8 +140,8 @@ export default function LhcPage() {
 
   return (
     <FormWindow title="Frm_PartChallan">
-      {msg && <div className="tbs-msg">{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-form-with-side">
         <div className="main">

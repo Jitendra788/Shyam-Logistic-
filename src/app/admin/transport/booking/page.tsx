@@ -7,7 +7,9 @@ import {
   FormWindow,
   ManualAmountInput,
   PrintCellButton,
+  StatusBanner,
   fmtDate,
+  readApiError,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -171,14 +173,15 @@ export default function BookingPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
       setMsg(
-        (err as { error?: string }).error ||
+        await readApiError(
+          res,
           "Save failed — Vercel pe Upstash Redis set karo",
+        ),
       );
       return;
     }
-    setMsg("Booking saved");
+    setMsg("Added successfully — Booking / LR save ho gaya");
     setForm(null);
     await reload();
   }
@@ -193,10 +196,10 @@ export default function BookingPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Update failed");
+      setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Booking updated");
+    setMsg("Updated successfully — Booking update ho gaya");
     await reload();
   }
 
@@ -204,7 +207,7 @@ export default function BookingPage() {
     if (!current.id || !confirm("Delete booking?")) return;
     await fetch(`/api/tbs/bookings?id=${current.id}`, { method: "DELETE" });
     setForm(null);
-    setMsg("Deleted");
+    setMsg("Deleted successfully");
     await reload();
   }
 
@@ -212,8 +215,8 @@ export default function BookingPage() {
 
   return (
     <FormWindow title="Frm_Booking">
-      {msg && <div className="tbs-msg">{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-split">
         <div>

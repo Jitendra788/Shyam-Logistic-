@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import {
   FormWindow,
   ManualAmountInput,
+  StatusBanner,
   fmtDate,
+  readApiError,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -106,10 +108,10 @@ export default function MoneyReceiptNewPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Save failed");
+      setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Money receipt saved");
+    setMsg("Added successfully — Money receipt save ho gaya");
     setRows(null);
     await reload();
   }
@@ -118,8 +120,8 @@ export default function MoneyReceiptNewPage() {
 
   return (
     <FormWindow title="Frm_MR">
-      {msg && <div className="tbs-msg">{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-row">
         <div className="tbs-field">

@@ -80,6 +80,55 @@ export function FormWindow({
   );
 }
 
+/** Success / error banner — scrolls into view; success auto-hides after 4s. */
+export function StatusBanner({
+  message,
+  onClear,
+}: {
+  message: string;
+  onClear?: () => void;
+}) {
+  const isErr = /fail|error|nahi|required|pehle|cannot|expire|select|enter /i.test(
+    message,
+  );
+
+  useEffect(() => {
+    if (!message) return;
+    document
+      .getElementById("tbs-flash")
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (!isErr && onClear) {
+      const t = window.setTimeout(onClear, 4500);
+      return () => window.clearTimeout(t);
+    }
+  }, [message, isErr, onClear]);
+
+  if (!message) return null;
+
+  return (
+    <div
+      id="tbs-flash"
+      className={`tbs-msg ${isErr ? "err" : "ok"}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="tbs-msg-icon" aria-hidden>
+        {isErr ? "!" : "✓"}
+      </span>
+      <span className="tbs-msg-text">{message}</span>
+    </div>
+  );
+}
+
+export async function readApiError(res: Response, fallback: string) {
+  try {
+    const data = (await res.json()) as { error?: string };
+    return data.error || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function ActionButtons({
   onSave,
   onUpdate,

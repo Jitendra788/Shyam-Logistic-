@@ -7,7 +7,9 @@ import {
   FormWindow,
   ManualAmountInput,
   PrintCellButton,
+  StatusBanner,
   fmtDate,
+  readApiError,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -47,10 +49,10 @@ export function NoteForm({
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Save failed");
+      setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Saved");
+    setMsg("Added successfully — Voucher save ho gaya");
     setForm({ id: "", date: todayISO(), partyName: "", amount: 0, narration: "", voucherNo: "" });
     await reload();
   }
@@ -65,10 +67,10 @@ export function NoteForm({
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Update failed");
+      setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Updated");
+    setMsg("Updated successfully");
     await reload();
   }
 
@@ -76,7 +78,7 @@ export function NoteForm({
     if (!form.id || !confirm("Delete?")) return;
     await fetch(`/api/tbs/notes?id=${form.id}`, { method: "DELETE" });
     setForm({ id: "", date: todayISO(), partyName: "", amount: 0, narration: "", voucherNo: "" });
-    setMsg("Deleted");
+    setMsg("Deleted successfully");
     await reload();
   }
 
@@ -84,8 +86,8 @@ export function NoteForm({
 
   return (
     <FormWindow title={title}>
-      {msg && <div className="tbs-msg">{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-row">
         <div className="tbs-field">

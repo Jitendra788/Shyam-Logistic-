@@ -7,6 +7,8 @@ import {
   FormWindow,
   ManualAmountInput,
   PrintCellButton,
+  StatusBanner,
+  readApiError,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
@@ -63,10 +65,10 @@ export default function PartyCreationPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg((await res.json()).error || "Save failed");
+      setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Party saved successfully");
+    setMsg("Added successfully — Party save ho gaya");
     setForm(null);
     await reload();
   }
@@ -82,10 +84,10 @@ export default function PartyCreationPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg((await res.json()).error || "Update failed");
+      setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Party updated");
+    setMsg("Updated successfully — Party update ho gaya");
     await reload();
   }
 
@@ -95,7 +97,7 @@ export default function PartyCreationPage() {
     await fetch(`/api/tbs/parties?id=${current.id}`, { method: "DELETE" });
     setSaving(false);
     setForm(null);
-    setMsg("Party deleted");
+    setMsg("Deleted successfully");
     await reload();
   }
 
@@ -103,8 +105,8 @@ export default function PartyCreationPage() {
 
   return (
     <FormWindow title="Frm_PartyCreation">
-      {msg && <div className={`tbs-msg ${msg.includes("fail") ? "err" : ""}`}>{msg}</div>}
-      {error && <div className="tbs-msg err">{error}</div>}
+      <StatusBanner message={msg} onClear={() => setMsg("")} />
+      <StatusBanner message={error} />
 
       <div className="tbs-split-3">
         <div>
