@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { downloadExcelBackup } from "@/lib/tbs/excel";
 import { installTbsPersist } from "@/lib/tbs/tbsPersist";
@@ -10,20 +10,22 @@ import { installTbsPersist } from "@/lib/tbs/tbsPersist";
 if (typeof window !== "undefined") installTbsPersist();
 
 type NavLink = { href: string; label: string };
-type NavGroup = { id: string; label: string; links: NavLink[] };
+type NavGroup = { id: string; label: string; mark: string; links: NavLink[] };
 
 const navGroups: NavGroup[] = [
   {
     id: "registration",
     label: "Registration",
+    mark: "R",
     links: [{ href: "/admin/registration/parties", label: "Party Creation" }],
   },
   {
     id: "transport",
     label: "Transport",
+    mark: "T",
     links: [
       { href: "/admin/transport/booking", label: "Booking" },
-      { href: "/admin/transport/lhc", label: "LHC — Lorry Hire Contract" },
+      { href: "/admin/transport/lhc", label: "LHC — Hire Contract" },
       { href: "/admin/transport/lhp/new", label: "LHP — New Payment" },
       { href: "/admin/transport/lhp/update", label: "LHP — Update Payment" },
       { href: "/admin/transport/bill", label: "Bill Preparation" },
@@ -37,6 +39,7 @@ const navGroups: NavGroup[] = [
   {
     id: "reports",
     label: "Reports",
+    mark: "P",
     links: [
       { href: "/admin/reports/booking", label: "Booking Report" },
       {
@@ -45,7 +48,7 @@ const navGroups: NavGroup[] = [
       },
       {
         href: "/admin/reports/party-outstanding/dayswise",
-        label: "Outstanding — Dayswise",
+        label: "Outstanding — Daywise",
       },
       {
         href: "/admin/reports/party-ledger/billwise",
@@ -58,6 +61,7 @@ const navGroups: NavGroup[] = [
   {
     id: "website",
     label: "Website",
+    mark: "W",
     links: [
       { href: "/admin/website/enquiries", label: "Enquiries" },
       { href: "/admin/website/blog", label: "Blog" },
@@ -78,6 +82,24 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function pageMeta(pathname: string): { crumb: string; title: string } {
+  if (pathname === "/admin") return { crumb: "Home", title: "Dashboard" };
+  for (const group of navGroups) {
+    for (const link of group.links) {
+      if (isActive(pathname, link.href)) {
+        return { crumb: group.label, title: link.label };
+      }
+    }
+  }
+  if (pathname.startsWith("/admin/reports"))
+    return { crumb: "Reports", title: "Reports" };
+  if (pathname.startsWith("/admin/transport"))
+    return { crumb: "Transport", title: "Transport" };
+  if (pathname.startsWith("/admin/website"))
+    return { crumb: "Website", title: "Website" };
+  return { crumb: "Admin", title: "SHYAM LOGISTICS" };
+}
+
 export function MasterShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -85,6 +107,7 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
   const [mobileNav, setMobileNav] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [backingUp, setBackingUp] = useState(false);
+  const meta = useMemo(() => pageMeta(pathname), [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -144,25 +167,42 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
 
   const nav = (
     <nav className="tbs-nav" aria-label="Admin">
+      <div className="tbs-nav-brand-block">
+        <span className="tbs-nav-brand-label">Transport Billing</span>
+        <strong>SHYAM LOGISTICS</strong>
+      </div>
+
       <Link
         href="/admin"
         className={`tbs-nav-link tbs-nav-home ${pathname === "/admin" ? "active" : ""}`}
         onClick={() => setMobileNav(false)}
       >
+        <span className="tbs-nav-dot" aria-hidden>
+          ◆
+        </span>
         Dashboard
       </Link>
 
       {navGroups.map((group) => {
         const open = openGroups[group.id] ?? group.id === "transport";
+        const groupActive = group.links.some((l) => isActive(pathname, l.href));
         return (
-          <div key={group.id} className={`tbs-nav-group ${open ? "open" : ""}`}>
+          <div
+            key={group.id}
+            className={`tbs-nav-group ${open ? "open" : ""} ${groupActive ? "has-active" : ""}`}
+          >
             <button
               type="button"
               className="tbs-nav-group-btn"
               onClick={() => toggleGroup(group.id)}
               aria-expanded={open}
             >
-              <span>{group.label}</span>
+              <span className="tbs-nav-group-left">
+                <span className="tbs-nav-mark" aria-hidden>
+                  {group.mark}
+                </span>
+                <span>{group.label}</span>
+              </span>
               <span className="tbs-nav-chevron" aria-hidden>
                 {open ? "▾" : "▸"}
               </span>
@@ -189,7 +229,7 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
         <a href="tel:8459858242" className="tbs-nav-phone">
           84598 58242
         </a>
-        <p className="tbs-nav-tag">Transport Billing · SHYAM LOGISTIC</p>
+        <p className="tbs-nav-tag">Admin · Live operations</p>
       </div>
     </nav>
   );
@@ -225,8 +265,14 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="tbs-topbar-brand">
-            <BrandLogo companyName="SHYAM LOGISTIC" size="sm" variant="light" />
+            <Link href="/admin" className="tbs-topbar-logo">
+              <BrandLogo companyName="SHYAM LOGISTICS" size="sm" variant="light" />
+            </Link>
             <span className="tbs-admin-badge">Admin</span>
+            <div className="tbs-page-meta" aria-live="polite">
+              <span className="tbs-page-crumb">{meta.crumb}</span>
+              <strong className="tbs-page-title">{meta.title}</strong>
+            </div>
           </div>
 
           <div className="tbs-topbar-actions">
