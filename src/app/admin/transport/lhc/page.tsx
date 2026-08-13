@@ -146,16 +146,18 @@ export default function LhcPage() {
           <div className="tbs-row">
             <div className="tbs-field">
               <label>Vehicle No.</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-md"
                 value={current.vehicleNo}
-                onChange={(e) => patch({ vehicleNo: e.target.value })}
-              >
-                <option value="">Select</option>
+                onChange={(e) => patch({ vehicleNo: e.target.value.toUpperCase() })}
+                placeholder="Type vehicle no…"
+                list="lhc-vehicle-suggestions"
+              />
+              <datalist id="lhc-vehicle-suggestions">
                 {(data?.masters.vehicles || []).map((v) => (
-                  <option key={v}>{v}</option>
+                  <option key={v} value={v} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <div className="tbs-field" style={{ flex: 1 }}>
               <label>Broker/Owner Name</label>

@@ -97,14 +97,68 @@ export default function BookingPage() {
     setForm({ ...next, total, grandTotal: total });
   }
 
-  function pickParty(name: string) {
-    const p = data?.parties.find((x) => x.partyName === name);
+  function partyByName(name: string): Party | undefined {
+    return data?.parties.find((x) => x.partyName === name);
+  }
+
+  /** Address / GST always from Consignee (preferred) or Consignor — never Billing Party. */
+  function addressFromConsigneeOrConsignor(
+    consignee: string,
+    consignor: string,
+  ): { address: string; gstNo: string } {
+    const ce = partyByName(consignee);
+    const cr = partyByName(consignor);
+    const src = ce || cr;
+    return {
+      address: src?.address || "",
+      gstNo: src?.gstTin || "",
+    };
+  }
+
+  function pickBillingParty(name: string) {
+    // Billing party only — do not overwrite Address with billing party data
     patch({
       billingParty: name,
-      consignor: name,
-      address: p?.address || current.address,
-      gstNo: p?.gstTin || current.gstNo,
+      consignor: current.consignor || name,
     });
+  }
+
+  function pickConsignor(name: string) {
+    const filled = addressFromConsigneeOrConsignor(current.consignee, name);
+    patch({
+      consignor: name,
+      address: filled.address || current.address,
+      gstNo: filled.gstNo || current.gstNo,
+    });
+  }
+
+  function pickConsignee(name: string) {
+    const filled = addressFromConsigneeOrConsignor(name, current.consignor);
+    patch({
+      consignee: name,
+      address: filled.address,
+      gstNo: filled.gstNo || current.gstNo,
+    });
+  }
+
+  function fillAddressFromConsigneeOrConsignor() {
+    const filled = addressFromConsigneeOrConsignor(
+      current.consignee,
+      current.consignor,
+    );
+    if (!current.consignee && !current.consignor) {
+      setMsg("Pehle Consignee ya Consignor select karo");
+      return;
+    }
+    patch({
+      address: filled.address,
+      gstNo: filled.gstNo || current.gstNo,
+    });
+    setMsg(
+      filled.address
+        ? "Address Consignee/Consignor se fill ho gaya"
+        : "Selected party ke paas address nahi hai — Party Creation me add karo",
+    );
   }
 
   async function save() {
@@ -117,7 +171,11 @@ export default function BookingPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      setMsg("Save failed");
+      const err = await res.json().catch(() => ({}));
+      setMsg(
+        (err as { error?: string }).error ||
+          "Save failed — Vercel pe Upstash Redis set karo",
+      );
       return;
     }
     setMsg("Booking saved");
@@ -223,16 +281,18 @@ export default function BookingPage() {
           <div className="tbs-row">
             <div className="tbs-field">
               <label>Vehicle No</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-md"
                 value={current.vehicleNo}
-                onChange={(e) => patch({ vehicleNo: e.target.value })}
-              >
-                <option value="">Select</option>
+                onChange={(e) => patch({ vehicleNo: e.target.value.toUpperCase() })}
+                placeholder="Type vehicle no…"
+                list="booking-vehicle-suggestions"
+              />
+              <datalist id="booking-vehicle-suggestions">
                 {(data?.masters.vehicles || []).map((v) => (
-                  <option key={v}>{v}</option>
+                  <option key={v} value={v} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <div className="tbs-field">
               <label>Delivery at</label>
@@ -250,7 +310,7 @@ export default function BookingPage() {
               <select
                 className="tbs-select w-full"
                 value={current.billingParty}
-                onChange={(e) => pickParty(e.target.value)}
+                onChange={(e) => pickBillingParty(e.target.value)}
               >
                 <option value="">Select</option>
                 {partyNames.map((n) => (
@@ -269,7 +329,7 @@ export default function BookingPage() {
               <select
                 className="tbs-select w-full"
                 value={current.consignor}
-                onChange={(e) => patch({ consignor: e.target.value })}
+                onChange={(e) => pickConsignor(e.target.value)}
               >
                 <option value="">Select</option>
                 {partyNames.map((n) => (
@@ -285,7 +345,7 @@ export default function BookingPage() {
               <select
                 className="tbs-select w-full"
                 value={current.consignee}
-                onChange={(e) => patch({ consignee: e.target.value })}
+                onChange={(e) => pickConsignee(e.target.value)}
               >
                 <option value="">Select</option>
                 {partyNames.map((n) => (
@@ -293,7 +353,11 @@ export default function BookingPage() {
                 ))}
               </select>
             </div>
-            <button type="button" className="tbs-btn">
+            <button
+              type="button"
+              className="tbs-btn"
+              onClick={fillAddressFromConsigneeOrConsignor}
+            >
               Check
             </button>
           </div>

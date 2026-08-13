@@ -40,7 +40,8 @@ export default function LhpUpdatePage() {
       }));
     }
     return list.filter((r) => {
-      if (vehicle && r.vehNo !== vehicle) return false;
+      if (vehicle && !r.vehNo.toUpperCase().includes(vehicle.toUpperCase()))
+        return false;
       if (broker && broker !== "All" && r.broker !== broker) return false;
       if (r.date && (r.date < fromDate || r.date > toDate)) return false;
       return true;
@@ -74,16 +75,18 @@ export default function LhpUpdatePage() {
         </div>
         <div className="tbs-field">
           <label>Select Vehicle No</label>
-          <select
-            className="tbs-select w-md"
+          <input
+            className="tbs-input w-md"
             value={vehicle}
-            onChange={(e) => setVehicle(e.target.value)}
-          >
-            <option value="">All</option>
+            onChange={(e) => setVehicle(e.target.value.toUpperCase())}
+            placeholder="Type or leave blank = All"
+            list="lhp-update-vehicles"
+          />
+          <datalist id="lhp-update-vehicles">
             {(data?.masters.vehicles || []).map((v) => (
-              <option key={v}>{v}</option>
+              <option key={v} value={v} />
             ))}
-          </select>
+          </datalist>
         </div>
       </div>
 
