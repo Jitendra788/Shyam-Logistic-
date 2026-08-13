@@ -90,11 +90,7 @@ function Shell({
       </div>
       {children}
       <div className="doc-foot">
-        <div>
-          Subject To Sangli Jurisdiction
-          <br />
-          Do Not Pay Cash to Lorry Driver — Cheque / RTGS only
-        </div>
+        <div />
         <div className="doc-sign">
           <ShyamStamp size="md" />
           <div>For Shyam Logistics</div>
