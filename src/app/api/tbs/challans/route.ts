@@ -22,7 +22,7 @@ export async function GET() {
       challans,
       bookings,
       masters,
-      nextChallan: nextCode(challans, "challanNo", 1152),
+      nextChallan: nextCode(challans, "challanNo", 1),
     });
   } catch (e) {
     return failSave(e);
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const fuel = Number(body.fuel) || 0;
     const challan: Challan = {
       id: uid("c"),
-      challanNo: body.challanNo || nextCode(challans, "challanNo", 1152),
+      challanNo: body.challanNo || nextCode(challans, "challanNo", 1),
       challanDate: body.challanDate || new Date().toISOString().slice(0, 10),
       vehicleNo: (body.vehicleNo || "").trim().toUpperCase(),
       brokerOwner: body.brokerOwner || "",

@@ -28,5 +28,5 @@ export function openPrint(
 }
 
 export function needSelectAlert(label = "record") {
-  alert(`Print ke liye pehle list se ${label} select karo, phir Print dabao.`);
+  alert(`Select a ${label} from the list first, then Print.`);
 }

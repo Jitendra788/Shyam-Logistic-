@@ -53,7 +53,7 @@ export function NoteForm({
       setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Added successfully — Voucher save ho gaya");
+    setMsg("Added successfully");
     setForm({ id: "", date: todayISO(), partyName: "", amount: 0, narration: "", voucherNo: "" });
     await reload();
   }
@@ -77,7 +77,7 @@ export function NoteForm({
 
   async function remove() {
     if (!form.id) {
-      setMsg("Pehle list se row select karo, phir Delete dabao");
+      setMsg("Select a record first, then Delete");
       return;
     }
     if (!confirm("Delete?")) return;

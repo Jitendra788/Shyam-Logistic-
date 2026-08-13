@@ -111,7 +111,7 @@ export default function MoneyReceiptNewPage() {
       setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Added successfully — Money receipt save ho gaya");
+    setMsg("Added successfully");
     setRows(null);
     await reload();
   }

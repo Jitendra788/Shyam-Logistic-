@@ -124,7 +124,7 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
       await downloadExcelBackup();
       if (
         confirm(
-          "Excel backup (.xlsx) download ho gaya (Downloads folder). Exit admin?",
+          "Excel backup (.xlsx) downloaded to your Downloads folder. Exit admin?",
         )
       ) {
         router.push("/");

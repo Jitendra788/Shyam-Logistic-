@@ -37,13 +37,13 @@ export default function MoneyReceiptEditPage() {
       setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Updated successfully — Money receipt update ho gaya");
+    setMsg("Updated successfully");
     await reload();
   }
 
   async function remove() {
     if (!selected) {
-      setMsg("Pehle receipt select karo, phir Delete dabao");
+      setMsg("Select a record first, then Delete");
       return;
     }
     if (!confirm("Delete receipt?")) return;

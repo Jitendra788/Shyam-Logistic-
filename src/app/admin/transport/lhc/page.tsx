@@ -59,7 +59,7 @@ export default function LhcPage() {
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const current = form || blank(data?.nextChallan || "1152");
+  const current = form || blank(data?.nextChallan || "1");
 
   const lrRows = data?.bookings || [];
 
@@ -116,7 +116,7 @@ export default function LhcPage() {
       setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Added successfully — Challan save ho gaya");
+    setMsg("Added successfully");
     setForm(null);
     setSelectedLrs([]);
     await reload();
@@ -135,13 +135,13 @@ export default function LhcPage() {
       setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Updated successfully — Challan update ho gaya");
+    setMsg("Updated successfully");
     await reload();
   }
 
   async function remove() {
     if (!current.id) {
-      setMsg("Pehle list se challan select karo, phir Delete dabao");
+      setMsg("Select a record first, then Delete");
       return;
     }
     if (!confirm("Delete challan?")) return;

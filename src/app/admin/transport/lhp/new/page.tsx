@@ -113,7 +113,7 @@ export default function LhpNewPage() {
       setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Added successfully — LHP payment save ho gaya");
+    setMsg("Added successfully");
     setRows(null);
     await reload();
   }

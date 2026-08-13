@@ -45,7 +45,7 @@ export function isTbsPersistent(): boolean {
 }
 
 function redisKey(file: string) {
-  return `shyam:tbs:${file}`;
+  return `shyam:tbs:v2:${file}`;
 }
 
 async function ensureDir() {
@@ -141,7 +141,7 @@ async function writeJson<T>(file: string, data: T): Promise<void> {
   const ok = await writeToFs(file, data);
   if (!ok) {
     throw new Error(
-      "Server cannot save/delete data. Vercel → Settings → Environment Variables me UPSTASH_REDIS_REST_URL aur UPSTASH_REDIS_REST_TOKEN set karke Redeploy karo.",
+      "Server cannot save data. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN on Vercel, then Redeploy.",
     );
   }
 }
@@ -157,191 +157,22 @@ export const defaultMasters: Masters = {
     "Mumbai",
     "Kolhapur",
   ],
-  vehicles: [
-    "MH10AB1234",
-    "RJ11GD4197",
-    "MH45AF7861",
-    "WB25N3925",
-    "MH09CD5678",
-  ],
-  brokers: [
-    "All",
-    "OMSAI CHICODI NISSAR MULLA",
-    "DIRECT LORRY BY VANDER",
-    "SHREE GAJENDARA",
-    "GS TARANSPOT KOP",
-    "OMKAR LOGISTICS",
-    "DELHI PANJAB ROADLINES",
-    "GURUKARPPA PATIL",
-    "MAHARVEER TARANSPOT",
-    "NEW RAVI TRANSPOT SERVICES",
-    "JAY HANUMANGARH",
-    "NAMOKAR TRANSPORT",
-    "ODC ROADLINES",
-    "VINOD AGRAVAL",
-  ],
-  particulars: ["PUMPS", "CASNUB", "6R1080TA 6H.2", "MACHINERY", "SPARE PARTS"],
+  vehicles: [],
+  brokers: ["All"],
+  particulars: [],
   partyTypes: ["Customer", "Consignor", "Consignee", "Both"],
   gstPaidBy: ["Consignor", "Consignee", "Transporter"],
   lrTypes: ["Paid", "To Pay", "TBB"],
 };
 
-const seedParties: Party[] = [
-  {
-    id: "p1",
-    partyCode: "1047",
-    partyName: "Shanbhag Engineering Works",
-    contactNo: "9876543210",
-    address: "Miraj",
-    gstTin: "27AAAAA0000A1Z5",
-    partyType: "Customer",
-    panNo: "",
-    opBalance: 0,
-    accountStartFrom: "2025-04-01",
-  },
-  {
-    id: "p2",
-    partyCode: "1048",
-    partyName: "Vijay Engineering & Mahchinry pvt Ltd",
-    contactNo: "9822000000",
-    address: "Kolhapur",
-    gstTin: "",
-    partyType: "Customer",
-    panNo: "",
-    opBalance: 0,
-    accountStartFrom: "2025-04-01",
-  },
-  {
-    id: "p3",
-    partyCode: "1049",
-    partyName: "jitendra",
-    contactNo: "8459858242",
-    address: "Sangli",
-    gstTin: "",
-    partyType: "Customer",
-    panNo: "",
-    opBalance: 0,
-    accountStartFrom: "2025-04-01",
-  },
-];
+const seedParties: Party[] = [];
 
-const seedBookings: Booking[] = [
-  {
-    id: "b1",
-    bookingFrom: "Sangli",
-    lrNo: "388",
-    lrDate: "2026-08-13",
-    from: "Sangli",
-    to: "Pune",
-    vehicleNo: "MH10AB1234",
-    deliveryAt: "Pune",
-    billingParty: "Shanbhag Engineering Works",
-    consignor: "Shanbhag Engineering Works",
-    consignee: "ABC Traders",
-    address: "Pune",
-    gstNo: "",
-    noOfArticles: "10",
-    particulars: "PUMPS",
-    invNoDate: "",
-    actualWt: 1000,
-    chargedWt: 1000,
-    rate: 5,
-    freight: 5000,
-    hamali: 0,
-    stCharges: 0,
-    lrCharges: 50,
-    doorDelivery: 0,
-    doorColle: 0,
-    barrier: 0,
-    otherChrg: 0,
-    total: 5050,
-    grandTotal: 5050,
-    gstPaidBy: "Consignor",
-    ewayBillNo: "",
-    validDate: "",
-    lrType: "TBB",
-    valueRs: 50000,
-    delivered: true,
-  },
-  {
-    id: "b3",
-    bookingFrom: "Sangli",
-    lrNo: "390",
-    lrDate: "2026-08-10",
-    from: "Sangli",
-    to: "Mumbai",
-    vehicleNo: "MH09CD5678",
-    deliveryAt: "Mumbai",
-    billingParty: "Vijay Engineering & Mahchinry pvt Ltd",
-    consignor: "Vijay Engineering & Mahchinry pvt Ltd",
-    consignee: "XYZ",
-    address: "Mumbai",
-    gstNo: "",
-    noOfArticles: "5",
-    particulars: "MACHINERY",
-    invNoDate: "",
-    actualWt: 2000,
-    chargedWt: 2000,
-    rate: 8,
-    freight: 16000,
-    hamali: 500,
-    stCharges: 0,
-    lrCharges: 50,
-    doorDelivery: 950,
-    doorColle: 0,
-    barrier: 0,
-    otherChrg: 0,
-    total: 17500,
-    grandTotal: 17500,
-    gstPaidBy: "Consignor",
-    ewayBillNo: "",
-    validDate: "",
-    lrType: "TBB",
-    valueRs: 200000,
-    delivered: true,
-  },
-];
+const seedBookings: Booking[] = [];
 
-const seedChallans: Challan[] = [
-  {
-    id: "c1",
-    challanNo: "1152",
-    challanDate: "2026-08-12",
-    vehicleNo: "MH10AB1234",
-    brokerOwner: "DIRECT LORRY BY VANDER",
-    brokerPan: "",
-    fromStation: "Sangli",
-    toStation: "Pune",
-    freight: 20000,
-    advance: 5000,
-    transfer: 0,
-    cash: 0,
-    fuel: 5000,
-    balance: 10000,
-    driverName: "",
-    licenceNo: "",
-    engine: "",
-    chessy: "",
-    insuNo: "",
-    owner: "",
-    panNo: "",
-    lrIds: ["b1"],
-  },
-];
+const seedChallans: Challan[] = [];
 
 const seedLhp: LhpPayment[] = [];
-const seedBills: Bill[] = [
-  {
-    id: "bill1",
-    billNo: "147",
-    billDate: "2026-08-11",
-    partyName: "Vijay Engineering & Mahchinry pvt Ltd",
-    totalAmount: 17500,
-    remark: "",
-    submissionDate: "2026-08-13",
-    lrIds: ["b3"],
-  },
-];
+const seedBills: Bill[] = [];
 const seedMr: MoneyReceipt[] = [];
 const seedNotes: NoteVoucher[] = [];
 

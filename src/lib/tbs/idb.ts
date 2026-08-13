@@ -1,6 +1,6 @@
 "use client";
 
-const DB_NAME = "shyam-tbs";
+const DB_NAME = "shyam-tbs-v2";
 const STORE = "kv";
 
 type Rec = { data: unknown; at: number };

@@ -39,7 +39,7 @@ export default function PartyCreationPage() {
   const [saving, setSaving] = useState(false);
 
   const parties = data?.parties || [];
-  const current = form || empty(data?.nextCode || "1047");
+  const current = form || empty(data?.nextCode || "1");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -69,7 +69,7 @@ export default function PartyCreationPage() {
       setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Added successfully — Party save ho gaya");
+    setMsg("Added successfully");
     setForm(null);
     await reload();
   }
@@ -88,13 +88,13 @@ export default function PartyCreationPage() {
       setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Updated successfully — Party update ho gaya");
+    setMsg("Updated successfully");
     await reload();
   }
 
   async function remove() {
     if (!current.id) {
-      setMsg("Pehle list se party select karo, phir Delete dabao");
+      setMsg("Select a record first, then Delete");
       return;
     }
     if (!confirm("Delete this party?")) return;

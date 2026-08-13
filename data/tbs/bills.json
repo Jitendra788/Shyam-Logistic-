@@ -1,14 +1,1 @@
-[
-  {
-    "id": "bill1",
-    "billNo": "147",
-    "billDate": "2026-08-13",
-    "partyName": "Vijay Engineering & Mahchinry pvt Ltd",
-    "totalAmount": 17500,
-    "remark": "",
-    "submissionDate": "2026-08-13",
-    "lrIds": [
-      "b3"
-    ]
-  }
-]
+[]

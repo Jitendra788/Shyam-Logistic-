@@ -128,7 +128,7 @@ export default function AdminMasterPage() {
         credentials: "same-origin",
       });
       if (res.status === 401) {
-        throw new Error("Login expire — phir se login karo");
+        throw new Error("Session expired — please log in again");
       }
       if (!res.ok) {
         throw new Error(`Dashboard API error (${res.status})`);
@@ -183,7 +183,7 @@ export default function AdminMasterPage() {
       });
     } catch (e) {
       setErr(
-        e instanceof Error ? e.message : "Dashboard data load nahi hui",
+        e instanceof Error ? e.message : "Dashboard data failed to load",
       );
     } finally {
       setLoading(false);
@@ -210,7 +210,7 @@ export default function AdminMasterPage() {
       <section className="tbs-dash-hero">
         <span className="tbs-dash-eyebrow">Transport Billing</span>
         <h1>SHYAM LOGISTIC</h1>
-        <p>Pending aur completed work — mobile se bhi clear dikhega.</p>
+        <p>Pending and completed work — easy to scan on phone and desktop.</p>
         {data && (
           <div className="tbs-dash-hero-stats">
             <div>
@@ -235,14 +235,14 @@ export default function AdminMasterPage() {
             !
           </span>
           <div className="tbs-msg-text">
-            <strong>Save / Delete is browser pe chalega.</strong>
+            <strong>Save / Delete will work in this browser until Redis is set.</strong>
             <ol className="tbs-setup-steps">
               <li>
-                Ab Add / Update / Delete is computer ke browser me save hoga
-                (Vercel disk write nahi karti).
+                Add, Update, and Delete are stored in this browser (Vercel disk is
+                read-only).
               </li>
               <li>
-                Doosre device / Chrome se data dikhana ho to Redis lagao:{" "}
+                To share data across devices or browsers, add Redis:{" "}
                 <a
                   href="https://console.upstash.com"
                   target="_blank"
@@ -252,13 +252,13 @@ export default function AdminMasterPage() {
                 </a>
               </li>
               <li>
-                Vercel → Settings → Environment Variables me{" "}
+                Vercel → Settings → Environment Variables:{" "}
                 <code>UPSTASH_REDIS_REST_URL</code> +{" "}
                 <code>UPSTASH_REDIS_REST_TOKEN</code> (Production) → Redeploy
               </li>
             </ol>
-            Excel Backup regular lo — browser cache clear hone pe local data
-            hat sakta hai.
+            Take Excel Backup regularly — clearing browser cache can remove local
+            data.
           </div>
         </div>
       )}
@@ -273,7 +273,7 @@ export default function AdminMasterPage() {
       )}
 
       {!data && !err ? (
-        <div className="tbs-empty">Dashboard load ho raha hai…</div>
+        <div className="tbs-empty">Loading dashboard…</div>
       ) : !data ? null : (
         <>
           <div className="tbs-pc-grid">
@@ -340,7 +340,7 @@ export default function AdminMasterPage() {
               <div className="tbs-dash-table-wrap">
                 <h3 className="tbs-pc-sub">Pending LRs</h3>
                 {data.pendingList.length === 0 ? (
-                  <p className="tbs-dash-muted">Koi pending LR nahi.</p>
+                  <p className="tbs-dash-muted">No pending LRs.</p>
                 ) : (
                   <div className="tbs-table-scroll">
                     <table className="tbs-grid tbs-dash-table">
@@ -436,7 +436,7 @@ export default function AdminMasterPage() {
               <div className="tbs-dash-table-wrap">
                 <h3 className="tbs-pc-sub">Completed LRs</h3>
                 {data.completedList.length === 0 ? (
-                  <p className="tbs-dash-muted">Abhi koi completed LR nahi.</p>
+                  <p className="tbs-dash-muted">No completed LRs yet.</p>
                 ) : (
                   <div className="tbs-table-scroll">
                     <table className="tbs-grid tbs-dash-table">
@@ -525,7 +525,7 @@ export default function AdminMasterPage() {
             <h2 className="tbs-dash-section">Top outstanding</h2>
             <div className="tbs-dash-table-wrap">
               {data.outstandingTop.length === 0 ? (
-                <p className="tbs-dash-muted">Koi outstanding bill nahi.</p>
+                <p className="tbs-dash-muted">No outstanding bills.</p>
               ) : (
                 <div className="tbs-table-scroll">
                   <table className="tbs-grid tbs-dash-table">

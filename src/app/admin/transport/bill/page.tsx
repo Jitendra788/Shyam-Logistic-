@@ -91,7 +91,7 @@ export default function BillPage() {
       setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Added successfully — Bill save ho gaya");
+    setMsg("Added successfully");
     setEditId(null);
     setSelected([]);
     setRemark("");
@@ -121,13 +121,13 @@ export default function BillPage() {
       setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Updated successfully — Bill update ho gaya");
+    setMsg("Updated successfully");
     await reload();
   }
 
   async function remove() {
     if (!editId) {
-      setMsg("Pehle list se bill select karo, phir Delete dabao");
+      setMsg("Select a record first, then Delete");
       return;
     }
     if (!confirm("Delete bill?")) return;

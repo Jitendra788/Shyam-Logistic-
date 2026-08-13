@@ -91,7 +91,7 @@ export default function BookingPage() {
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const current = form || blank(data?.nextLr || "389");
+  const current = form || blank(data?.nextLr || "1");
   const parties = data?.parties || [];
   const partyNames = parties.map((p) => p.partyName);
 
@@ -174,7 +174,7 @@ export default function BookingPage() {
       current.consignor,
     );
     if (!current.consignee && !current.consignor) {
-      setMsg("Pehle Consignee ya Consignor select karo");
+      setMsg("Select consignee or consignor first");
       return;
     }
     patch({
@@ -183,8 +183,8 @@ export default function BookingPage() {
     });
     setMsg(
       filled.address
-        ? "Address Consignee/Consignor se fill ho gaya"
-        : "Selected party ke paas address nahi hai — Party Creation me add karo",
+        ? "Address filled from consignee/consignor"
+        : "Selected party has no address — add it in Party Creation",
     );
   }
 
@@ -201,12 +201,12 @@ export default function BookingPage() {
       setMsg(
         await readApiError(
           res,
-          "Save failed — Vercel pe Upstash Redis set karo",
+          "Save failed — set Upstash Redis on Vercel",
         ),
       );
       return;
     }
-    setMsg("Added successfully — Booking / LR save ho gaya");
+    setMsg("Added successfully");
     setForm(null);
     await reload();
   }
@@ -224,13 +224,13 @@ export default function BookingPage() {
       setMsg(await readApiError(res, "Update failed"));
       return;
     }
-    setMsg("Updated successfully — Booking update ho gaya");
+    setMsg("Updated successfully");
     await reload();
   }
 
   async function remove() {
     if (!current.id) {
-      setMsg("Pehle list se booking select karo, phir Delete dabao");
+      setMsg("Select a record first, then Delete");
       return;
     }
     if (!confirm("Delete booking?")) return;

@@ -22,7 +22,7 @@ export async function GET() {
       bills,
       bookings,
       parties,
-      nextBill: nextCode(bills, "billNo", 148),
+      nextBill: nextCode(bills, "billNo", 1),
     });
   } catch (e) {
     return failSave(e);
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const bills = await getBills();
     const bill: Bill = {
       id: uid("bill"),
-      billNo: body.billNo || nextCode(bills, "billNo", 148),
+      billNo: body.billNo || nextCode(bills, "billNo", 1),
       billDate: body.billDate || new Date().toISOString().slice(0, 10),
       partyName: body.partyName.trim(),
       totalAmount: Number(body.totalAmount) || 0,

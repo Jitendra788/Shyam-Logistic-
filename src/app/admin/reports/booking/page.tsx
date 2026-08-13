@@ -188,7 +188,7 @@ export default function BookingReportPage() {
           className="tbs-btn tbs-btn-excel"
           onClick={() => {
             if (!rows.length) {
-              alert("Pehle Show dabao, phir Generate as Excel.");
+              alert("Click Show first, then Generate as Excel.");
               return;
             }
             downloadExcel(rows, from, to);

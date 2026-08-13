@@ -7,7 +7,7 @@ export async function GET() {
   if (denied) return denied;
   try {
     const [parties, masters] = await Promise.all([getParties(), getMasters()]);
-    return ok({ parties, masters, nextCode: nextCode(parties, "partyCode", 1047) });
+    return ok({ parties, masters, nextCode: nextCode(parties, "partyCode", 1) });
   } catch (e) {
     return failSave(e);
   }
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const parties = await getParties();
     const party: Party = {
       id: uid("p"),
-      partyCode: body.partyCode || nextCode(parties, "partyCode", 1047),
+      partyCode: body.partyCode || nextCode(parties, "partyCode", 1),
       partyName: body.partyName.trim(),
       contactNo: body.contactNo || "",
       address: body.address || "",

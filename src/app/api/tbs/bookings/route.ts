@@ -64,7 +64,7 @@ export async function GET() {
       bookings,
       parties,
       masters,
-      nextLr: nextCode(bookings, "lrNo", 388),
+      nextLr: nextCode(bookings, "lrNo", 1),
     });
   } catch (e) {
     return failSave(e);
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     const booking: Booking = {
       id: uid("b"),
       bookingFrom: body.bookingFrom || "Sangli",
-      lrNo: body.lrNo || nextCode(bookings, "lrNo", 388),
+      lrNo: body.lrNo || nextCode(bookings, "lrNo", 1),
       lrDate: body.lrDate || new Date().toISOString().slice(0, 10),
       from: body.from || "",
       to: body.to || "",

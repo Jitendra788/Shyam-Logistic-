@@ -192,10 +192,10 @@ export default function AdminSettingsPage() {
             Admin Settings
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted">
-            Yahan se almost sab kuch change hota hai — phones, logo, hero image,
-            services, FAQs, home page text, about/services/contact headings.
-            Change ke baad neeche <strong>Save all changes</strong> zaroor dabayein.
-            Blog posts alag se <strong>Admin → Blog</strong> se manage karein.
+            Change phones, logo, hero image, services, FAQs, home page text, and
+            about/services/contact headings here. After editing, click{" "}
+            <strong>Save all changes</strong> at the bottom. Manage blog posts
+            from <strong>Admin → Blog</strong>.
           </p>
         </div>
         <button type="submit" disabled={saving} className="btn-primary">
@@ -297,7 +297,7 @@ export default function AdminSettingsPage() {
       </Section>
 
       <Section title="4) Home page section headings">
-        <p className="text-sm text-muted">Home page har section ke title / intro yahan se.</p>
+        <p className="text-sm text-muted">Edit home page section titles and intro text here.</p>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Services label" value={settings.homeServicesLabel || ""} onChange={(v) => update("homeServicesLabel", v)} />
           <Field label="Services title" value={settings.homeServicesTitle || ""} onChange={(v) => update("homeServicesTitle", v)} />
