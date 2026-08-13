@@ -20,6 +20,19 @@ async function rememberVehicle(vehicleNo: string) {
   }
 }
 
+async function rememberParticular(particulars: string) {
+  const p = particulars.trim();
+  if (!p) return;
+  const masters = await getMasters();
+  const exists = masters.particulars.some(
+    (x) => x.toLowerCase() === p.toLowerCase(),
+  );
+  if (!exists) {
+    masters.particulars = [p, ...masters.particulars];
+    await saveMasters(masters);
+  }
+}
+
 function totals(body: Partial<Booking>) {
   const freight = Number(body.freight) || 0;
   const hamali = Number(body.hamali) || 0;
@@ -110,6 +123,7 @@ export async function POST(req: Request) {
     bookings.unshift(booking);
     await saveBookings(bookings);
     await rememberVehicle(booking.vehicleNo);
+    await rememberParticular(booking.particulars);
     return ok(booking, 201);
   } catch (e) {
     return failSave(e);
@@ -136,6 +150,7 @@ export async function PUT(req: Request) {
     };
     await saveBookings(bookings);
     await rememberVehicle(vehicleNo);
+    await rememberParticular(body.particulars);
     return ok(bookings[idx]);
   } catch (e) {
     return failSave(e);

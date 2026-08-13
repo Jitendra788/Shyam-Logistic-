@@ -426,16 +426,18 @@ export default function BookingPage() {
             </div>
             <div className="tbs-field" style={{ flex: 1 }}>
               <label>Particulars</label>
-              <select
-                className="tbs-select w-full"
+              <input
+                className="tbs-input w-full"
                 value={current.particulars}
                 onChange={(e) => patch({ particulars: e.target.value })}
-              >
-                <option value="">Select</option>
+                placeholder="Type or select…"
+                list="booking-particulars"
+              />
+              <datalist id="booking-particulars">
                 {(data?.masters.particulars || []).map((p) => (
-                  <option key={p}>{p}</option>
+                  <option key={p} value={p} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
 
