@@ -160,7 +160,14 @@ export const defaultMasters: Masters = {
   vehicles: [],
   brokers: ["All"],
   particulars: [],
-  partyTypes: ["Customer", "Consignor", "Consignee", "Both"],
+  partyTypes: [
+    "Customer",
+    "Consignor",
+    "Consignee",
+    "Both",
+    "Consigner/Consignee",
+    "Broker",
+  ],
   gstPaidBy: ["Consignor", "Consignee", "Broker", "Company", "Transporter"],
   lrTypes: ["Paid", "ToPay", "To Pay", "TBB", "Cancel"],
   gstLabels: ["GST @ 0%", "GST @ 5%", "GST @ 12%", "GST @ 18%"],
@@ -185,6 +192,7 @@ export async function getMasters() {
     gstPaidBy: raw.gstPaidBy?.length ? raw.gstPaidBy : defaultMasters.gstPaidBy,
     lrTypes: raw.lrTypes?.length ? raw.lrTypes : defaultMasters.lrTypes,
     gstLabels: raw.gstLabels?.length ? raw.gstLabels : defaultMasters.gstLabels,
+    partyTypes: raw.partyTypes?.length ? raw.partyTypes : defaultMasters.partyTypes,
   };
 }
 export async function saveMasters(data: Masters) {

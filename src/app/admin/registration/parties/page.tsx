@@ -185,23 +185,32 @@ export default function PartyCreationPage() {
             </div>
           </div>
           <div className="tbs-row">
-            <div className="tbs-field">
+            <div className="tbs-field" style={{ flex: 1 }}>
               <label style={{ width: 90 }}>Party Type</label>
-              <select
-                className="tbs-select w-md"
+              <input
+                className="tbs-input w-full"
                 value={current.partyType}
                 onChange={(e) => set("partyType", e.target.value)}
-              >
+                placeholder="Type or select…"
+                list="party-type-suggestions"
+                autoComplete="off"
+              />
+              <datalist id="party-type-suggestions">
                 {(data?.masters.partyTypes || []).map((t) => (
-                  <option key={t}>{t}</option>
+                  <option key={t} value={t} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
           <div className="tbs-row">
             <div className="tbs-field">
               <label style={{ width: 90 }}>Party Code</label>
-              <input className="tbs-input w-sm" value={current.partyCode} readOnly />
+              <input
+                className="tbs-input w-sm"
+                value={current.partyCode}
+                onChange={(e) => set("partyCode", e.target.value)}
+                placeholder="Code"
+              />
             </div>
           </div>
           <div className="tbs-row">

@@ -1,6 +1,23 @@
 import { bad, failSave, ok, requireAuth } from "@/lib/tbs/api";
-import { getMasters, getParties, nextCode, saveParties, uid } from "@/lib/tbs/store";
+import {
+  getMasters,
+  getParties,
+  nextCode,
+  saveMasters,
+  saveParties,
+  uid,
+} from "@/lib/tbs/store";
 import type { Party } from "@/lib/tbs/types";
+
+async function rememberPartyType(partyType: string) {
+  const t = partyType.trim();
+  if (!t) return;
+  const masters = await getMasters();
+  if (!masters.partyTypes.some((x) => x.toLowerCase() === t.toLowerCase())) {
+    masters.partyTypes = [t, ...masters.partyTypes];
+    await saveMasters(masters);
+  }
+}
 
 export async function GET() {
   const denied = await requireAuth();
@@ -22,7 +39,8 @@ export async function POST(req: Request) {
     const parties = await getParties();
     const party: Party = {
       id: uid("p"),
-      partyCode: body.partyCode || nextCode(parties, "partyCode", 1),
+      partyCode:
+        String(body.partyCode || "").trim() || nextCode(parties, "partyCode", 1),
       partyName: body.partyName.trim(),
       contactNo: body.contactNo || "",
       address: body.address || "",
@@ -35,6 +53,7 @@ export async function POST(req: Request) {
     };
     parties.unshift(party);
     await saveParties(parties);
+    await rememberPartyType(party.partyType);
     return ok(party, 201);
   } catch (e) {
     return failSave(e);
@@ -50,8 +69,13 @@ export async function PUT(req: Request) {
     const parties = await getParties();
     const idx = parties.findIndex((p) => p.id === body.id);
     if (idx < 0) return bad("Not found", 404);
-    parties[idx] = { ...parties[idx], ...body };
+    parties[idx] = {
+      ...parties[idx],
+      ...body,
+      partyCode: String(body.partyCode || parties[idx].partyCode).trim(),
+    };
     await saveParties(parties);
+    await rememberPartyType(parties[idx].partyType);
     return ok(parties[idx]);
   } catch (e) {
     return failSave(e);
