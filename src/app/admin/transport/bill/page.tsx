@@ -37,9 +37,24 @@ export default function BillPage() {
   const [saving, setSaving] = useState(false);
 
   const partyLrs = useMemo(() => {
-    if (!party) return data?.bookings || [];
-    return (data?.bookings || []).filter((b) => b.billingParty === party);
+    const all = data?.bookings || [];
+    const q = party.trim().toLowerCase();
+    if (!q) return all;
+    return all.filter(
+      (b) =>
+        b.billingParty.toLowerCase() === q ||
+        b.billingParty.toLowerCase().includes(q),
+    );
   }, [data, party]);
+
+  const partyNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const p of data?.parties || []) names.add(p.partyName);
+    for (const b of data?.bookings || []) {
+      if (b.billingParty) names.add(b.billingParty);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [data]);
 
   const total = useMemo(
     () =>
@@ -171,35 +186,39 @@ export default function BillPage() {
         </div>
         <div className="tbs-field" style={{ flex: 1 }}>
           <label>Select Party</label>
-          <select
-            className="tbs-select w-full"
+          <input
+            className="tbs-input w-full"
             value={party}
             onChange={(e) => {
               setParty(e.target.value);
               setSelected([]);
             }}
-          >
-            <option value="">Select</option>
-            {(data?.parties || []).map((p) => (
-              <option key={p.id}>{p.partyName}</option>
+            placeholder="Type or select…"
+            list="bill-party-suggestions"
+            autoComplete="off"
+          />
+          <datalist id="bill-party-suggestions">
+            {partyNames.map((n) => (
+              <option key={n} value={n} />
             ))}
-          </select>
+          </datalist>
         </div>
       </div>
 
       <DataGrid
         columns={[
           { key: "select", label: "Select" },
-          { key: "sr", label: "Sr No" },
-          { key: "loadFor", label: "Load For" },
-          { key: "lrNo", label: "LR No" },
-          { key: "lrDate", label: "LR Date" },
+          { key: "lrDate", label: "Date" },
           { key: "billingParty", label: "Billing Party", width: "140px" },
           { key: "from", label: "From" },
           { key: "to", label: "To" },
           { key: "particulars", label: "Particulars" },
           { key: "weight", label: "Weight" },
           { key: "freight", label: "Freight" },
+          { key: "haulting", label: "Haulting" },
+          { key: "hamali", label: "Hamali" },
+          { key: "other", label: "Other" },
+          { key: "lrNo", label: "LR No" },
         ]}
         rows={partyLrs}
         renderCell={(row, key, i) => {
@@ -211,11 +230,20 @@ export default function BillPage() {
                 onChange={() => toggle(row.id)}
               />
             );
-          if (key === "sr") return i + 1;
-          if (key === "loadFor") return row.bookingFrom;
           if (key === "lrDate") return fmtDate(row.lrDate);
           if (key === "weight") return row.chargedWt || row.actualWt;
           if (key === "freight") return row.freight;
+          if (key === "haulting") return row.barrier || "";
+          if (key === "hamali") return row.hamali || "";
+          if (key === "other") {
+            const n =
+              Number(row.otherChrg) +
+              Number(row.doorDelivery) +
+              Number(row.doorColle) +
+              Number(row.stCharges) +
+              Number(row.lrCharges);
+            return n || "";
+          }
           return (row as unknown as Record<string, string>)[key];
         }}
       />
