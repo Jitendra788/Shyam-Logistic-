@@ -14,6 +14,17 @@
   flex-wrap: wrap;
 }
 
+.tbs-btn-wa {
+  background: #25d366 !important;
+  color: #fff !important;
+  border-color: #1ebe57 !important;
+  font-weight: 700;
+}
+
+.tbs-btn-wa:hover {
+  filter: brightness(1.05);
+}
+
 .doc-sheet {
   max-width: 210mm;
   margin: 0 auto 16px;

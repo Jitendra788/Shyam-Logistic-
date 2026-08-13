@@ -25,6 +25,13 @@ import type {
   NoteVoucher,
   Party,
 } from "@/lib/tbs/types";
+import {
+  billWhatsAppText,
+  bookingWhatsAppText,
+  challanWhatsAppText,
+  mrWhatsAppText,
+  shareOnWhatsApp,
+} from "@/lib/tbs/whatsapp";
 import "../doc-print.css";
 import "../lr-print.css";
 import "../tbs.css";
@@ -86,6 +93,46 @@ function useBundle(type: string) {
   };
 
   return { loading, data };
+}
+
+function buildShareText(
+  type: string,
+  id: string,
+  data: Bundle,
+): string | null {
+  if (type === "booking" && id) {
+    const b = data.bookings?.find((x) => x.id === id || x.lrNo === id);
+    return b ? bookingWhatsAppText(b) : null;
+  }
+  if (type === "challan" && id) {
+    const c = data.challans?.find((x) => x.id === id || x.challanNo === id);
+    return c ? challanWhatsAppText(c) : null;
+  }
+  if (type === "bill" && id) {
+    const b = data.bills?.find((x) => x.id === id || x.billNo === id);
+    return b ? billWhatsAppText(b) : null;
+  }
+  if (type === "mr" && id) {
+    const r = data.receipts?.find((x) => x.id === id || x.mrNo === id);
+    return r ? mrWhatsAppText(r) : null;
+  }
+  if (type === "lhp" && id) {
+    const p = data.payments?.find((x) => x.id === id);
+    if (!p) return null;
+    return [
+      "*SHYAM LOGISTICS*",
+      "Lorry Hire Payment",
+      "",
+      `Challan: *${p.challanNo}*`,
+      `Broker: ${p.broker || "—"}`,
+      `Vehicle: ${p.vehNo || "—"}`,
+      `Paid: ₹ ${Number(p.paidAmt || 0).toFixed(2)}`,
+      `Date: ${fmtDate(p.transactionDate)}`,
+      "",
+      "Thank you.",
+    ].join("\n");
+  }
+  return null;
 }
 
 function PrintInner() {
@@ -248,6 +295,11 @@ function PrintInner() {
     return null;
   }, [type, id, noteType, data]);
 
+  const shareText = useMemo(
+    () => (!loading ? buildShareText(type, id, data) : null),
+    [loading, type, id, data],
+  );
+
   useEffect(() => {
     if (auto && content && !loading) {
       const t = setTimeout(() => window.print(), 500);
@@ -264,9 +316,18 @@ function PrintInner() {
         <button type="button" className="tbs-btn tbs-btn-print" onClick={() => window.print()}>
           🖨 Print
         </button>
+        {shareText && (
+          <button
+            type="button"
+            className="tbs-btn tbs-btn-wa"
+            onClick={() => shareOnWhatsApp(shareText)}
+          >
+            WhatsApp
+          </button>
+        )}
         <span style={{ fontSize: 12 }}>
           {type}
-          {id ? ` #${id}` : ""} — Print / Save as PDF
+          {id ? ` #${id}` : ""} — Print / Save as PDF / WhatsApp
         </span>
       </div>
       {loading ? (

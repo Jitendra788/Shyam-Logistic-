@@ -6,6 +6,7 @@ import { Suspense, useEffect } from "react";
 import { BookingBillPrint } from "@/components/tbs/DocPrint";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import type { Booking, Party } from "@/lib/tbs/types";
+import { bookingWhatsAppText, shareOnWhatsApp } from "@/lib/tbs/whatsapp";
 import "@/app/admin/doc-print.css";
 import "@/app/admin/lr-print.css";
 
@@ -52,6 +53,13 @@ function PrintInner() {
         </Link>
         <button type="button" className="tbs-btn tbs-btn-print" onClick={() => window.print()}>
           🖨 Print Bill
+        </button>
+        <button
+          type="button"
+          className="tbs-btn tbs-btn-wa"
+          onClick={() => shareOnWhatsApp(bookingWhatsAppText(booking))}
+        >
+          WhatsApp
         </button>
         <span style={{ fontSize: 12, color: "#333" }}>
           LR No. {booking.lrNo} — Consignment Note
