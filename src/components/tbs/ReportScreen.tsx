@@ -128,7 +128,26 @@ export function ReportScreen({
                 : kind === "ledger"
                   ? ["Sr", "Date", "Type", "Doc No", "Narration", "Debit", "Credit", "Balance"]
                   : kind === "gst"
-                    ? ["Sr", "LR No", "Date", "Party", "GST No", "Taxable", "GST Paid By", "Eway"]
+                    ? [
+                        "Sr",
+                        "Date",
+                        "Party",
+                        "Party Code",
+                        "PAN No",
+                        "GST No",
+                        "Bill No",
+                        "Challan No",
+                        "From",
+                        "To",
+                        "LR No",
+                        "Before Tax",
+                        "CGST %",
+                        "CGST Amt",
+                        "SGST %",
+                        "SGST Amt",
+                        "IGST %",
+                        "IGST Amt",
+                      ]
                     : kind === "profit"
                       ? ["Particulars", "Amount"]
                       : kind === "outstanding"
@@ -163,13 +182,23 @@ export function ReportScreen({
                     : kind === "gst"
                       ? rows.map((r) => [
                           String(r.sr),
-                          String(r.lrNo),
                           fmtDate(String(r.date)),
                           String(r.party),
-                          String(r.gstNo),
-                          Number(r.taxable),
-                          String(r.gstPaidBy),
-                          String(r.eway),
+                          String(r.partyCode || ""),
+                          String(r.panNo || ""),
+                          String(r.gstNo || ""),
+                          String(r.billNo || ""),
+                          String(r.challanNo || ""),
+                          String(r.from || ""),
+                          String(r.to || ""),
+                          String(r.lrNo || ""),
+                          Number(r.beforeTax),
+                          Number(r.cgstPct),
+                          Number(r.cgstAmt),
+                          Number(r.sgstPct),
+                          Number(r.sgstAmt),
+                          Number(r.igstPct),
+                          Number(r.igstAmt),
                         ])
                       : kind === "outstanding"
                         ? rows.map((r) => [
@@ -354,26 +383,46 @@ export function ReportScreen({
               <thead>
                 <tr>
                   <th>Sr</th>
-                  <th>LR No</th>
                   <th>Date</th>
                   <th>Party</th>
+                  <th>Party Code</th>
+                  <th>PAN No</th>
                   <th>GST No</th>
-                  <th>Taxable Amt</th>
-                  <th>GST Paid By</th>
-                  <th>Eway Bill</th>
+                  <th>Bill No</th>
+                  <th>Challan No</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>LR No</th>
+                  <th>Before Tax</th>
+                  <th>CGST %</th>
+                  <th>CGST Amt</th>
+                  <th>SGST %</th>
+                  <th>SGST Amt</th>
+                  <th>IGST %</th>
+                  <th>IGST Amt</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={String(r.id || r.sr)}>
                     <td>{String(r.sr)}</td>
-                    <td>{String(r.lrNo)}</td>
                     <td>{fmtDate(String(r.date))}</td>
-                    <td>{String(r.party)}</td>
-                    <td>{String(r.gstNo)}</td>
-                    <td>{Number(r.taxable).toFixed(2)}</td>
-                    <td>{String(r.gstPaidBy)}</td>
-                    <td>{String(r.eway)}</td>
+                    <td>{String(r.party || "")}</td>
+                    <td>{String(r.partyCode || "")}</td>
+                    <td>{String(r.panNo || "")}</td>
+                    <td>{String(r.gstNo || "")}</td>
+                    <td>{String(r.billNo || "")}</td>
+                    <td>{String(r.challanNo || "")}</td>
+                    <td>{String(r.from || "")}</td>
+                    <td>{String(r.to || "")}</td>
+                    <td>{String(r.lrNo || "")}</td>
+                    <td>{Number(r.beforeTax || 0).toFixed(2)}</td>
+                    <td>{Number(r.cgstPct || 0)}</td>
+                    <td>{Number(r.cgstAmt || 0).toFixed(2)}</td>
+                    <td>{Number(r.sgstPct || 0)}</td>
+                    <td>{Number(r.sgstAmt || 0).toFixed(2)}</td>
+                    <td>{Number(r.igstPct || 0)}</td>
+                    <td>{Number(r.igstAmt || 0).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

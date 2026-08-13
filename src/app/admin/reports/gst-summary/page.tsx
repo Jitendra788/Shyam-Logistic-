@@ -3,5 +3,5 @@
 import { ReportScreen } from "@/components/tbs/ReportScreen";
 
 export default function GstSummaryPage() {
-  return <ReportScreen title="Frm_GSTSummaryReport" kind="gst" />;
+  return <ReportScreen title="Frm_TotalGSTReport" kind="gst" />;
 }

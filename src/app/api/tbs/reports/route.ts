@@ -250,29 +250,76 @@ export async function GET(req: Request) {
   }
 
   if (kind === "gst") {
+    const billByLr = new Map<string, string>();
+    for (const bill of bills) {
+      for (const lrId of bill.lrIds || []) {
+        if (!billByLr.has(lrId)) billByLr.set(lrId, bill.billNo);
+      }
+    }
+    const challanByLr = new Map<string, string>();
+    for (const c of challans) {
+      for (const lrId of c.lrIds || []) {
+        if (!challanByLr.has(lrId)) challanByLr.set(lrId, c.challanNo);
+      }
+    }
+    const partyByName = new Map(
+      parties.map((p) => [p.partyName.trim().toLowerCase(), p] as const),
+    );
+
     let rows = bookings.filter((b) => inRange(b.lrDate));
     if (party) rows = rows.filter((b) => b.billingParty === party);
+
     const mapped = rows.map((b, i) => {
-      const taxable = Number(b.grandTotal || b.total || b.freight || 0);
-      // approx GST split if not stored — show taxable & paid-by
+      const gstAmt = Number(b.gstAmt) || 0;
+      const beforeTax =
+        Number(b.total) ||
+        Math.max(0, Number(b.grandTotal || b.freight || 0) - gstAmt);
+      const rateMatch = String(b.gstLabel || "").match(/(\d+(?:\.\d+)?)\s*%/);
+      const rate = rateMatch ? Number(rateMatch[1]) : gstAmt && beforeTax
+        ? Math.round((gstAmt / beforeTax) * 1000) / 10
+        : 0;
+      // Local Maharashtra-style split: CGST + SGST; IGST left blank
+      const halfPct = rate ? rate / 2 : 0;
+      const halfAmt = gstAmt ? Math.round((gstAmt / 2) * 100) / 100 : 0;
+      const pInfo =
+        partyByName.get(b.billingParty.trim().toLowerCase()) ||
+        partyByName.get(b.consignor.trim().toLowerCase());
+
       return {
         sr: i + 1,
-        lrNo: b.lrNo,
         date: b.lrDate,
         party: b.billingParty,
-        gstNo: b.gstNo,
-        taxable,
+        partyCode: pInfo?.partyCode || "",
+        panNo: pInfo?.panNo || "",
+        startDate: pInfo?.accountStartFrom || "",
+        gstNo: b.gstNo || pInfo?.gstTin || "",
+        billNo: billByLr.get(b.id) || "",
+        challanNo: challanByLr.get(b.id) || "",
+        from: b.from || b.bookingFrom || "",
+        to: b.to || "",
+        lrNo: b.lrNo,
+        beforeTax,
+        cgstPct: halfPct,
+        cgstAmt: halfAmt,
+        sgstPct: halfPct,
+        sgstAmt: halfAmt,
+        igstPct: 0,
+        igstAmt: 0,
         gstPaidBy: b.gstPaidBy,
         eway: b.ewayBillNo,
         id: b.id,
       };
     });
+
     return ok({
       kind,
       parties: parties.map((p) => p.partyName),
       rows: mapped,
       totals: {
-        taxable: mapped.reduce((s, r) => s + r.taxable, 0),
+        beforeTax: mapped.reduce((s, r) => s + r.beforeTax, 0),
+        cgstAmt: mapped.reduce((s, r) => s + r.cgstAmt, 0),
+        sgstAmt: mapped.reduce((s, r) => s + r.sgstAmt, 0),
+        igstAmt: mapped.reduce((s, r) => s + r.igstAmt, 0),
         count: mapped.length,
       },
     });
