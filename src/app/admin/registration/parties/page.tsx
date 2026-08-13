@@ -57,6 +57,10 @@ export default function PartyCreationPage() {
   }
 
   async function save() {
+    if (current.id) {
+      await update();
+      return;
+    }
     setSaving(true);
     setMsg("");
     const res = await fetch("/api/tbs/parties", {
@@ -233,6 +237,10 @@ export default function PartyCreationPage() {
       <div className="tbs-actions">
         <ActionButtons
           onSave={save}
+          onNew={() => {
+            setForm(null);
+            setMsg("");
+          }}
           onUpdate={update}
           onDelete={remove}
           onPrint={() => {

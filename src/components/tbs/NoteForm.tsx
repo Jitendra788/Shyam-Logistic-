@@ -106,6 +106,10 @@ export function NoteForm({
   }
 
   async function save() {
+    if (form.id) {
+      await update();
+      return;
+    }
     setSaving(true);
     setMsg("");
     const res = await fetch("/api/tbs/notes", {
@@ -281,6 +285,10 @@ export function NoteForm({
       <div className="tbs-actions">
         <ActionButtons
           onSave={save}
+          onNew={() => {
+            setForm(blank());
+            setMsg("");
+          }}
           onUpdate={update}
           onDelete={remove}
           onPrint={() => {

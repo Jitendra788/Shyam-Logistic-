@@ -138,6 +138,10 @@ export default function LhcPage() {
   }
 
   async function save() {
+    if (current.id) {
+      await update();
+      return;
+    }
     setSaving(true);
     setMsg("");
     const res = await fetch("/api/tbs/challans", {
@@ -454,6 +458,11 @@ export default function LhcPage() {
 
           <ActionButtons
             onSave={save}
+            onNew={() => {
+              setForm(null);
+              setSelectedLrs([]);
+              setMsg("");
+            }}
             onUpdate={update}
             onDelete={remove}
             onPrint={() => {

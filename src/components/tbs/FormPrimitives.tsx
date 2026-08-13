@@ -140,6 +140,7 @@ export async function apiDelete(url: string) {
 
 export function ActionButtons({
   onSave,
+  onNew,
   onUpdate,
   onDelete,
   onPrint,
@@ -152,6 +153,8 @@ export function ActionButtons({
   extra,
 }: {
   onSave?: () => void;
+  /** Clear form to add a new record (shown while editing). */
+  onNew?: () => void;
   onUpdate?: () => void;
   onDelete?: () => void;
   onPrint?: () => void;
@@ -163,11 +166,17 @@ export function ActionButtons({
   printLabel?: string;
   extra?: React.ReactNode;
 }) {
+  const editing = canUpdate;
   return (
     <div className="tbs-actions">
-      {onSave && (
+      {!editing && onSave && (
         <button type="button" className="tbs-btn" onClick={onSave} disabled={saving}>
           <span className="dot green">+</span> Save
+        </button>
+      )}
+      {editing && onNew && (
+        <button type="button" className="tbs-btn" onClick={onNew} disabled={saving}>
+          New
         </button>
       )}
       {onUpdate && (

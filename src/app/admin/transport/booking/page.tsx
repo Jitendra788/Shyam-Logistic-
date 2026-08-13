@@ -232,6 +232,10 @@ export default function BookingPage() {
   }
 
   async function save() {
+    if (current.id) {
+      await update();
+      return;
+    }
     setSaving(true);
     setMsg("");
     const res = await fetch("/api/tbs/bookings", {
@@ -673,6 +677,10 @@ export default function BookingPage() {
       <div className="tbs-actions" style={{ borderTop: "1px solid #ccc", paddingTop: 10 }}>
         <ActionButtons
           onSave={save}
+          onNew={() => {
+            setForm(null);
+            setMsg("");
+          }}
           onUpdate={update}
           onDelete={remove}
           onPrint={() => {

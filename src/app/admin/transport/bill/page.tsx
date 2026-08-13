@@ -86,6 +86,10 @@ export default function BillPage() {
   }
 
   async function save() {
+    if (editId) {
+      await update();
+      return;
+    }
     setSaving(true);
     setMsg("");
     const res = await fetch("/api/tbs/bills", {
@@ -251,6 +255,14 @@ export default function BillPage() {
       <div className="tbs-actions">
         <ActionButtons
           onSave={save}
+          onNew={() => {
+            setEditId(null);
+            setSelected([]);
+            setRemark("");
+            setBillNo("");
+            setParty("");
+            setMsg("");
+          }}
           onUpdate={update}
           onDelete={remove}
           onPrint={() => {
