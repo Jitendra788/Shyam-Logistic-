@@ -13,7 +13,7 @@ const items = [
   },
   {
     href: "/admin/reports/party-outstanding/dayswise",
-    label: "Party Outstanding → Dayswise Outstanding",
+    label: "Party Outstanding → Daywise Outstanding",
     icon: "₹",
   },
   {

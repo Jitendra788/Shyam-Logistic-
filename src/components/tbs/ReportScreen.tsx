@@ -35,17 +35,20 @@ export function ReportScreen({
     return d.toISOString().slice(0, 10);
   });
   const [to, setTo] = useState(todayISO());
+  const [asOf, setAsOf] = useState(todayISO());
   const [party, setParty] = useState("");
   const [parties, setParties] = useState<string[]>([]);
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function load() {
+  async function load(opts?: { partyName?: string }) {
     setLoading(true);
     setError("");
+    const partyFilter = opts?.partyName !== undefined ? opts.partyName : party;
     const q = new URLSearchParams({ kind, from, to });
-    if (party) q.set("party", party);
+    if (kind === "dayswise") q.set("asOf", asOf);
+    if (partyFilter) q.set("party", partyFilter);
     const res = await fetch(`/api/tbs/reports?${q}`);
     setLoading(false);
     if (!res.ok) {
@@ -55,7 +58,7 @@ export function ReportScreen({
     const json = await res.json();
     setData(json);
     if (Array.isArray(json.parties)) setParties(json.parties);
-    if (needParty && !party && json.party) setParty(json.party);
+    if (needParty && !partyFilter && json.party) setParty(json.party);
   }
 
   useEffect(() => {
@@ -73,155 +76,197 @@ export function ReportScreen({
       {error && <div className="tbs-msg err">{error}</div>}
 
       <div className="tbs-row rpt-filters">
-        <div className="tbs-field">
-          <label>From Date</label>
-          <input
-            className="tbs-input w-md"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
-        </div>
-        <div className="tbs-field">
-          <label>To Date</label>
-          <input
-            className="tbs-input w-md"
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
-        </div>
-        {(needParty ||
-          kind === "outstanding" ||
-          kind === "billingwise" ||
-          kind === "dayswise" ||
-          kind === "booking" ||
-          kind === "gst") && (
-          <div className="tbs-field" style={{ flex: 1 }}>
-            <label>{needParty ? "Select Party" : "Party (optional)"}</label>
-            <select
-              className="tbs-select w-full"
-              value={party}
-              onChange={(e) => setParty(e.target.value)}
+        {kind === "dayswise" ? (
+          <>
+            <div className="tbs-field">
+              <label>Todays Date</label>
+              <input
+                className="tbs-input w-md"
+                type="date"
+                value={asOf}
+                onChange={(e) => setAsOf(e.target.value)}
+              />
+            </div>
+            <button
+              type="button"
+              className="tbs-btn"
+              disabled={loading}
+              onClick={() => {
+                setParty("");
+                void load({ partyName: "" });
+              }}
             >
-              {!needParty && <option value="">All</option>}
-              {parties.map((p) => (
-                <option key={p}>{p}</option>
-              ))}
-            </select>
-          </div>
+              Show All
+            </button>
+            <div className="tbs-field" style={{ flex: 1, minWidth: 220 }}>
+              <label>Enter Party Name</label>
+              <input
+                className="tbs-input w-full"
+                list="dayswise-party-list"
+                value={party}
+                onChange={(e) => setParty(e.target.value)}
+                placeholder="Type or select party"
+              />
+              <datalist id="dayswise-party-list">
+                {parties.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="tbs-field">
+              <label>From Date</label>
+              <input
+                className="tbs-input w-md"
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </div>
+            <div className="tbs-field">
+              <label>To Date</label>
+              <input
+                className="tbs-input w-md"
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </div>
+            {(needParty ||
+              kind === "outstanding" ||
+              kind === "billingwise" ||
+              kind === "booking" ||
+              kind === "gst") && (
+              <div className="tbs-field" style={{ flex: 1 }}>
+                <label>{needParty ? "Select Party" : "Party (optional)"}</label>
+                <select
+                  className="tbs-select w-full"
+                  value={party}
+                  onChange={(e) => setParty(e.target.value)}
+                >
+                  {!needParty && <option value="">All</option>}
+                  {parties.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </>
         )}
         <button type="button" className="tbs-btn" onClick={() => load()} disabled={loading}>
           Show
         </button>
-        <button
-          type="button"
-          className="tbs-btn tbs-btn-excel"
-          onClick={() => {
-            if (!rows.length && kind !== "profit") {
-              alert("Click Show first, then Generate as Excel.");
-              return;
-            }
-            const headers =
-              kind === "billingwise" || kind === "dayswise"
-                ? ["Sr", "Bill No", "Date", "Party", "Bill Amt", "Paid", "Outstanding", "Days", "Age"]
-                : kind === "ledger"
-                  ? ["Sr", "Date", "Type", "Doc No", "Narration", "Debit", "Credit", "Balance"]
-                  : kind === "gst"
-                    ? [
-                        "Sr",
-                        "Date",
-                        "Party",
-                        "Party Code",
-                        "PAN No",
-                        "GST No",
-                        "Bill No",
-                        "Challan No",
-                        "From",
-                        "To",
-                        "LR No",
-                        "Before Tax",
-                        "CGST %",
-                        "CGST Amt",
-                        "SGST %",
-                        "SGST Amt",
-                        "IGST %",
-                        "IGST Amt",
-                      ]
-                    : kind === "profit"
-                      ? ["Particulars", "Amount"]
-                      : kind === "outstanding"
-                        ? ["Sr", "Party", "Bills", "Bill Amt", "Paid", "Outstanding"]
-                        : ["Sr", "Data"];
-            const excelRows =
-              kind === "profit"
-                ? rows.map((r) => [String(r.label), Number(r.amount)])
-                : kind === "billingwise" || kind === "dayswise"
-                  ? rows.map((r) => [
-                      String(r.sr),
-                      String(r.billNo),
-                      fmtDate(String(r.date)),
-                      String(r.party),
-                      Number(r.billAmt),
-                      Number(r.paid),
-                      Number(r.outstanding),
-                      String(r.days),
-                      String(r.age || ""),
-                    ])
+        {kind !== "dayswise" && (
+          <button
+            type="button"
+            className="tbs-btn tbs-btn-excel"
+            onClick={() => {
+              if (!rows.length && kind !== "profit") {
+                alert("Click Show first, then Generate as Excel.");
+                return;
+              }
+              const headers =
+                kind === "billingwise"
+                  ? ["Sr", "Bill No", "Date", "Party", "Bill Amt", "Paid", "Outstanding", "Days"]
                   : kind === "ledger"
+                    ? ["Sr", "Date", "Type", "Doc No", "Narration", "Debit", "Credit", "Balance"]
+                    : kind === "gst"
+                      ? [
+                          "Sr",
+                          "Date",
+                          "Party",
+                          "Party Code",
+                          "PAN No",
+                          "GST No",
+                          "Bill No",
+                          "Challan No",
+                          "From",
+                          "To",
+                          "LR No",
+                          "Before Tax",
+                          "CGST %",
+                          "CGST Amt",
+                          "SGST %",
+                          "SGST Amt",
+                          "IGST %",
+                          "IGST Amt",
+                        ]
+                      : kind === "profit"
+                        ? ["Particulars", "Amount"]
+                        : kind === "outstanding"
+                          ? ["Sr", "Party", "Bills", "Bill Amt", "Paid", "Outstanding"]
+                          : ["Sr", "Data"];
+              const excelRows =
+                kind === "profit"
+                  ? rows.map((r) => [String(r.label), Number(r.amount)])
+                  : kind === "billingwise"
                     ? rows.map((r) => [
                         String(r.sr),
+                        String(r.billNo),
                         fmtDate(String(r.date)),
-                        String(r.type),
-                        String(r.docNo),
-                        String(r.narr),
-                        Number(r.debit),
-                        Number(r.credit),
-                        Number(r.balance),
+                        String(r.party),
+                        Number(r.billAmt),
+                        Number(r.paid),
+                        Number(r.outstanding),
+                        String(r.days),
                       ])
-                    : kind === "gst"
+                    : kind === "ledger"
                       ? rows.map((r) => [
                           String(r.sr),
                           fmtDate(String(r.date)),
-                          String(r.party),
-                          String(r.partyCode || ""),
-                          String(r.panNo || ""),
-                          String(r.gstNo || ""),
-                          String(r.billNo || ""),
-                          String(r.challanNo || ""),
-                          String(r.from || ""),
-                          String(r.to || ""),
-                          String(r.lrNo || ""),
-                          Number(r.beforeTax),
-                          Number(r.cgstPct),
-                          Number(r.cgstAmt),
-                          Number(r.sgstPct),
-                          Number(r.sgstAmt),
-                          Number(r.igstPct),
-                          Number(r.igstAmt),
+                          String(r.type),
+                          String(r.docNo),
+                          String(r.narr),
+                          Number(r.debit),
+                          Number(r.credit),
+                          Number(r.balance),
                         ])
-                      : kind === "outstanding"
+                      : kind === "gst"
                         ? rows.map((r) => [
                             String(r.sr),
+                            fmtDate(String(r.date)),
                             String(r.party),
-                            String(r.bills),
-                            Number(r.billAmt),
-                            Number(r.paid),
-                            Number(r.outstanding),
+                            String(r.partyCode || ""),
+                            String(r.panNo || ""),
+                            String(r.gstNo || ""),
+                            String(r.billNo || ""),
+                            String(r.challanNo || ""),
+                            String(r.from || ""),
+                            String(r.to || ""),
+                            String(r.lrNo || ""),
+                            Number(r.beforeTax),
+                            Number(r.cgstPct),
+                            Number(r.cgstAmt),
+                            Number(r.sgstPct),
+                            Number(r.sgstAmt),
+                            Number(r.igstPct),
+                            Number(r.igstAmt),
                           ])
-                        : rows.map((r) => [String(r.sr), JSON.stringify(r)]);
-            downloadAsExcel(`${kind}_report_${from}_${to}.xlsx`, headers, excelRows);
-          }}
-        >
-          Generate as Excel
-        </button>
+                        : kind === "outstanding"
+                          ? rows.map((r) => [
+                              String(r.sr),
+                              String(r.party),
+                              String(r.bills),
+                              Number(r.billAmt),
+                              Number(r.paid),
+                              Number(r.outstanding),
+                            ])
+                          : rows.map((r) => [String(r.sr), JSON.stringify(r)]);
+              downloadAsExcel(`${kind}_report_${from}_${to}.xlsx`, headers, excelRows);
+            }}
+          >
+            Generate as Excel
+          </button>
+        )}
         <button
           type="button"
           className="tbs-btn tbs-btn-print"
           onClick={() => window.print()}
           disabled={!rows.length && kind !== "profit"}
         >
-          <span className="dot print">🖨</span> Print
+          Print
         </button>
       </div>
 
@@ -233,8 +278,9 @@ export function ReportScreen({
             <div style={{ fontWeight: 800, fontSize: 16 }}>SHYAM LOGISTICS</div>
             <div style={{ fontSize: 12 }}>{title}</div>
             <div style={{ fontSize: 11 }}>
-              Period: {fmtDate(from)} to {fmtDate(to)}
-              {party ? ` · Party: ${party}` : ""}
+              {kind === "dayswise"
+                ? `As on: ${fmtDate(asOf)}${party ? ` · Party: ${party}` : ""}`
+                : `Period: ${fmtDate(from)} to ${fmtDate(to)}${party ? ` · Party: ${party}` : ""}`}
             </div>
           </div>
         </div>
@@ -307,7 +353,7 @@ export function ReportScreen({
           </div>
         )}
 
-        {(kind === "billingwise" || kind === "dayswise") && (
+        {kind === "billingwise" && (
           <div className="tbs-grid-wrap">
             <table className="tbs-grid">
               <thead>
@@ -320,7 +366,6 @@ export function ReportScreen({
                   <th>Paid</th>
                   <th>Outstanding</th>
                   <th>Days</th>
-                  {kind === "dayswise" && <th>Age</th>}
                 </tr>
               </thead>
               <tbody>
@@ -336,7 +381,41 @@ export function ReportScreen({
                       <b>{Number(r.outstanding).toFixed(2)}</b>
                     </td>
                     <td>{String(r.days)}</td>
-                    {kind === "dayswise" && <td>{String(r.age)}</td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {kind === "dayswise" && (
+          <div className="tbs-grid-wrap">
+            <table className="tbs-grid">
+              <thead>
+                <tr>
+                  <th>Bill Date</th>
+                  <th>Party Name</th>
+                  <th>CNS Date</th>
+                  <th>CNS No</th>
+                  <th>0 To 30</th>
+                  <th>31 To 60</th>
+                  <th>61 To 90</th>
+                  <th>91 &amp; above</th>
+                  <th>Sub Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={String(r.id || r.billNo || r.sr)}>
+                    <td>{fmtDate(String(r.billDate))}</td>
+                    <td>{String(r.party)}</td>
+                    <td>{r.cnsDate ? fmtDate(String(r.cnsDate)) : ""}</td>
+                    <td>{String(r.cnsNo || "")}</td>
+                    <td>{Number(r.d0to30) ? Number(r.d0to30).toFixed(2) : ""}</td>
+                    <td>{Number(r.d31to60) ? Number(r.d31to60).toFixed(2) : ""}</td>
+                    <td>{Number(r.d61to90) ? Number(r.d61to90).toFixed(2) : ""}</td>
+                    <td>{Number(r.d91above) ? Number(r.d91above).toFixed(2) : ""}</td>
+                    <td>{r.subDate ? fmtDate(String(r.subDate)) : ""}</td>
                   </tr>
                 ))}
               </tbody>
@@ -455,11 +534,23 @@ export function ReportScreen({
 
         {!!Object.keys(totals).length && (
           <div style={{ marginTop: 10, fontWeight: 700 }}>
-            {Object.entries(totals).map(([k, v]) => (
-              <span key={k} style={{ marginRight: 16 }}>
-                {k}: ₹ {Number(v).toFixed(2)}
-              </span>
-            ))}
+            {Object.entries(totals).map(([k, v]) => {
+              const label =
+                k === "d0to30"
+                  ? "0 To 30"
+                  : k === "d31to60"
+                    ? "31 To 60"
+                    : k === "d61to90"
+                      ? "61 To 90"
+                      : k === "d91above"
+                        ? "91 & above"
+                        : k;
+              return (
+                <span key={k} style={{ marginRight: 16 }}>
+                  {label}: ₹ {Number(v).toFixed(2)}
+                </span>
+              );
+            })}
           </div>
         )}
 

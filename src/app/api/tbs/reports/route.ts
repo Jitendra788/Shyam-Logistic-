@@ -153,10 +153,72 @@ export async function GET(req: Request) {
       .filter((r) => r.outstanding > 0);
 
     if (kind === "dayswise") {
-      billRows.sort((a, b) => b.days - a.days || a.party.localeCompare(b.party));
-    } else {
-      billRows.sort((a, b) => a.party.localeCompare(b.party) || a.billNo.localeCompare(b.billNo));
+      const asOfParam = searchParams.get("asOf") || today.toISOString().slice(0, 10);
+      const asOf = new Date(asOfParam);
+      const asOfTime = Number.isFinite(asOf.getTime()) ? asOf.getTime() : today.getTime();
+      const asOfISO = Number.isFinite(asOf.getTime())
+        ? asOf.toISOString().slice(0, 10)
+        : today.toISOString().slice(0, 10);
+
+      const bookingById = new Map(bookings.map((b) => [b.id, b]));
+
+      const dayRows = bills
+        .filter((b) => {
+          if (party && b.partyName !== party) return false;
+          if (b.billDate && b.billDate > asOfISO) return false;
+          return true;
+        })
+        .map((b) => {
+          const paid = paidByBill.get(b.billNo) || 0;
+          const outstanding = Math.max(0, Number(b.totalAmount) - paid);
+          const billDate = new Date(b.billDate);
+          const days = Number.isFinite(billDate.getTime())
+            ? Math.max(
+                0,
+                Math.floor((asOfTime - billDate.getTime()) / 86400000),
+              )
+            : 0;
+          const linked = (b.lrIds || [])
+            .map((id) => bookingById.get(id))
+            .filter(Boolean);
+          const cnsNo = linked.map((x) => x!.lrNo).filter(Boolean).join(", ");
+          const cnsDate = linked[0]?.lrDate || "";
+          return {
+            id: b.id,
+            billDate: b.billDate,
+            party: b.partyName,
+            cnsDate,
+            cnsNo,
+            d0to30: days <= 30 ? outstanding : 0,
+            d31to60: days > 30 && days <= 60 ? outstanding : 0,
+            d61to90: days > 60 && days <= 90 ? outstanding : 0,
+            d91above: days > 90 ? outstanding : 0,
+            subDate: b.submissionDate || "",
+            billNo: b.billNo,
+            outstanding,
+            days,
+          };
+        })
+        .filter((r) => r.outstanding > 0)
+        .sort((a, b) => b.days - a.days || a.party.localeCompare(b.party))
+        .map((r, i) => ({ sr: i + 1, ...r }));
+
+      return ok({
+        kind: "dayswise",
+        asOf: asOfISO,
+        parties: parties.map((p) => p.partyName),
+        rows: dayRows,
+        totals: {
+          d0to30: dayRows.reduce((s, r) => s + r.d0to30, 0),
+          d31to60: dayRows.reduce((s, r) => s + r.d31to60, 0),
+          d61to90: dayRows.reduce((s, r) => s + r.d61to90, 0),
+          d91above: dayRows.reduce((s, r) => s + r.d91above, 0),
+          outstanding: dayRows.reduce((s, r) => s + r.outstanding, 0),
+        },
+      });
     }
+
+    billRows.sort((a, b) => a.party.localeCompare(b.party) || a.billNo.localeCompare(b.billNo));
 
     const rows = billRows.map((r, i) => ({ sr: i + 1, ...r }));
 
