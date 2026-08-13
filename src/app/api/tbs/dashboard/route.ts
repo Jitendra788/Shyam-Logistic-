@@ -14,25 +14,26 @@ export async function GET() {
   const denied = await requireAuth();
   if (denied) return denied;
 
-  const [
-    parties,
-    bookings,
-    bills,
-    receipts,
-    challans,
-    lhp,
-    notes,
-    enquiries,
-  ] = await Promise.all([
-    getParties(),
-    getBookings(),
-    getBills(),
-    getMoneyReceipts(),
-    getChallans(),
-    getLhpPayments(),
-    getNotes(),
-    getEnquiries().catch(() => []),
-  ]);
+  try {
+    const [
+      parties,
+      bookings,
+      bills,
+      receipts,
+      challans,
+      lhp,
+      notes,
+      enquiries,
+    ] = await Promise.all([
+      getParties(),
+      getBookings(),
+      getBills(),
+      getMoneyReceipts(),
+      getChallans(),
+      getLhpPayments(),
+      getNotes(),
+      getEnquiries().catch(() => []),
+    ]);
 
   const billedLrIds = new Set<string>();
   for (const bill of bills) {
@@ -228,4 +229,55 @@ export async function GET() {
     pendingList,
     completedList,
   });
+  } catch (err) {
+    console.error("dashboard failed", err);
+    return ok({
+      counts: {
+        parties: 0,
+        bookings: 0,
+        bills: 0,
+        challans: 0,
+        receipts: 0,
+      },
+      pending: {
+        delivery: 0,
+        bill: 0,
+        notDeliveredNotBilled: 0,
+        billedNotDelivered: 0,
+        deliveredNotBilled: 0,
+        deliveredBilled: 0,
+        outstandingAmt: 0,
+        outstandingBills: 0,
+        hireAmt: 0,
+        hireCount: 0,
+        enquiries: 0,
+        lrTotal: 0,
+      },
+      completed: {
+        lrs: 0,
+        billsPaid: 0,
+        billsPaidAmt: 0,
+        collected: 0,
+        hireDone: 0,
+        enquiries: 0,
+      },
+      profit: {
+        income: 0,
+        freight: 0,
+        billAmt: 0,
+        hirePaid: 0,
+        challanHire: 0,
+        expenseNotes: 0,
+        expense: 0,
+        profit: 0,
+        collected: 0,
+        outstanding: 0,
+      },
+      outstandingTop: [],
+      recentBookings: [],
+      pendingList: [],
+      completedList: [],
+      warning: "Dashboard data could not be fully loaded",
+    });
+  }
 }

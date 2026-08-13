@@ -14,7 +14,11 @@ import type {
 const DATA_DIR = path.join(process.cwd(), "data", "tbs");
 
 async function ensureDir() {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+  } catch {
+    // read-only hosts (e.g. Vercel) — ignore
+  }
 }
 
 async function readJson<T>(file: string, fallback: T): Promise<T> {
@@ -24,18 +28,28 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
     const raw = await fs.readFile(p, "utf8");
     return JSON.parse(raw) as T;
   } catch {
-    await fs.writeFile(p, JSON.stringify(fallback, null, 2), "utf8");
+    try {
+      await fs.writeFile(p, JSON.stringify(fallback, null, 2), "utf8");
+    } catch {
+      // cannot persist on read-only filesystem — use in-memory fallback
+    }
     return fallback;
   }
 }
 
 async function writeJson<T>(file: string, data: T): Promise<void> {
   await ensureDir();
-  await fs.writeFile(
-    path.join(DATA_DIR, file),
-    JSON.stringify(data, null, 2),
-    "utf8",
-  );
+  try {
+    await fs.writeFile(
+      path.join(DATA_DIR, file),
+      JSON.stringify(data, null, 2),
+      "utf8",
+    );
+  } catch (err) {
+    throw new Error(
+      "Data save failed — local disk required (Vercel cannot persist TBS JSON).",
+    );
+  }
 }
 
 export const defaultMasters: Masters = {

@@ -116,23 +116,82 @@ export default function AdminMasterPage() {
   const ready = useAdminAuth();
   const [data, setData] = useState<Dash | null>(null);
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function loadDash() {
+    setLoading(true);
+    setErr("");
+    try {
+      const res = await fetch("/api/tbs/dashboard", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      if (res.status === 401) {
+        throw new Error("Login expire — phir se login karo");
+      }
+      if (!res.ok) {
+        throw new Error(`Dashboard API error (${res.status})`);
+      }
+      const json = (await res.json()) as Dash;
+      setData({
+        ...json,
+        pendingList: json.pendingList || [],
+        completedList: json.completedList || [],
+        outstandingTop: json.outstandingTop || [],
+        pending: json.pending || {
+          delivery: 0,
+          bill: 0,
+          notDeliveredNotBilled: 0,
+          billedNotDelivered: 0,
+          deliveredNotBilled: 0,
+          deliveredBilled: 0,
+          outstandingAmt: 0,
+          outstandingBills: 0,
+          hireAmt: 0,
+          hireCount: 0,
+          enquiries: 0,
+          lrTotal: 0,
+        },
+        completed: json.completed || {
+          lrs: 0,
+          billsPaid: 0,
+          billsPaidAmt: 0,
+          collected: 0,
+          hireDone: 0,
+          enquiries: 0,
+        },
+        profit: json.profit || {
+          income: 0,
+          freight: 0,
+          billAmt: 0,
+          hirePaid: 0,
+          challanHire: 0,
+          expenseNotes: 0,
+          expense: 0,
+          profit: 0,
+          collected: 0,
+          outstanding: 0,
+        },
+        counts: json.counts || {
+          parties: 0,
+          bookings: 0,
+          bills: 0,
+          challans: 0,
+          receipts: 0,
+        },
+      });
+    } catch (e) {
+      setErr(
+        e instanceof Error ? e.message : "Dashboard data load nahi hui",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!ready) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/tbs/dashboard", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed");
-        const json = (await res.json()) as Dash;
-        if (!cancelled) setData(json);
-      } catch {
-        if (!cancelled) setErr("Dashboard data load nahi hui");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    void loadDash();
   }, [ready]);
 
   if (!ready) return <div className="tbs-empty">Loading…</div>;
@@ -169,11 +228,18 @@ export default function AdminMasterPage() {
         )}
       </section>
 
-      {err && <div className="tbs-msg err">{err}</div>}
+      {err && (
+        <div className="tbs-msg err" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          <span>{err}</span>
+          <button type="button" className="tbs-btn" onClick={() => void loadDash()} disabled={loading}>
+            {loading ? "Loading…" : "Retry"}
+          </button>
+        </div>
+      )}
 
-      {!data ? (
+      {!data && !err ? (
         <div className="tbs-empty">Dashboard load ho raha hai…</div>
-      ) : (
+      ) : !data ? null : (
         <>
           <div className="tbs-pc-grid">
             <section className="tbs-pc-panel tbs-pc-pending">
