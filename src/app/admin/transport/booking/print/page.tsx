@@ -7,6 +7,7 @@ import { BookingBillPrint } from "@/components/tbs/DocPrint";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import type { Booking, Party } from "@/lib/tbs/types";
 import "@/app/admin/doc-print.css";
+import "@/app/admin/lr-print.css";
 
 type Payload = {
   bookings: Booking[];
@@ -53,7 +54,7 @@ function PrintInner() {
           🖨 Print Bill
         </button>
         <span style={{ fontSize: 12, color: "#333" }}>
-          LR No. {booking.lrNo} — Tax Invoice
+          LR No. {booking.lrNo} — Consignment Note
         </span>
       </div>
       <BookingBillPrint booking={booking} parties={data?.parties || []} />

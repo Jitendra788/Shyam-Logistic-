@@ -453,16 +453,7 @@ export function BookingBillPrint({
   booking: Booking;
   parties?: Party[];
 }) {
-  return (
-    <TaxInvoicePrint
-      partyName={booking.billingParty}
-      billNo={booking.lrNo}
-      billDate={booking.lrDate}
-      lrs={[booking]}
-      parties={parties}
-      totalAmount={Number(booking.grandTotal || booking.freight || 0)}
-    />
-  );
+  return <LrPrintSheet booking={booking} parties={parties} />;
 }
 
 export function BillPrint({
