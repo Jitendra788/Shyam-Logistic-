@@ -137,11 +137,19 @@ async function applyMutation(url: string, method: string, init?: RequestInit) {
       const particulars = Array.isArray(masters.particulars)
         ? [...(masters.particulars as string[])]
         : [];
+      const brokers = Array.isArray(masters.brokers)
+        ? [...(masters.brokers as string[])]
+        : ["All"];
       const p = String((body as { particulars?: string }).particulars || "").trim();
+      const broker = String((body as { broker?: string }).broker || "").trim();
       if (p && !particulars.some((x) => x.toLowerCase() === p.toLowerCase())) {
         particulars.unshift(p);
       }
-      const next = { ...masters, particulars };
+      if (broker && !brokers.some((x) => x.toLowerCase() === broker.toLowerCase())) {
+        const rest = brokers.filter((x) => x !== "All");
+        brokers.splice(0, brokers.length, "All", broker, ...rest);
+      }
+      const next = { ...masters, particulars, brokers };
       await setCol("masters", next);
       return { ok: true, row: { masters: next } };
     }

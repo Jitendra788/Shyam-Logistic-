@@ -103,6 +103,26 @@ export default function LhcPage() {
     setSelectedLrs(c.lrIds || []);
   }
 
+  async function addBroker() {
+    const name = current.brokerOwner.trim();
+    if (!name) {
+      setMsg("Type Broker/Owner Name first");
+      return;
+    }
+    patch({ brokerOwner: name, owner: name });
+    const res = await fetch("/api/tbs/masters", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ broker: name }),
+    });
+    if (!res.ok) {
+      setMsg(await readApiError(res, "Could not add broker"));
+      return;
+    }
+    setMsg("Added successfully");
+    await reload();
+  }
+
   async function save() {
     setSaving(true);
     setMsg("");
@@ -186,20 +206,25 @@ export default function LhcPage() {
             </div>
             <div className="tbs-field" style={{ flex: 1 }}>
               <label>Broker/Owner Name</label>
-              <select
-                className="tbs-select w-full"
+              <input
+                className="tbs-input w-full"
                 value={current.brokerOwner}
                 onChange={(e) =>
                   patch({ brokerOwner: e.target.value, owner: e.target.value })
                 }
-              >
-                <option value="">Select</option>
-                {(data?.masters.brokers || []).filter((b) => b !== "All").map((b) => (
-                  <option key={b}>{b}</option>
-                ))}
-              </select>
+                placeholder="Type or select…"
+                list="lhc-broker-suggestions"
+                autoComplete="off"
+              />
+              <datalist id="lhc-broker-suggestions">
+                {(data?.masters.brokers || [])
+                  .filter((b) => b !== "All")
+                  .map((b) => (
+                    <option key={b} value={b} />
+                  ))}
+              </datalist>
             </div>
-            <button type="button" className="tbs-btn">
+            <button type="button" className="tbs-btn" onClick={() => void addBroker()}>
               Add
             </button>
             <button type="button" className="tbs-btn" onClick={() => reload()}>

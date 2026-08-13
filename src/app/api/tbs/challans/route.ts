@@ -5,9 +5,34 @@ import {
   getMasters,
   nextCode,
   saveChallans,
+  saveMasters,
   uid,
 } from "@/lib/tbs/store";
 import type { Challan } from "@/lib/tbs/types";
+
+async function rememberBroker(brokerOwner: string) {
+  const name = brokerOwner.trim();
+  if (!name) return;
+  const masters = await getMasters();
+  const exists = masters.brokers.some(
+    (x) => x.toLowerCase() === name.toLowerCase(),
+  );
+  if (!exists) {
+    const rest = masters.brokers.filter((x) => x !== "All");
+    masters.brokers = ["All", name, ...rest];
+    await saveMasters(masters);
+  }
+}
+
+async function rememberVehicle(vehicleNo: string) {
+  const v = vehicleNo.trim().toUpperCase();
+  if (!v) return;
+  const masters = await getMasters();
+  if (!masters.vehicles.includes(v)) {
+    masters.vehicles = [v, ...masters.vehicles];
+    await saveMasters(masters);
+  }
+}
 
 export async function GET() {
   const denied = await requireAuth();
@@ -66,6 +91,8 @@ export async function POST(req: Request) {
     };
     challans.unshift(challan);
     await saveChallans(challans);
+    await rememberVehicle(challan.vehicleNo);
+    await rememberBroker(challan.brokerOwner);
     return ok(challan, 201);
   } catch (e) {
     return failSave(e);
@@ -93,6 +120,8 @@ export async function PUT(req: Request) {
       balance: freight - advance - transfer - cash - fuel,
     };
     await saveChallans(challans);
+    await rememberVehicle(challans[idx].vehicleNo);
+    await rememberBroker(challans[idx].brokerOwner);
     return ok(challans[idx]);
   } catch (e) {
     return failSave(e);
