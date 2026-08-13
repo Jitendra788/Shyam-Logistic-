@@ -45,7 +45,7 @@ export function isTbsPersistent(): boolean {
 }
 
 function redisKey(file: string) {
-  return `shyam:tbs:v2:${file}`;
+  return `shyam:tbs:v3:${file}`;
 }
 
 async function ensureDir() {

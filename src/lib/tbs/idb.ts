@@ -1,7 +1,22 @@
 "use client";
 
-const DB_NAME = "shyam-tbs-v2";
+const DB_NAME = "shyam-tbs-v3";
 const STORE = "kv";
+
+const OLD_DBS = ["shyam-tbs", "shyam-tbs-v2"];
+
+function wipeOldDbs() {
+  if (typeof indexedDB === "undefined") return;
+  for (const name of OLD_DBS) {
+    try {
+      indexedDB.deleteDatabase(name);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+wipeOldDbs();
 
 type Rec = { data: unknown; at: number };
 
