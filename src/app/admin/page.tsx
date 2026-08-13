@@ -92,6 +92,13 @@ function todayLabel() {
   });
 }
 
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 function statusLabel(b: BookingRow) {
   if (b.delivered && b.billed) return "Completed";
   if (b.delivered && !b.billed) return "Bill due";
@@ -106,12 +113,12 @@ function statusClass(b: BookingRow) {
 }
 
 const quickActions = [
-  { href: "/admin/transport/booking", title: "New Booking", desc: "Create LR", tone: "red" },
-  { href: "/admin/registration/parties", title: "Party", desc: "Add customer", tone: "navy" },
-  { href: "/admin/transport/lhc", title: "LHC", desc: "Hire challan", tone: "amber" },
-  { href: "/admin/transport/bill", title: "Bill", desc: "Party invoice", tone: "teal" },
-  { href: "/admin/transport/money-receipt/new", title: "Receipt", desc: "Collect payment", tone: "ok" },
-  { href: "/admin/website/enquiries", title: "Enquiries", desc: "Website leads", tone: "muted" },
+  { href: "/admin/transport/booking", title: "New Booking", desc: "Create LR", tone: "red", mark: "LR" },
+  { href: "/admin/registration/parties", title: "Party", desc: "Add customer", tone: "navy", mark: "P" },
+  { href: "/admin/transport/lhc", title: "LHC", desc: "Hire challan", tone: "amber", mark: "HC" },
+  { href: "/admin/transport/bill", title: "Bill", desc: "Party invoice", tone: "teal", mark: "B" },
+  { href: "/admin/transport/money-receipt/new", title: "Receipt", desc: "Collect payment", tone: "ok", mark: "MR" },
+  { href: "/admin/website/enquiries", title: "Enquiries", desc: "Website leads", tone: "muted", mark: "E" },
 ];
 
 export default function AdminMasterPage() {
@@ -211,22 +218,71 @@ export default function AdminMasterPage() {
     data.counts.bookings === 0 &&
     data.counts.bills === 0;
 
+  const attention: { href: string; label: string; value: string; tone: string }[] = [];
+  if (p) {
+    if (p.outstandingAmt > 0)
+      attention.push({
+        href: "/admin/reports/party-outstanding/billingwise",
+        label: "Outstanding",
+        value: inr(p.outstandingAmt),
+        tone: "red",
+      });
+    if (p.deliveredNotBilled > 0)
+      attention.push({
+        href: "/admin/reports/booking?status=delivered_not_billed",
+        label: "Bill pending",
+        value: String(p.deliveredNotBilled),
+        tone: "amber",
+      });
+    if (p.billedNotDelivered > 0)
+      attention.push({
+        href: "/admin/reports/booking?status=billed_not_delivered",
+        label: "Delivery pending",
+        value: String(p.billedNotDelivered),
+        tone: "navy",
+      });
+    if (p.hireCount > 0)
+      attention.push({
+        href: "/admin/transport/lhp/new",
+        label: "Hire due",
+        value: inr(p.hireAmt),
+        tone: "muted",
+      });
+    if (p.enquiries > 0)
+      attention.push({
+        href: "/admin/website/enquiries",
+        label: "New enquiries",
+        value: String(p.enquiries),
+        tone: "navy",
+      });
+  }
+
   return (
     <div className="tbs-dash">
       <section className="tbs-dash-hero">
         <div className="tbs-dash-hero-top">
-          <span className="tbs-dash-eyebrow">Dashboard · {todayLabel()}</span>
-          <button
-            type="button"
-            className="tbs-dash-refresh"
-            onClick={() => void loadDash()}
-            disabled={loading}
-          >
-            {loading ? "Refreshing…" : "Refresh"}
-          </button>
+          <div>
+            <span className="tbs-dash-eyebrow">{todayLabel()}</span>
+            <h1>
+              {greeting()}
+              <span className="tbs-dash-brand"> · SHYAM LOGISTICS</span>
+            </h1>
+            <p>Today&apos;s work, collections, and pending LRs in one place.</p>
+          </div>
+          <div className="tbs-dash-hero-actions">
+            <Link href="/admin/transport/booking" className="tbs-dash-cta">
+              + New Booking
+            </Link>
+            <button
+              type="button"
+              className="tbs-dash-refresh"
+              onClick={() => void loadDash()}
+              disabled={loading}
+            >
+              {loading ? "Refreshing…" : "Refresh"}
+            </button>
+          </div>
         </div>
-        <h1>SHYAM LOGISTIC</h1>
-        <p>Today’s work, collections, and pending LRs in one place.</p>
         {data && (
           <>
             <div className="tbs-dash-hero-stats tbs-dash-hero-stats-4">
@@ -258,7 +314,7 @@ export default function AdminMasterPage() {
             <p className="tbs-dash-progress-label">
               {totalLr === 0
                 ? "No bookings yet — start with a party, then create an LR."
-                : `${donePct}% of LRs delivered and billed`}
+                : `${donePct}% of LRs delivered and billed · ${totalLr} total`}
             </p>
           </>
         )}
@@ -271,11 +327,35 @@ export default function AdminMasterPage() {
             href={m.href}
             className={`tbs-quick-card tbs-quick-${m.tone}`}
           >
+            <span className="tbs-quick-mark" aria-hidden>
+              {m.mark}
+            </span>
             <strong>{m.title}</strong>
             <span>{m.desc}</span>
           </Link>
         ))}
       </div>
+
+      {data && attention.length > 0 && !isFresh ? (
+        <section className="tbs-attention" aria-label="Needs attention">
+          <div className="tbs-attention-head">
+            <h2>Needs attention</h2>
+            <span>{attention.length} item{attention.length === 1 ? "" : "s"}</span>
+          </div>
+          <div className="tbs-attention-grid">
+            {attention.map((a) => (
+              <Link
+                key={a.href + a.label}
+                href={a.href}
+                className={`tbs-attention-card tbs-att-${a.tone}`}
+              >
+                <span>{a.label}</span>
+                <strong>{a.value}</strong>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {data && data.persistent === false && (
         <details className="tbs-setup-compact">
@@ -328,7 +408,13 @@ export default function AdminMasterPage() {
       )}
 
       {!data && !err ? (
-        <div className="tbs-empty">Loading dashboard…</div>
+        <div className="tbs-dash-skel" aria-busy>
+          <div className="tbs-skel-block" />
+          <div className="tbs-skel-row">
+            <div className="tbs-skel-block" />
+            <div className="tbs-skel-block" />
+          </div>
+        </div>
       ) : !data ? null : (
         <>
           {isFresh ? (
@@ -355,7 +441,10 @@ export default function AdminMasterPage() {
           <div className="tbs-pc-grid">
             <section className="tbs-pc-panel tbs-pc-pending">
               <header className="tbs-pc-head">
-                <h2>Pending</h2>
+                <div>
+                  <h2>Pending</h2>
+                  <p className="tbs-pc-subline">Work still open</p>
+                </div>
                 <span className="tbs-pc-badge warn">{p!.lrTotal} LR</span>
               </header>
               <div className="tbs-pc-kpis">
@@ -414,7 +503,12 @@ export default function AdminMasterPage() {
                 </Link>
               </div>
               <div className="tbs-dash-table-wrap">
-                <h3 className="tbs-pc-sub">Pending LRs</h3>
+                <div className="tbs-pc-table-head">
+                  <h3 className="tbs-pc-sub">Pending LRs</h3>
+                  <Link href="/admin/reports/booking" className="tbs-pc-more">
+                    View all →
+                  </Link>
+                </div>
                 {data.pendingList.length === 0 ? (
                   <div className="tbs-empty-box">
                     <p>No pending LRs.</p>
@@ -428,7 +522,10 @@ export default function AdminMasterPage() {
 
             <section className="tbs-pc-panel tbs-pc-done">
               <header className="tbs-pc-head">
-                <h2>Completed</h2>
+                <div>
+                  <h2>Completed</h2>
+                  <p className="tbs-pc-subline">Delivered and billed</p>
+                </div>
                 <span className="tbs-pc-badge ok">{c!.lrs} LR</span>
               </header>
               <div className="tbs-pc-kpis">
@@ -478,7 +575,15 @@ export default function AdminMasterPage() {
                 </Link>
               </div>
               <div className="tbs-dash-table-wrap">
-                <h3 className="tbs-pc-sub">Completed LRs</h3>
+                <div className="tbs-pc-table-head">
+                  <h3 className="tbs-pc-sub">Completed LRs</h3>
+                  <Link
+                    href="/admin/reports/booking?status=delivered_billed"
+                    className="tbs-pc-more"
+                  >
+                    View all →
+                  </Link>
+                </div>
                 {data.completedList.length === 0 ? (
                   <div className="tbs-empty-box">
                     <p>No completed LRs yet.</p>
@@ -561,7 +666,7 @@ export default function AdminMasterPage() {
                           <tr key={`${r.billNo}-${r.party}`}>
                             <td>{r.party}</td>
                             <td>{r.billNo}</td>
-                            <td>{inr(r.amount)}</td>
+                            <td className="tbs-amt-due">{inr(r.amount)}</td>
                           </tr>
                         ))}
                       </tbody>
