@@ -41,6 +41,9 @@ export type Booking = {
   otherChrg: number;
   total: number;
   grandTotal: number;
+  /** e.g. "GST @ 0%" — typed or picked */
+  gstLabel?: string;
+  gstAmt?: number;
   gstPaidBy: string;
   ewayBillNo: string;
   validDate: string;
@@ -132,4 +135,5 @@ export type Masters = {
   partyTypes: string[];
   gstPaidBy: string[];
   lrTypes: string[];
+  gstLabels?: string[];
 };

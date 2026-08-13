@@ -33,6 +33,20 @@ async function rememberParticular(particulars: string) {
   }
 }
 
+async function rememberListValue(
+  key: "gstPaidBy" | "lrTypes" | "gstLabels",
+  value: string,
+) {
+  const v = value.trim();
+  if (!v) return;
+  const masters = await getMasters();
+  const list = [...(masters[key] || [])];
+  if (!list.some((x) => x.toLowerCase() === v.toLowerCase())) {
+    masters[key] = [v, ...list];
+    await saveMasters(masters);
+  }
+}
+
 function totals(body: Partial<Booking>) {
   const freight = Number(body.freight) || 0;
   const hamali = Number(body.hamali) || 0;
@@ -112,7 +126,9 @@ export async function POST(req: Request) {
       chargedWt: Number(body.chargedWt) || 0,
       rate: Number(body.rate) || 0,
       ...t,
-      grandTotal: t.total,
+      grandTotal: t.total + (Number(body.gstAmt) || 0),
+      gstLabel: body.gstLabel || "GST @ 0%",
+      gstAmt: Number(body.gstAmt) || 0,
       gstPaidBy: body.gstPaidBy || "",
       ewayBillNo: body.ewayBillNo || "",
       validDate: body.validDate || new Date().toISOString().slice(0, 10),
@@ -124,6 +140,9 @@ export async function POST(req: Request) {
     await saveBookings(bookings);
     await rememberVehicle(booking.vehicleNo);
     await rememberParticular(booking.particulars);
+    await rememberListValue("gstPaidBy", booking.gstPaidBy);
+    await rememberListValue("lrTypes", booking.lrType);
+    await rememberListValue("gstLabels", booking.gstLabel || "");
     return ok(booking, 201);
   } catch (e) {
     return failSave(e);
@@ -141,16 +160,22 @@ export async function PUT(req: Request) {
     if (idx < 0) return bad("Not found", 404);
     const t = totals(body);
     const vehicleNo = (body.vehicleNo || "").trim().toUpperCase();
+    const gstAmt = Number(body.gstAmt) || 0;
     bookings[idx] = {
       ...bookings[idx],
       ...body,
       vehicleNo,
       ...t,
-      grandTotal: t.total,
+      gstAmt,
+      gstLabel: body.gstLabel || bookings[idx].gstLabel || "GST @ 0%",
+      grandTotal: t.total + gstAmt,
     };
     await saveBookings(bookings);
     await rememberVehicle(vehicleNo);
     await rememberParticular(body.particulars);
+    await rememberListValue("gstPaidBy", body.gstPaidBy);
+    await rememberListValue("lrTypes", body.lrType);
+    await rememberListValue("gstLabels", body.gstLabel || "");
     return ok(bookings[idx]);
   } catch (e) {
     return failSave(e);

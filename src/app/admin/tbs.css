@@ -1391,6 +1391,19 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
   font-weight: 700;
 }
 
+.tbs-gst-row {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+}
+
+.tbs-gst-row .tbs-input {
+  width: 100%;
+  min-width: 0;
+}
+
 .tbs-split {
   display: grid;
   grid-template-columns: 1fr 220px;

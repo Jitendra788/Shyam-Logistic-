@@ -55,6 +55,8 @@ function blank(nextLr: string): Booking {
     otherChrg: 0,
     total: 100,
     grandTotal: 100,
+    gstLabel: "GST @ 0%",
+    gstAmt: 0,
     gstPaidBy: "Consignor",
     ewayBillNo: "",
     validDate: todayISO(),
@@ -75,6 +77,12 @@ function calcTotal(b: Booking) {
     Number(b.barrier) +
     Number(b.otherChrg)
   );
+}
+
+function withTotals(b: Booking): Booking {
+  const total = calcTotal(b);
+  const gstAmt = Number(b.gstAmt) || 0;
+  return { ...b, total, grandTotal: total + gstAmt };
 }
 
 function normalizeBooking(b: Booking): Booking {
@@ -103,9 +111,7 @@ export default function BookingPage() {
   }, [data, search]);
 
   function patch(partial: Partial<Booking>) {
-    const next = { ...current, ...partial };
-    const total = calcTotal(next);
-    setForm({ ...next, total, grandTotal: total });
+    setForm(withTotals({ ...current, ...partial }));
   }
 
   function partyByName(name: string): Party | undefined {
@@ -536,18 +542,44 @@ export default function BookingPage() {
           ))}
           <label className="total-label">TOTAL</label>
           <input className="tbs-input" value={current.total.toFixed(2)} readOnly />
+          <label>GST</label>
+          <div className="tbs-gst-row">
+            <input
+              className="tbs-input"
+              value={current.gstLabel || ""}
+              onChange={(e) => patch({ gstLabel: e.target.value })}
+              placeholder="GST @ 0%"
+              list="booking-gst-labels"
+              autoComplete="off"
+            />
+            <ManualAmountInput
+              className="tbs-input"
+              syncKey={`${current.id}-gstAmt`}
+              value={current.gstAmt || 0}
+              onChange={(n) => patch({ gstAmt: n })}
+            />
+            <datalist id="booking-gst-labels">
+              {(data?.masters.gstLabels || []).map((g) => (
+                <option key={g} value={g} />
+              ))}
+            </datalist>
+          </div>
           <label className="total-label">Grand Total</label>
           <input className="tbs-input" value={current.grandTotal.toFixed(2)} readOnly />
           <label>GST Paid By</label>
-          <select
-            className="tbs-select"
+          <input
+            className="tbs-input"
             value={current.gstPaidBy}
             onChange={(e) => patch({ gstPaidBy: e.target.value })}
-          >
+            placeholder="Type or select…"
+            list="booking-gst-paid-by"
+            autoComplete="off"
+          />
+          <datalist id="booking-gst-paid-by">
             {(data?.masters.gstPaidBy || []).map((g) => (
-              <option key={g}>{g}</option>
+              <option key={g} value={g} />
             ))}
-          </select>
+          </datalist>
           <label>Eway Bill No</label>
           <input
             className="tbs-input"
@@ -562,15 +594,19 @@ export default function BookingPage() {
             onChange={(e) => patch({ validDate: e.target.value })}
           />
           <label>Lr Type</label>
-          <select
-            className="tbs-select"
+          <input
+            className="tbs-input"
             value={current.lrType}
             onChange={(e) => patch({ lrType: e.target.value })}
-          >
+            placeholder="Type or select…"
+            list="booking-lr-types"
+            autoComplete="off"
+          />
+          <datalist id="booking-lr-types">
             {(data?.masters.lrTypes || []).map((t) => (
-              <option key={t}>{t}</option>
+              <option key={t} value={t} />
             ))}
-          </select>
+          </datalist>
           <label>Value Rs.</label>
           <ManualAmountInput
             className="tbs-input"

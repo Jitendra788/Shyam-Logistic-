@@ -66,7 +66,7 @@ function Copy({
     ["Hamali", amt(booking.hamali)],
     ["St.Chgs.", amt(booking.stCharges)],
     ["Total Amt", amt(booking.total || booking.grandTotal)],
-    ["GST", ""],
+    ["GST", amt(booking.gstAmt)],
     ["Advance", ""],
     ["Balance", amt(booking.grandTotal || booking.total)],
   ];
@@ -124,7 +124,11 @@ function Copy({
               <input
                 type="checkbox"
                 readOnly
-                checked={gstBy.includes("transport")}
+                checked={
+                  gstBy.includes("transport") ||
+                  gstBy.includes("broker") ||
+                  gstBy.includes("company")
+                }
               />
               Transporter
             </label>
