@@ -83,6 +83,15 @@ function fmtDate(d: string) {
   });
 }
 
+function todayLabel() {
+  return new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function statusLabel(b: BookingRow) {
   if (b.delivered && b.billed) return "Completed";
   if (b.delivered && !b.billed) return "Bill due";
@@ -96,21 +105,13 @@ function statusClass(b: BookingRow) {
   return "mid";
 }
 
-const modules = [
-  { href: "/admin/transport/booking", title: "Booking", desc: "New LR entry" },
-  { href: "/admin/transport/lhc", title: "LHC", desc: "Part challan" },
-  { href: "/admin/transport/bill", title: "Bill", desc: "Party billing" },
-  {
-    href: "/admin/transport/money-receipt/new",
-    title: "Money Receipt",
-    desc: "Collections",
-  },
-  {
-    href: "/admin/reports/booking",
-    title: "Booking Report",
-    desc: "Status & Excel",
-  },
-  { href: "/admin/reports/profit", title: "Profit Report", desc: "Full P&L" },
+const quickActions = [
+  { href: "/admin/transport/booking", title: "New Booking", desc: "Create LR", tone: "red" },
+  { href: "/admin/registration/parties", title: "Party", desc: "Add customer", tone: "navy" },
+  { href: "/admin/transport/lhc", title: "LHC", desc: "Hire challan", tone: "amber" },
+  { href: "/admin/transport/bill", title: "Bill", desc: "Party invoice", tone: "teal" },
+  { href: "/admin/transport/money-receipt/new", title: "Receipt", desc: "Collect payment", tone: "ok" },
+  { href: "/admin/website/enquiries", title: "Enquiries", desc: "Website leads", tone: "muted" },
 ];
 
 export default function AdminMasterPage() {
@@ -204,69 +205,123 @@ export default function AdminMasterPage() {
   const totalLr = data?.counts.bookings || 0;
   const donePct =
     totalLr > 0 ? Math.round(((c?.lrs || 0) / totalLr) * 100) : 0;
+  const isFresh =
+    data &&
+    data.counts.parties === 0 &&
+    data.counts.bookings === 0 &&
+    data.counts.bills === 0;
 
   return (
     <div className="tbs-dash">
       <section className="tbs-dash-hero">
-        <span className="tbs-dash-eyebrow">Transport Billing</span>
+        <div className="tbs-dash-hero-top">
+          <span className="tbs-dash-eyebrow">Dashboard · {todayLabel()}</span>
+          <button
+            type="button"
+            className="tbs-dash-refresh"
+            onClick={() => void loadDash()}
+            disabled={loading}
+          >
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
         <h1>SHYAM LOGISTIC</h1>
-        <p>Pending and completed work — easy to scan on phone and desktop.</p>
+        <p>Today’s work, collections, and pending LRs in one place.</p>
         {data && (
-          <div className="tbs-dash-hero-stats">
-            <div>
-              <strong>{p!.lrTotal}</strong>
-              <span>Pending LR</span>
+          <>
+            <div className="tbs-dash-hero-stats tbs-dash-hero-stats-4">
+              <div>
+                <strong>{p!.lrTotal}</strong>
+                <span>Pending LR</span>
+              </div>
+              <div>
+                <strong>{c!.lrs}</strong>
+                <span>Completed LR</span>
+              </div>
+              <div>
+                <strong>{inr(p!.outstandingAmt)}</strong>
+                <span>Outstanding</span>
+              </div>
+              <div>
+                <strong className={profitPositive ? "" : "neg"}>
+                  {inr(pr!.profit)}
+                </strong>
+                <span>Gross profit</span>
+              </div>
             </div>
-            <div>
-              <strong>{c!.lrs}</strong>
-              <span>Completed LR</span>
+            <div className="tbs-dash-progress" aria-hidden>
+              <div
+                className="tbs-dash-progress-bar"
+                style={{ width: `${donePct}%` }}
+              />
             </div>
-            <div>
-              <strong>{donePct}%</strong>
-              <span>Done</span>
-            </div>
-          </div>
+            <p className="tbs-dash-progress-label">
+              {totalLr === 0
+                ? "No bookings yet — start with a party, then create an LR."
+                : `${donePct}% of LRs delivered and billed`}
+            </p>
+          </>
         )}
       </section>
 
+      <div className="tbs-quick-grid">
+        {quickActions.map((m) => (
+          <Link
+            key={m.href}
+            href={m.href}
+            className={`tbs-quick-card tbs-quick-${m.tone}`}
+          >
+            <strong>{m.title}</strong>
+            <span>{m.desc}</span>
+          </Link>
+        ))}
+      </div>
+
       {data && data.persistent === false && (
-        <div className="tbs-msg err tbs-setup-banner">
-          <span className="tbs-msg-icon" aria-hidden>
-            !
-          </span>
-          <div className="tbs-msg-text">
-            <strong>Save / Delete will work in this browser until Redis is set.</strong>
-            <ol className="tbs-setup-steps">
-              <li>
-                Add, Update, and Delete are stored in this browser (Vercel disk is
-                read-only).
-              </li>
-              <li>
-                To share data across devices or browsers, add Redis:{" "}
-                <a
-                  href="https://console.upstash.com"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  console.upstash.com
-                </a>
-              </li>
-              <li>
-                Vercel → Settings → Environment Variables:{" "}
-                <code>UPSTASH_REDIS_REST_URL</code> +{" "}
-                <code>UPSTASH_REDIS_REST_TOKEN</code> (Production) → Redeploy
-              </li>
-            </ol>
-            Take Excel Backup regularly — clearing browser cache can remove local
-            data.
-          </div>
-        </div>
+        <details className="tbs-setup-compact">
+          <summary>
+            Save / Delete works in this browser until Redis is set
+          </summary>
+          <ol className="tbs-setup-steps">
+            <li>
+              Add, Update, and Delete are stored in this browser (Vercel disk is
+              read-only).
+            </li>
+            <li>
+              To share data across devices, add Redis at{" "}
+              <a
+                href="https://console.upstash.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                console.upstash.com
+              </a>
+            </li>
+            <li>
+              Vercel → Settings → Environment Variables:{" "}
+              <code>UPSTASH_REDIS_REST_URL</code> +{" "}
+              <code>UPSTASH_REDIS_REST_TOKEN</code> (Production) → Redeploy
+            </li>
+          </ol>
+          <p>
+            Take Excel Backup regularly — clearing browser cache can remove
+            local data.
+          </p>
+        </details>
       )}
 
       {err && (
-        <div className="tbs-msg err" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <div
+          className="tbs-msg err"
+          style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}
+        >
           <span>{err}</span>
-          <button type="button" className="tbs-btn" onClick={() => void loadDash()} disabled={loading}>
+          <button
+            type="button"
+            className="tbs-btn"
+            onClick={() => void loadDash()}
+            disabled={loading}
+          >
             {loading ? "Loading…" : "Retry"}
           </button>
         </div>
@@ -276,6 +331,27 @@ export default function AdminMasterPage() {
         <div className="tbs-empty">Loading dashboard…</div>
       ) : !data ? null : (
         <>
+          {isFresh ? (
+            <section className="tbs-start">
+              <h2>Start here</h2>
+              <p>Records are empty. Follow these three steps to begin billing.</p>
+              <ol>
+                <li>
+                  <Link href="/admin/registration/parties">Add a party</Link>
+                  <span>Consignor, consignee, or both — with address and GST.</span>
+                </li>
+                <li>
+                  <Link href="/admin/transport/booking">Create a booking / LR</Link>
+                  <span>From, To, vehicle, freight, and charges.</span>
+                </li>
+                <li>
+                  <Link href="/admin/transport/bill">Prepare a bill</Link>
+                  <span>Then collect with Money Receipt when payment comes in.</span>
+                </li>
+              </ol>
+            </section>
+          ) : null}
+
           <div className="tbs-pc-grid">
             <section className="tbs-pc-panel tbs-pc-pending">
               <header className="tbs-pc-head">
@@ -340,44 +416,12 @@ export default function AdminMasterPage() {
               <div className="tbs-dash-table-wrap">
                 <h3 className="tbs-pc-sub">Pending LRs</h3>
                 {data.pendingList.length === 0 ? (
-                  <p className="tbs-dash-muted">No pending LRs.</p>
-                ) : (
-                  <div className="tbs-table-scroll">
-                    <table className="tbs-grid tbs-dash-table">
-                      <thead>
-                        <tr>
-                          <th>LR</th>
-                          <th>Party</th>
-                          <th>Status</th>
-                          <th>Amt</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.pendingList.map((b) => (
-                          <tr key={b.id}>
-                            <td>
-                              <div className="tbs-lr-cell">
-                                <strong>{b.lrNo}</strong>
-                                <small>
-                                  {fmtDate(b.lrDate)} · {b.from || "—"}→
-                                  {b.to || "—"}
-                                </small>
-                              </div>
-                            </td>
-                            <td>{b.party}</td>
-                            <td>
-                              <span
-                                className={`tbs-status-pill ${statusClass(b)}`}
-                              >
-                                {statusLabel(b)}
-                              </span>
-                            </td>
-                            <td>{inr(b.amount)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="tbs-empty-box">
+                    <p>No pending LRs.</p>
+                    <Link href="/admin/transport/booking">Create booking →</Link>
                   </div>
+                ) : (
+                  <LrTable rows={data.pendingList} />
                 )}
               </div>
             </section>
@@ -436,166 +480,181 @@ export default function AdminMasterPage() {
               <div className="tbs-dash-table-wrap">
                 <h3 className="tbs-pc-sub">Completed LRs</h3>
                 {data.completedList.length === 0 ? (
-                  <p className="tbs-dash-muted">No completed LRs yet.</p>
+                  <div className="tbs-empty-box">
+                    <p>No completed LRs yet.</p>
+                    <Link href="/admin/reports/booking">Open booking report →</Link>
+                  </div>
+                ) : (
+                  <LrTable rows={data.completedList} completed />
+                )}
+              </div>
+            </section>
+          </div>
+
+          <div className="tbs-dash-split">
+            <section>
+              <h2 className="tbs-dash-section">Profit &amp; cash</h2>
+              <div className="tbs-profit-panel">
+                <div className="tbs-profit-main">
+                  <span className="tbs-kpi-label">Gross profit</span>
+                  <strong
+                    className={`tbs-profit-big ${profitPositive ? "pos" : "neg"}`}
+                  >
+                    {inr(pr!.profit)}
+                  </strong>
+                  <span className="tbs-kpi-hint">
+                    Income {inr(pr!.income)} − Expense {inr(pr!.expense)}
+                  </span>
+                  <Link href="/admin/reports/profit" className="tbs-profit-link">
+                    Open profit report →
+                  </Link>
+                </div>
+                <div className="tbs-profit-breakdown">
+                  <div>
+                    <span>Bill income</span>
+                    <strong>{inr(pr!.billAmt)}</strong>
+                  </div>
+                  <div>
+                    <span>Booking freight</span>
+                    <strong>{inr(pr!.freight)}</strong>
+                  </div>
+                  <div>
+                    <span>Collected (MR)</span>
+                    <strong>{inr(pr!.collected)}</strong>
+                  </div>
+                  <div>
+                    <span>Lorry hire</span>
+                    <strong>{inr(pr!.hirePaid || pr!.challanHire)}</strong>
+                  </div>
+                  <div>
+                    <span>Expense vouchers</span>
+                    <strong>{inr(pr!.expenseNotes)}</strong>
+                  </div>
+                  <div>
+                    <span>Still outstanding</span>
+                    <strong className="neg-text">{inr(pr!.outstanding)}</strong>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="tbs-dash-section">Top outstanding</h2>
+              <div className="tbs-dash-table-wrap tbs-dash-table-card">
+                {data.outstandingTop.length === 0 ? (
+                  <div className="tbs-empty-box">
+                    <p>No outstanding bills.</p>
+                    <Link href="/admin/transport/bill">Prepare a bill →</Link>
+                  </div>
                 ) : (
                   <div className="tbs-table-scroll">
                     <table className="tbs-grid tbs-dash-table">
                       <thead>
                         <tr>
-                          <th>LR</th>
                           <th>Party</th>
-                          <th>Status</th>
-                          <th>Amt</th>
+                          <th>Bill</th>
+                          <th>Due</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {data.completedList.map((b) => (
-                          <tr key={b.id}>
-                            <td>
-                              <div className="tbs-lr-cell">
-                                <strong>{b.lrNo}</strong>
-                                <small>
-                                  {fmtDate(b.lrDate)} · {b.from || "—"}→
-                                  {b.to || "—"}
-                                </small>
-                              </div>
-                            </td>
-                            <td>{b.party}</td>
-                            <td>
-                              <span className="tbs-status-pill ok">
-                                Completed
-                              </span>
-                            </td>
-                            <td>{inr(b.amount)}</td>
+                        {data.outstandingTop.map((r) => (
+                          <tr key={`${r.billNo}-${r.party}`}>
+                            <td>{r.party}</td>
+                            <td>{r.billNo}</td>
+                            <td>{inr(r.amount)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 )}
+                <Link
+                  href="/admin/reports/party-outstanding/billingwise"
+                  className="tbs-profit-link"
+                >
+                  Full outstanding →
+                </Link>
               </div>
             </section>
           </div>
 
-          <h2 className="tbs-dash-section">Profit &amp; cash</h2>
-          <div className="tbs-profit-panel">
-            <div className="tbs-profit-main">
-              <span className="tbs-kpi-label">Gross profit</span>
-              <strong
-                className={`tbs-profit-big ${profitPositive ? "pos" : "neg"}`}
-              >
-                {inr(pr!.profit)}
-              </strong>
-              <span className="tbs-kpi-hint">
-                Income {inr(pr!.income)} − Expense {inr(pr!.expense)}
-              </span>
-              <Link href="/admin/reports/profit" className="tbs-profit-link">
-                Open profit report →
-              </Link>
-            </div>
-            <div className="tbs-profit-breakdown">
-              <div>
-                <span>Bill income</span>
-                <strong>{inr(pr!.billAmt)}</strong>
-              </div>
-              <div>
-                <span>Booking freight</span>
-                <strong>{inr(pr!.freight)}</strong>
-              </div>
-              <div>
-                <span>Collected (MR)</span>
-                <strong>{inr(pr!.collected)}</strong>
-              </div>
-              <div>
-                <span>Lorry hire</span>
-                <strong>{inr(pr!.hirePaid || pr!.challanHire)}</strong>
-              </div>
-              <div>
-                <span>Expense vouchers</span>
-                <strong>{inr(pr!.expenseNotes)}</strong>
-              </div>
-              <div>
-                <span>Still outstanding</span>
-                <strong className="neg-text">{inr(pr!.outstanding)}</strong>
-              </div>
-            </div>
-          </div>
-
-          <section>
-            <h2 className="tbs-dash-section">Top outstanding</h2>
-            <div className="tbs-dash-table-wrap">
-              {data.outstandingTop.length === 0 ? (
-                <p className="tbs-dash-muted">No outstanding bills.</p>
-              ) : (
-                <div className="tbs-table-scroll">
-                  <table className="tbs-grid tbs-dash-table">
-                    <thead>
-                      <tr>
-                        <th>Party</th>
-                        <th>Bill</th>
-                        <th>Due</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.outstandingTop.map((r) => (
-                        <tr key={`${r.billNo}-${r.party}`}>
-                          <td>{r.party}</td>
-                          <td>{r.billNo}</td>
-                          <td>{inr(r.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              <Link
-                href="/admin/reports/party-outstanding/billingwise"
-                className="tbs-profit-link"
-              >
-                Full outstanding →
-              </Link>
-            </div>
-          </section>
-
           <h2 className="tbs-dash-section">Masters snapshot</h2>
           <div className="tbs-snap-grid">
-            <div className="tbs-snap">
+            <Link href="/admin/registration/parties" className="tbs-snap">
               <strong>{data.counts.parties}</strong>
               <span>Parties</span>
-            </div>
-            <div className="tbs-snap">
+            </Link>
+            <Link href="/admin/transport/booking" className="tbs-snap">
               <strong>{data.counts.bookings}</strong>
               <span>Bookings</span>
-            </div>
-            <div className="tbs-snap">
+            </Link>
+            <Link href="/admin/transport/lhc" className="tbs-snap">
               <strong>{data.counts.challans}</strong>
               <span>Challans</span>
-            </div>
-            <div className="tbs-snap">
+            </Link>
+            <Link href="/admin/transport/bill" className="tbs-snap">
               <strong>{data.counts.bills}</strong>
               <span>Bills</span>
-            </div>
-            <div className="tbs-snap">
+            </Link>
+            <Link href="/admin/transport/money-receipt/new" className="tbs-snap">
               <strong>{data.counts.receipts}</strong>
               <span>Money receipts</span>
-            </div>
-            <div className="tbs-snap">
+            </Link>
+            <Link href="/admin/reports/booking" className="tbs-snap">
               <strong>{c!.lrs}</strong>
               <span>Completed LRs</span>
-            </div>
+            </Link>
           </div>
         </>
       )}
+    </div>
+  );
+}
 
-      <h2 className="tbs-dash-section">Quick open</h2>
-      <div className="tbs-dash-grid">
-        {modules.map((m) => (
-          <Link key={m.href} href={m.href} className="tbs-dash-card">
-            <strong>{m.title}</strong>
-            <span>{m.desc}</span>
-          </Link>
-        ))}
-      </div>
+function LrTable({
+  rows,
+  completed,
+}: {
+  rows: BookingRow[];
+  completed?: boolean;
+}) {
+  return (
+    <div className="tbs-table-scroll">
+      <table className="tbs-grid tbs-dash-table">
+        <thead>
+          <tr>
+            <th>LR</th>
+            <th>Party</th>
+            <th>Status</th>
+            <th>Amt</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((b) => (
+            <tr key={b.id}>
+              <td>
+                <Link href="/admin/transport/booking" className="tbs-lr-link">
+                  <div className="tbs-lr-cell">
+                    <strong>{b.lrNo}</strong>
+                    <small>
+                      {fmtDate(b.lrDate)} · {b.from || "—"}→{b.to || "—"}
+                    </small>
+                  </div>
+                </Link>
+              </td>
+              <td>{b.party}</td>
+              <td>
+                <span
+                  className={`tbs-status-pill ${completed ? "ok" : statusClass(b)}`}
+                >
+                  {completed ? "Completed" : statusLabel(b)}
+                </span>
+              </td>
+              <td>{inr(b.amount)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
