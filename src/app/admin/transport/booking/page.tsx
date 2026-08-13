@@ -95,22 +95,6 @@ export default function BookingPage() {
   const parties = data?.parties || [];
   const partyNames = parties.map((p) => p.partyName);
 
-  function namesForRole(role: "consignor" | "consignee", selected = "") {
-    const list = parties
-      .filter((p) => {
-        const t = (p.partyType || "").toLowerCase();
-        if (t === "both") return true;
-        if (role === "consignor") return t === "consignor" || t === "consigner";
-        return t === "consignee";
-      })
-      .map((p) => p.partyName);
-    if (selected && !list.includes(selected)) list.unshift(selected);
-    return list;
-  }
-
-  const consignorNames = namesForRole("consignor", current.consignor);
-  const consigneeNames = namesForRole("consignee", current.consignee);
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const list = data?.bookings || [];
@@ -151,20 +135,22 @@ export default function BookingPage() {
   }
 
   function pickConsignor(name: string) {
+    const matched = partyByName(name);
     const filled = addressFromConsigneeOrConsignor(current.consignee, name);
     patch({
       consignor: name,
-      address: filled.address || current.address,
-      gstNo: filled.gstNo || current.gstNo,
+      address: matched ? filled.address || current.address : current.address,
+      gstNo: matched ? filled.gstNo || current.gstNo : current.gstNo,
     });
   }
 
   function pickConsignee(name: string) {
+    const matched = partyByName(name);
     const filled = addressFromConsigneeOrConsignor(name, current.consignor);
     patch({
       consignee: name,
-      address: filled.address,
-      gstNo: filled.gstNo || current.gstNo,
+      address: matched ? filled.address : current.address,
+      gstNo: matched ? filled.gstNo || current.gstNo : current.gstNo,
     });
   }
 
@@ -184,7 +170,7 @@ export default function BookingPage() {
     setMsg(
       filled.address
         ? "Address filled from consignee/consignor"
-        : "Selected party has no address — add it in Party Creation",
+        : "No saved address for this name — type Address and GST below",
     );
   }
 
@@ -346,16 +332,18 @@ export default function BookingPage() {
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
               <label>BILLING PARTY</label>
-              <select
-                className="tbs-select w-full"
+              <input
+                className="tbs-input w-full"
                 value={current.billingParty}
                 onChange={(e) => pickBillingParty(e.target.value)}
-              >
-                <option value="">Select</option>
+                placeholder="Type or select…"
+                list="booking-billing-party"
+              />
+              <datalist id="booking-billing-party">
                 {partyNames.map((n) => (
-                  <option key={n}>{n}</option>
+                  <option key={n} value={n} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <button type="button" className="tbs-btn" onClick={() => (window.location.href = "/admin/registration/parties")}>
               Add
@@ -365,32 +353,36 @@ export default function BookingPage() {
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
               <label>Consignor</label>
-              <select
-                className="tbs-select w-full"
+              <input
+                className="tbs-input w-full"
                 value={current.consignor}
                 onChange={(e) => pickConsignor(e.target.value)}
-              >
-                <option value="">Select</option>
-                {consignorNames.map((n) => (
-                  <option key={n}>{n}</option>
+                placeholder="Type or select…"
+                list="booking-consignor"
+              />
+              <datalist id="booking-consignor">
+                {partyNames.map((n) => (
+                  <option key={n} value={n} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
 
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
               <label>Consignee</label>
-              <select
-                className="tbs-select w-full"
+              <input
+                className="tbs-input w-full"
                 value={current.consignee}
                 onChange={(e) => pickConsignee(e.target.value)}
-              >
-                <option value="">Select</option>
-                {consigneeNames.map((n) => (
-                  <option key={n}>{n}</option>
+                placeholder="Type or select…"
+                list="booking-consignee"
+              />
+              <datalist id="booking-consignee">
+                {partyNames.map((n) => (
+                  <option key={n} value={n} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <button
               type="button"
