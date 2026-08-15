@@ -14,6 +14,7 @@ import {
   PartyPrint,
   RegisterPrint,
 } from "@/components/tbs/DocPrint";
+import { openLrPdfBlob, printLrPdfFrame, shareLrPdfOnWhatsApp } from "@/components/tbs/LrPdfFrame";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { fmtDate } from "@/components/tbs/FormPrimitives";
 import type {
@@ -33,7 +34,6 @@ import {
   shareOnWhatsApp,
 } from "@/lib/tbs/whatsapp";
 import "../doc-print.css";
-import "../lr-print.css";
 import "../tbs.css";
 
 type Bundle = {
@@ -300,12 +300,22 @@ function PrintInner() {
     [loading, type, id, data],
   );
 
+  const booking =
+    type === "booking" && id
+      ? data.bookings?.find((x) => x.id === id || x.lrNo === id)
+      : undefined;
+
   useEffect(() => {
     if (auto && content && !loading) {
-      const t = setTimeout(() => window.print(), 500);
+      const t = setTimeout(() => {
+        if (type === "booking") printLrPdfFrame();
+        else window.print();
+      }, 800);
       return () => clearTimeout(t);
     }
-  }, [auto, content, loading]);
+  }, [auto, content, loading, type]);
+
+  const isBookingPdf = Boolean(booking);
 
   return (
     <div className="doc-print-page">
@@ -313,10 +323,27 @@ function PrintInner() {
         <Link href="/admin" className="tbs-btn">
           ← Admin
         </Link>
-        <button type="button" className="tbs-btn tbs-btn-print" onClick={() => window.print()}>
+        <button
+          type="button"
+          className="tbs-btn tbs-btn-print"
+          onClick={() => (isBookingPdf ? printLrPdfFrame() : window.print())}
+        >
           🖨 Print
         </button>
-        {shareText && (
+        {isBookingPdf && (
+          <button type="button" className="tbs-btn" onClick={() => openLrPdfBlob()}>
+            Open PDF
+          </button>
+        )}
+        {isBookingPdf ? (
+          <button
+            type="button"
+            className="tbs-btn tbs-btn-wa"
+            onClick={() => void shareLrPdfOnWhatsApp()}
+          >
+            WhatsApp
+          </button>
+        ) : shareText ? (
           <button
             type="button"
             className="tbs-btn tbs-btn-wa"
@@ -324,10 +351,10 @@ function PrintInner() {
           >
             WhatsApp
           </button>
-        )}
+        ) : null}
         <span style={{ fontSize: 12 }}>
           {type}
-          {id ? ` #${id}` : ""} — Print / Save as PDF / WhatsApp
+          {id ? ` #${id}` : ""} — {isBookingPdf ? "Original PDF form" : "Print / Save as PDF / WhatsApp"}
         </span>
       </div>
       {loading ? (

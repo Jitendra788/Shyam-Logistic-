@@ -22,6 +22,36 @@ function openWaMe(text: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+/** Share a PDF file on WhatsApp (native share sheet). Text-only wa.me is not used. */
+export async function sharePdfOnWhatsApp(blob: Blob, fileName: string) {
+  const name = fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`;
+  const file = new File([blob], name, { type: "application/pdf" });
+  const payload: ShareData = { files: [file], title: name };
+  const nav = navigator as Navigator & {
+    canShare?: (data: ShareData) => boolean;
+  };
+
+  if (typeof nav.share === "function" && nav.canShare?.(payload)) {
+    try {
+      await nav.share(payload);
+      return;
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+    }
+  }
+
+  // Desktop browsers often cannot attach files to WhatsApp Web via URL.
+  // Save the PDF so it can be attached in WhatsApp.
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
 export function bookingWhatsAppText(b: {
   lrNo: string;
   lrDate: string;

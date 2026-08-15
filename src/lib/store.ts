@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { sqliteGet, sqliteSet } from "@/lib/db/sqlite";
 import type { BlogPost, Enquiry, SiteSettings } from "./types";
 
 const dataDir = path.join(process.cwd(), "data");
@@ -7,8 +8,35 @@ const settingsPath = path.join(dataDir, "settings.json");
 const enquiriesPath = path.join(dataDir, "enquiries.json");
 const postsPath = path.join(dataDir, "posts.json");
 
-async function ensureDataDir() {
-  await fs.mkdir(dataDir, { recursive: true });
+async function readStoreJson<T>(key: string, filePath: string, fallback: T): Promise<T> {
+  const fromSql = sqliteGet<T>(key);
+  if (fromSql !== undefined) {
+    if (Array.isArray(fromSql) && fromSql.length === 0) {
+      try {
+        const raw = await fs.readFile(filePath, "utf-8");
+        const data = JSON.parse(raw) as T;
+        if (Array.isArray(data) && data.length > 0) {
+          sqliteSet(key, data);
+          return data;
+        }
+      } catch {
+        /* keep empty sqlite */
+      }
+    }
+    return fromSql;
+  }
+  try {
+    const raw = await fs.readFile(filePath, "utf-8");
+    const data = JSON.parse(raw) as T;
+    sqliteSet(key, data);
+    return data;
+  } catch {
+    return fallback;
+  }
+}
+
+async function writeStoreJson<T>(key: string, _filePath: string, data: T): Promise<boolean> {
+  return sqliteSet(key, data);
 }
 
 const settingsDefaults: Partial<SiteSettings> = {
@@ -51,8 +79,9 @@ const settingsDefaults: Partial<SiteSettings> = {
 };
 
 export async function getSettings(): Promise<SiteSettings> {
-  const raw = await fs.readFile(settingsPath, "utf-8");
-  const data = JSON.parse(raw) as SiteSettings;
+  const data = await readStoreJson<SiteSettings>("site:settings", settingsPath, {
+    companyName: "SHYAM LOGISTICS",
+  } as SiteSettings);
   let logoUrl = data.logoUrl?.trim() || "";
   if (
     !logoUrl ||
@@ -77,28 +106,15 @@ export async function getSettings(): Promise<SiteSettings> {
 }
 
 export async function saveSettings(settings: SiteSettings): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+  await writeStoreJson("site:settings", settingsPath, settings);
 }
 
 export async function getEnquiries(): Promise<Enquiry[]> {
-  try {
-    const raw = await fs.readFile(enquiriesPath, "utf-8");
-    return JSON.parse(raw) as Enquiry[];
-  } catch {
-    return [];
-  }
+  return readStoreJson<Enquiry[]>("site:enquiries", enquiriesPath, []);
 }
 
 export async function saveEnquiries(enquiries: Enquiry[]): Promise<boolean> {
-  try {
-    await ensureDataDir();
-    await fs.writeFile(enquiriesPath, JSON.stringify(enquiries, null, 2), "utf-8");
-    return true;
-  } catch {
-    // Vercel serverless FS is read-only — email notify still delivers the lead.
-    return false;
-  }
+  return writeStoreJson("site:enquiries", enquiriesPath, enquiries);
 }
 
 export async function addEnquiry(
@@ -136,17 +152,11 @@ export function getPrimaryLocation(settings: SiteSettings) {
 }
 
 export async function getPosts(): Promise<BlogPost[]> {
-  try {
-    const raw = await fs.readFile(postsPath, "utf-8");
-    return JSON.parse(raw) as BlogPost[];
-  } catch {
-    return [];
-  }
+  return readStoreJson<BlogPost[]>("site:posts", postsPath, []);
 }
 
 export async function savePosts(posts: BlogPost[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(postsPath, JSON.stringify(posts, null, 2), "utf-8");
+  await writeStoreJson("site:posts", postsPath, posts);
 }
 
 export async function getPublishedPosts(): Promise<BlogPost[]> {

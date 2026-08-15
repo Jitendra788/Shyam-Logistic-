@@ -36,8 +36,17 @@ export default function BillPage() {
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const billedLrIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const bill of data?.bills || []) {
+      if (editId && bill.id === editId) continue;
+      for (const id of bill.lrIds || []) ids.add(id);
+    }
+    return ids;
+  }, [data, editId]);
+
   const partyLrs = useMemo(() => {
-    const all = data?.bookings || [];
+    const all = (data?.bookings || []).filter((b) => !billedLrIds.has(b.id));
     const q = party.trim().toLowerCase();
     if (!q) return all;
     return all.filter(
@@ -45,7 +54,7 @@ export default function BillPage() {
         b.billingParty.toLowerCase() === q ||
         b.billingParty.toLowerCase().includes(q),
     );
-  }, [data, party]);
+  }, [data, party, billedLrIds]);
 
   const partyNames = useMemo(() => {
     const names = new Set<string>();
@@ -85,6 +94,13 @@ export default function BillPage() {
     setSubmissionDate(b.submissionDate);
   }
 
+  function partyForSave() {
+    const typed = party.trim();
+    if (typed) return typed;
+    const first = (data?.bookings || []).find((b) => selected.includes(b.id));
+    return first?.billingParty || "";
+  }
+
   async function save() {
     if (editId) {
       await update();
@@ -98,7 +114,7 @@ export default function BillPage() {
       body: JSON.stringify({
         billNo: billNo || data?.nextBill,
         billDate,
-        partyName: party,
+        partyName: partyForSave(),
         totalAmount: total,
         remark,
         submissionDate,
@@ -128,7 +144,7 @@ export default function BillPage() {
         id: editId,
         billNo,
         billDate,
-        partyName: party,
+        partyName: partyForSave(),
         totalAmount: total,
         remark,
         submissionDate,

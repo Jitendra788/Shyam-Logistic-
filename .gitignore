@@ -27,6 +27,10 @@
 
 # runtime data
 /data/enquiries.json
+/data/*.sqlite
+/data/*.sqlite-wal
+/data/*.sqlite-shm
+/data/*.sqlite-journal
 
 # keep posts & settings seed in repo
 

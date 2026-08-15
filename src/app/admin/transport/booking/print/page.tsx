@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
-import { BookingBillPrint } from "@/components/tbs/DocPrint";
+import { Suspense } from "react";
+import { LrPdfFrame, openLrPdfBlob, printLrPdfFrame, shareLrPdfOnWhatsApp } from "@/components/tbs/LrPdfFrame";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import type { Booking, Party } from "@/lib/tbs/types";
-import { bookingWhatsAppText, shareOnWhatsApp } from "@/lib/tbs/whatsapp";
 import "@/app/admin/doc-print.css";
-import "@/app/admin/lr-print.css";
 
 type Payload = {
   bookings: Booking[];
@@ -22,13 +20,6 @@ function PrintInner() {
   const { data, loading, error } = useTbsApi<Payload>("/api/tbs/bookings");
 
   const booking = data?.bookings.find((b) => b.id === id || b.lrNo === id);
-
-  useEffect(() => {
-    if (auto && booking) {
-      const t = setTimeout(() => window.print(), 400);
-      return () => clearTimeout(t);
-    }
-  }, [auto, booking]);
 
   if (loading) return <div className="tbs-empty">Loading bill…</div>;
   if (error) return <div className="tbs-msg err">{error}</div>;
@@ -46,26 +37,40 @@ function PrintInner() {
   }
 
   return (
-    <div className="doc-print-page">
-      <div className="doc-print-toolbar">
+    <div className="doc-print-page" style={{ background: "#ddd", minHeight: "100vh" }}>
+      <div className="doc-print-toolbar lr-no-print" style={{ padding: 12 }}>
         <Link href="/admin/transport/booking" className="tbs-btn">
           ← Back
         </Link>
-        <button type="button" className="tbs-btn tbs-btn-print" onClick={() => window.print()}>
+        <button type="button" className="tbs-btn tbs-btn-print" onClick={() => printLrPdfFrame()}>
           🖨 Print Bill
+        </button>
+        <button type="button" className="tbs-btn" onClick={() => openLrPdfBlob()}>
+          Open PDF
         </button>
         <button
           type="button"
           className="tbs-btn tbs-btn-wa"
-          onClick={() => shareOnWhatsApp(bookingWhatsAppText(booking))}
+          onClick={() => void shareLrPdfOnWhatsApp()}
         >
           WhatsApp
         </button>
         <span style={{ fontSize: 12, color: "#333" }}>
-          LR No. {booking.lrNo} — Consignment Note
+          LR No. {booking.lrNo} — Original PDF form
         </span>
       </div>
-      <BookingBillPrint booking={booking} parties={data?.parties || []} />
+      <LrPdfFrame
+        booking={booking}
+        parties={data?.parties || []}
+        autoPrint={auto}
+      />
+      <style>{`
+        @media print {
+          .lr-no-print, .doc-print-toolbar { display: none !important; }
+          body { margin: 0; background: #fff; }
+          iframe { border: none !important; width: 100% !important; height: 100vh !important; }
+        }
+      `}</style>
     </div>
   );
 }

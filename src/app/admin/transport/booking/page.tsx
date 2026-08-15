@@ -615,19 +615,31 @@ export default function BookingPage() {
           <label className="total-label">Grand Total</label>
           <input className="tbs-input" value={current.grandTotal.toFixed(2)} readOnly />
           <label>GST Paid By</label>
-          <input
-            className="tbs-input"
-            value={current.gstPaidBy}
-            onChange={(e) => patch({ gstPaidBy: e.target.value })}
-            placeholder="Type or select…"
-            list="booking-gst-paid-by"
-            autoComplete="off"
-          />
-          <datalist id="booking-gst-paid-by">
-            {(data?.masters.gstPaidBy || []).map((g) => (
-              <option key={g} value={g} />
-            ))}
-          </datalist>
+          <div className="tbs-gst-pay-by">
+            {(
+              [
+                { label: "Consigner", value: "Consignor" },
+                { label: "Consignee", value: "Consignee" },
+                { label: "Transporter", value: "Transporter" },
+              ] as const
+            ).map((opt) => {
+              const paid = (current.gstPaidBy || "").toLowerCase();
+              const checked =
+                opt.value === "Consignor"
+                  ? paid.includes("consignor") || paid.includes("consigner") || !paid
+                  : paid.includes(opt.value.toLowerCase());
+              return (
+                <label key={opt.value} className="tbs-gst-pay-opt">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => patch({ gstPaidBy: opt.value })}
+                  />
+                  {opt.label}
+                </label>
+              );
+            })}
+          </div>
           <label>Eway Bill No</label>
           <input
             className="tbs-input"

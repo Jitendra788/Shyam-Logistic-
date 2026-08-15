@@ -1,9 +1,68 @@
 "use client";
 
+import type { CSSProperties, ReactNode } from "react";
 import type { Booking, Party } from "@/lib/tbs/types";
-import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 
-const LOGO_SRC = "/brand/shyam-peacock-mark-print.png";
+/** Original form background (from 384.pdf) — all lines/labels baked in */
+const FORM_BG = "/brand/lr-form-blank.png";
+
+/** PDF page size (points) → A4 mm mapping */
+const PAGE_W = 595.32;
+const PAGE_H = 841.92;
+const COPY2_DY = 419.8;
+
+function mmX(pt: number) {
+  return Number(((pt / PAGE_W) * 210).toFixed(3));
+}
+function mmY(pt: number) {
+  return Number(((pt / PAGE_H) * 297).toFixed(3));
+}
+
+/**
+ * Dynamic field TOP-LEFT in PDF points (copy 1 only).
+ * Y = same as printed labels on the form (no vertical centering tricks).
+ * Freight amounts share Y with Freight Ch. labels so they sit in the same row.
+ */
+const F_PT: Record<string, { x: number; y: number }> = {
+  lorryNo: { x: 70.8, y: 66.7 },
+  bookingFrom: { x: 100.2, y: 91.3 },
+  deliveryAt: { x: 316.2, y: 91.3 },
+  lrNo: { x: 484.2, y: 91.3 },
+  from: { x: 100.8, y: 109.7 },
+  to: { x: 285.9, y: 109.7 },
+  date: { x: 483.6, y: 109.7 },
+  consignor: { x: 76.0, y: 131.2 },
+  consignorAddr: { x: 26.4, y: 146.5 },
+  consignorGst: { x: 76.0, y: 173.2 },
+  consignee: { x: 352.0, y: 131.2 },
+  consigneeAddr: { x: 304.0, y: 149.2 },
+  consigneeGst: { x: 352.0, y: 173.2 },
+  articles: { x: 25.0, y: 217.1 },
+  particulars: { x: 69.9, y: 217.1 },
+  invNo: { x: 268.0, y: 217.1 },
+  rate: { x: 348.8, y: 217.0 },
+  actWt: { x: 340.0, y: 265.1 },
+  chgWt: { x: 340.0, y: 307.1 },
+  // Align with Freight Ch. label baselines (PDF)
+  freight: { x: 502.0, y: 216.01 },
+  doorColl: { x: 502.0, y: 231.01 },
+  doorDel: { x: 502.0, y: 246.01 },
+  hamali: { x: 502.0, y: 261.01 },
+  stChgs: { x: 502.0, y: 273.97 },
+  totalAmt: { x: 502.0, y: 288.97 },
+  gstAmt: { x: 502.0, y: 303.01 },
+  advance: { x: 502.0, y: 316.93 },
+  balance: { x: 502.0, y: 332.05 },
+  // Same baseline as "Valid Date" / "Eway Bill No." labels
+  eway: { x: 86.0, y: 348.97 },
+  validDate: { x: 278.0, y: 348.97 },
+  // Checkbox top-left (inside square)
+  payTopay: { x: 28.5, y: 375.5 },
+  payPaid: { x: 76.5, y: 375.5 },
+  payTbb: { x: 118.5, y: 375.5 },
+};
+
+type FieldKey = keyof typeof F_PT;
 
 export type LrCompany = {
   companyName: string;
@@ -44,310 +103,211 @@ function amt(n: number | string | undefined) {
   return v ? v.toFixed(2) : "";
 }
 
-function Copy({
+function Field({
+  name,
+  copyIndex,
+  children,
+  className = "",
+  align = "left",
+}: {
+  name: FieldKey;
+  copyIndex: 0 | 1;
+  children: ReactNode;
+  className?: string;
+  align?: "left" | "right";
+}) {
+  const { x, y } = F_PT[name];
+  const style: CSSProperties = {
+    position: "absolute",
+    top: `${mmY(y + copyIndex * COPY2_DY)}mm`,
+    textAlign: align,
+  };
+  if (align === "right") {
+    style.right = `${(210 - mmX(x)).toFixed(3)}mm`;
+    style.left = "auto";
+  } else {
+    style.left = `${mmX(x)}mm`;
+  }
+  return (
+    <div className={`lr-field ${className}`} style={style}>
+      {children}
+    </div>
+  );
+}
+
+function Mark({
+  name,
+  copyIndex,
+  on,
+}: {
+  name: FieldKey;
+  copyIndex: 0 | 1;
+  on: boolean;
+}) {
+  if (!on) return null;
+  const { x, y } = F_PT[name];
+  return (
+    <div
+      className="lr-field lr-mark"
+      style={{
+        position: "absolute",
+        left: `${mmX(x)}mm`,
+        top: `${mmY(y + copyIndex * COPY2_DY)}mm`,
+      }}
+      aria-hidden
+    />
+  );
+}
+
+function OverlayFields({
   booking,
   parties,
-  company,
+  copyIndex,
 }: {
   booking: Booking;
   parties: Party[];
-  company: LrCompany;
+  copyIndex: 0 | 1;
 }) {
   const consignor = partyOf(parties, booking.consignor);
   const consignee = partyOf(parties, booking.consignee);
   const lrType = (booking.lrType || "").toLowerCase();
-  const gstBy = (booking.gstPaidBy || "").toLowerCase();
   const fromStation = booking.from || booking.bookingFrom || "";
-  const rateLabel = booking.rate ? String(booking.rate) : "";
-  const charges: [string, string][] = [
-    ["Freight Rs.", amt(booking.freight)],
-    ["Door Coll.", amt(booking.doorColle)],
-    ["Door Del.", amt(booking.doorDelivery)],
-    ["Hamali", amt(booking.hamali)],
-    ["St.Chgs.", amt(booking.stCharges)],
-    ["Total Amt", amt(booking.total || booking.grandTotal)],
-    ["GST", amt(booking.gstAmt)],
-    ["Advance", ""],
-    ["Balance", amt(booking.grandTotal || booking.total)],
-  ];
+  const rateLabel = booking.rate ? String(booking.rate) : "FIX";
+  const actWt = booking.actualWt ? String(booking.actualWt) : "";
+  const chgWt = booking.chargedWt ? String(booking.chargedWt) : actWt;
 
   return (
-    <div className="lr-copy">
-      <header className="lr-head">
-        <div className="lr-head-left">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO_SRC} alt="" className="lr-logo-mark" />
-        </div>
-        <div className="lr-head-mid">
-          <div className="lr-bless">{company.blessing}</div>
-          <div className="lr-title">{company.companyName}</div>
-          <div className="lr-addr">{company.address}</div>
-          <div className="lr-email">E-mail :{company.email}</div>
-        </div>
-        <div className="lr-head-right">
-          <div>
-            GST : {company.gstin}
-          </div>
-          <div>
-            Mob :{company.phone}
-            <br />
-            {company.phone2}
-          </div>
-        </div>
-      </header>
+    <>
+      <Field name="lorryNo" copyIndex={copyIndex} className="lr-f-lorry">
+        {booking.vehicleNo || ""}
+      </Field>
+      <Field name="bookingFrom" copyIndex={copyIndex}>
+        {booking.bookingFrom}
+      </Field>
+      <Field name="deliveryAt" copyIndex={copyIndex}>
+        {booking.deliveryAt || ""}
+      </Field>
+      <Field name="lrNo" copyIndex={copyIndex} className="lr-f-lrno">
+        {booking.lrNo}
+      </Field>
+      <Field name="from" copyIndex={copyIndex}>
+        {fromStation}
+      </Field>
+      <Field name="to" copyIndex={copyIndex} className="lr-f-to">
+        {booking.to}
+      </Field>
+      <Field name="date" copyIndex={copyIndex} className="lr-f-date">
+        {dmy(booking.lrDate)}
+      </Field>
 
-      <div className="lr-lorry-row">
-        <div>
-          <b>Lorry No</b> {booking.vehicleNo || ""}
-        </div>
-        <div className="lr-risk">OWNER&apos;S RISK</div>
-        <div className="lr-gst-pay">
-          GST Tax Payble by Consigner/Consignee/Transporter
-          <span className="lr-gst-ticks">
-            <label>
-              <input
-                type="checkbox"
-                readOnly
-                checked={/consign?or|consigner/.test(gstBy)}
-              />
-              Consigner
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                readOnly
-                checked={gstBy.includes("consignee")}
-              />
-              Consignee
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                readOnly
-                checked={
-                  gstBy.includes("transport") ||
-                  gstBy.includes("broker") ||
-                  gstBy.includes("company")
-                }
-              />
-              Transporter
-            </label>
-          </span>
-        </div>
-      </div>
+      <Field name="consignor" copyIndex={copyIndex} className="lr-f-party">
+        {booking.consignor}
+      </Field>
+      <Field name="consignorAddr" copyIndex={copyIndex} className="lr-f-addr">
+        {consignor?.address || ""}
+      </Field>
+      <Field name="consignorGst" copyIndex={copyIndex}>
+        {consignor?.gstTin || ""}
+      </Field>
 
-      <table className="lr-table lr-info">
-        <tbody>
-          <tr>
-            <td>
-              <b>Booking Office .</b>
-              <div>{booking.bookingFrom}</div>
-            </td>
-            <td>
-              <b>Delievery At .</b>
-              <div>{booking.deliveryAt || ""}</div>
-            </td>
-            <td>
-              <b>Cons.Note No.</b>
-              <div className="lr-big">{booking.lrNo}</div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <b>From</b>
-              <div>{fromStation}</div>
-            </td>
-            <td>
-              <b>To</b>
-              <div>{booking.to}</div>
-            </td>
-            <td>
-              <b>Date</b>
-              <div>{dmy(booking.lrDate)}</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <Field name="consignee" copyIndex={copyIndex} className="lr-f-party">
+        {booking.consignee || ""}
+      </Field>
+      <Field name="consigneeAddr" copyIndex={copyIndex} className="lr-f-addr">
+        {consignee?.address || booking.address || ""}
+      </Field>
+      <Field name="consigneeGst" copyIndex={copyIndex}>
+        {consignee?.gstTin || booking.gstNo || ""}
+      </Field>
 
-      <table className="lr-table lr-parties">
-        <tbody>
-          <tr>
-            <td>
-              <b>Consigner</b>
-              <div className="lr-strong">{booking.consignor}</div>
-              <div className="lr-small">{consignor?.address || ""}</div>
-              <div className="lr-small">
-                GST No. {consignor?.gstTin || ""}
-              </div>
-            </td>
-            <td>
-              <b>Consignee</b>
-              <div className="lr-strong">{booking.consignee || ""}</div>
-              <div className="lr-small">
-                {consignee?.address || booking.address || ""}
-              </div>
-              <div className="lr-small">
-                GST No. {consignee?.gstTin || booking.gstNo || ""}
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <Field name="articles" copyIndex={copyIndex}>
+        {booking.noOfArticles || ""}
+      </Field>
+      <Field name="particulars" copyIndex={copyIndex}>
+        {booking.particulars || ""}
+      </Field>
+      <Field name="invNo" copyIndex={copyIndex}>
+        {booking.invNoDate || ""}
+      </Field>
+      <Field name="rate" copyIndex={copyIndex} className="lr-f-rate">
+        {rateLabel}
+      </Field>
+      <Field name="actWt" copyIndex={copyIndex} className="lr-f-rate">
+        {actWt}
+      </Field>
+      <Field name="chgWt" copyIndex={copyIndex} className="lr-f-rate">
+        {chgWt}
+      </Field>
 
-      <table className="lr-table lr-goods">
-        <colgroup>
-          <col className="c-art" />
-          <col className="c-desc" />
-          <col className="c-inv" />
-          <col className="c-rate" />
-          <col className="c-ch" />
-          <col className="c-fr" />
-          <col className="c-rm" />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>No.of Art</th>
-            <th>Description Said To Contents</th>
-            <th>Inv.No &amp; Date</th>
-            <th>Rate</th>
-            <th>Freight Ch.</th>
-            <th>Freight</th>
-            <th>Remark</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td rowSpan={2}>{booking.noOfArticles || ""}</td>
-            <td rowSpan={2}>{booking.particulars || ""}</td>
-            <td rowSpan={2}>{booking.invNoDate || ""}</td>
-            <td rowSpan={9} className="lr-rate-cell">
-              <table className="lr-rate-inner">
-                <tbody>
-                  <tr>
-                    <td className="lr-rate-fix">
-                      {rateLabel || "FIX"}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="lr-rate-wt">
-                      <div className="lr-wt-label">Act.Weight</div>
-                      <div className="lr-wt-val">
-                        {booking.actualWt || ""}
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="lr-rate-wt lr-rate-wt-last">
-                      <div className="lr-wt-label">Chg.Weight</div>
-                      <div className="lr-wt-val">
-                        {booking.chargedWt || booking.actualWt || ""}
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </td>
-            <td>{charges[0][0]}</td>
-            <td className="num">{charges[0][1]}</td>
-            <td rowSpan={9} className="lr-remark"></td>
-          </tr>
-          <tr>
-            <td>{charges[1][0]}</td>
-            <td className="num">{charges[1][1]}</td>
-          </tr>
-          <tr>
-            <td colSpan={3} rowSpan={7} className="lr-value">
-              Value Rs. AS PER INVOICE
-              {booking.valueRs ? ` ${Number(booking.valueRs)}` : ""}
-            </td>
-            <td>{charges[2][0]}</td>
-            <td className="num">{charges[2][1]}</td>
-          </tr>
-          {charges.slice(3).map(([label, val]) => (
-            <tr key={label}>
-              <td>{label}</td>
-              <td className="num">{val}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Field name="freight" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.freight)}
+      </Field>
+      <Field name="doorColl" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.doorColle)}
+      </Field>
+      <Field name="doorDel" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.doorDelivery)}
+      </Field>
+      <Field name="hamali" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.hamali)}
+      </Field>
+      <Field name="stChgs" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.stCharges)}
+      </Field>
+      <Field name="totalAmt" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.total || booking.grandTotal)}
+      </Field>
+      <Field name="gstAmt" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.gstAmt)}
+      </Field>
+      <Field name="advance" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {""}
+      </Field>
+      <Field name="balance" copyIndex={copyIndex} className="lr-f-amt" align="right">
+        {amt(booking.grandTotal || booking.total)}
+      </Field>
 
-      <table className="lr-table lr-foot">
-        <tbody>
-          <tr>
-            <td>
-              <b>Eway Bill No.</b> {booking.ewayBillNo || ""}
-            </td>
-            <td>
-              <b>Valid Date</b>{" "}
-              {booking.validDate ? dmy(booking.validDate) : ""}
-            </td>
-            <td className="lr-sign-cell" rowSpan={3}>
-              <div>For Shyam Logistics</div>
-              <ShyamStamp size="sm" />
-            </td>
-          </tr>
-          <tr>
-            <td colSpan={2}>
-              <span className="lr-paytypes">
-                <label>
-                  <input
-                    type="checkbox"
-                    readOnly
-                    checked={
-                      lrType.includes("to pay") || lrType.includes("topay")
-                    }
-                  />{" "}
-                  Topay
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    readOnly
-                    checked={lrType === "paid"}
-                  />{" "}
-                  Paid
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    readOnly
-                    checked={lrType.includes("tbb")}
-                  />{" "}
-                  TBB
-                </label>
-              </span>
-              <span className="lr-legal">
-                Subject To Sangli Jurisdiction, Leakage &amp; Breakage carries
-                not responsible.
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan={2} className="lr-warn">
-              Do Not Pay Cash to Lorry Driver, Payble Check RTGS Only Shyam
-              Logistics
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <Field name="eway" copyIndex={copyIndex} className="lr-f-eway">
+        {booking.ewayBillNo || ""}
+      </Field>
+      <Field name="validDate" copyIndex={copyIndex} className="lr-f-date">
+        {booking.validDate ? dmy(booking.validDate) : ""}
+      </Field>
+
+      <Mark
+        name="payTopay"
+        copyIndex={copyIndex}
+        on={lrType.includes("to pay") || lrType.includes("topay")}
+      />
+      <Mark name="payPaid" copyIndex={copyIndex} on={lrType === "paid"} />
+      <Mark name="payTbb" copyIndex={copyIndex} on={lrType.includes("tbb")} />
+    </>
   );
 }
 
 export function LrPrintSheet({
   booking,
   parties,
-  company = DEFAULT_LR_COMPANY,
 }: {
   booking: Booking;
   parties: Party[];
   company?: LrCompany;
+  copies?: 1 | 2 | 3;
+  showReferenceOverlay?: boolean;
 }) {
   return (
     <div className="lr-print-root">
-      <Copy booking={booking} parties={parties} company={company} />
-      <Copy booking={booking} parties={parties} company={company} />
+      <div className="lr-print-document">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${FORM_BG}?v=5`}
+          alt=""
+          className="lr-form-bg"
+          draggable={false}
+        />
+        <OverlayFields booking={booking} parties={parties} copyIndex={0} />
+        <OverlayFields booking={booking} parties={parties} copyIndex={1} />
+      </div>
     </div>
   );
 }

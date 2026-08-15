@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { Redis } from "@upstash/redis";
+import { isSqliteReady, sqliteGet, sqliteSet } from "@/lib/db/sqlite";
 import type {
   Bill,
   Booking,
@@ -39,9 +40,9 @@ function redisClient(): Redis | null {
   return new Redis({ url, token });
 }
 
-/** True when writes survive across deploys / cold starts (Upstash / Vercel KV). */
+/** True when the SQLite database file can be written. */
 export function isTbsPersistent(): boolean {
-  return Boolean(redisClient());
+  return isSqliteReady();
 }
 
 function redisKey(file: string) {
@@ -79,9 +80,26 @@ async function writeToFs<T>(file: string, data: T): Promise<boolean> {
   }
 }
 
+function isEmptyStoreValue(value: unknown) {
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+}
+
 async function readJson<T>(file: string, fallback: T): Promise<T> {
   if (mem.has(file)) {
     return mem.get(file) as T;
+  }
+
+  const fromDisk = await readFromFs<T>(file);
+  const fromSql = sqliteGet<T>(file);
+  if (fromSql !== undefined) {
+    if (isEmptyStoreValue(fromSql) && fromDisk && !isEmptyStoreValue(fromDisk)) {
+      mem.set(file, fromDisk);
+      sqliteSet(file, fromDisk);
+      return fromDisk;
+    }
+    mem.set(file, fromSql);
+    return fromSql;
   }
 
   const redis = redisClient();
@@ -90,6 +108,7 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
       const val = await redis.get<T>(redisKey(file));
       if (val !== null && val !== undefined) {
         mem.set(file, val);
+        sqliteSet(file, val);
         return val;
       }
     } catch (err) {
@@ -97,10 +116,9 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
     }
   }
 
-  const fromDisk = await readFromFs<T>(file);
   if (fromDisk !== null) {
     mem.set(file, fromDisk);
-    // Warm Redis so later writes/reads stay consistent
+    sqliteSet(file, fromDisk);
     if (redis) {
       try {
         await redis.set(redisKey(file), fromDisk);
@@ -112,6 +130,7 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
   }
 
   mem.set(file, fallback);
+  sqliteSet(file, fallback);
   if (redis) {
     try {
       await redis.set(redisKey(file), fallback);
@@ -126,22 +145,9 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 
 async function writeJson<T>(file: string, data: T): Promise<void> {
   mem.set(file, data);
-
-  const redis = redisClient();
-  if (redis) {
-    try {
-      await redis.set(redisKey(file), data);
-      return;
-    } catch (err) {
-      console.error("Upstash write failed", file, err);
-      throw new Error("Server data save failed (Redis). Check Upstash env vars.");
-    }
-  }
-
-  const ok = await writeToFs(file, data);
-  if (!ok) {
+  if (!sqliteSet(file, data)) {
     throw new Error(
-      "Server cannot save data. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN on Vercel, then Redeploy.",
+      "SQLite save failed. Make sure the data folder is writable.",
     );
   }
 }

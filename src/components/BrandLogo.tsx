@@ -13,6 +13,9 @@ type BrandLogoProps = {
   size?: "sm" | "md" | "lg";
   variant?: "light" | "dark";
   showWordmark?: boolean;
+  /** Destination; default public home. Pass a path so callers do not wrap another Link. */
+  href?: string;
+  className?: string;
 };
 
 const sizes = {
@@ -69,6 +72,8 @@ export function BrandLogo({
   size = "sm",
   variant = "light",
   showWordmark = true,
+  href = "/",
+  className = "",
 }: BrandLogoProps) {
   const s = sizes[size];
   const parts = companyName.trim().split(/\s+/);
@@ -86,8 +91,8 @@ export function BrandLogo({
 
   return (
     <Link
-      href="/"
-      className={`group inline-flex max-w-full min-w-0 items-center ${s.gap}`}
+      href={href}
+      className={`group inline-flex max-w-full min-w-0 items-center ${s.gap} ${className}`.trim()}
       aria-label={`${companyName} home`}
     >
       <span

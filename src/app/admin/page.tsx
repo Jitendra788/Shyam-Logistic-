@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/components/tbs/useTbs";
+import { partyLabel } from "@/lib/tbs/partyLabel";
 
 type BookingRow = {
   id: string;
@@ -16,8 +17,35 @@ type BookingRow = {
   billed: boolean;
 };
 
+type Bucket = { count: number; amount: number };
+
 type Dash = {
   persistent?: boolean;
+  storage?: "sqlite" | "redis" | "local";
+  collectionPct?: number;
+  todayWork?: {
+    date: string;
+    bookings: number;
+    freight: number;
+    bills: number;
+    billAmt: number;
+    collected: number;
+    vehicles: number;
+  };
+  week?: {
+    date: string;
+    label: string;
+    bookings: number;
+    freight: number;
+    collected: number;
+  }[];
+  aging?: {
+    d0_15: Bucket;
+    d16_30: Bucket;
+    d30plus: Bucket;
+  };
+  topRoutes?: { from: string; to: string; count: number; freight: number }[];
+  topParties?: { party: string; count: number; freight: number }[];
   counts: {
     parties: number;
     bookings: number;
@@ -62,6 +90,9 @@ type Dash = {
   outstandingTop: { party: string; billNo: string; amount: number }[];
   pendingList: BookingRow[];
   completedList: BookingRow[];
+  recentBookings?: BookingRow[];
+  months?: { key: string; label: string; bookings: number; freight: number }[];
+  vehicles?: { total: number; onRoad: number; idle: number; list: string[] };
 };
 
 function inr(n: number) {
@@ -83,13 +114,49 @@ function fmtDate(d: string) {
   });
 }
 
-function todayLabel() {
-  return new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+function weekdayParts() {
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(
+    ((now.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7,
+  );
+  const h = now.getHours();
+  return {
+    weekday: now.toLocaleDateString("en-IN", { weekday: "long" }),
+    date: now.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
+    week,
+    shift: h < 12 ? "Morning shift" : h < 17 ? "Afternoon shift" : "Evening shift",
+  };
+}
+
+function last6MonthShell() {
+  const out: { key: string; label: string; bookings: number; freight: number }[] =
+    [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const x = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({
+      key: `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}`,
+      label: x.toLocaleDateString("en-IN", { month: "short" }),
+      bookings: 0,
+      freight: 0,
+    });
+  }
+  return out;
+}
+
+function matchRow(r: BookingRow, needle: string) {
+  if (!needle) return true;
+  return (
+    String(r.lrNo).toLowerCase().includes(needle) ||
+    partyLabel(r.party).toLowerCase().includes(needle) ||
+    String(r.from).toLowerCase().includes(needle) ||
+    String(r.to).toLowerCase().includes(needle)
+  );
 }
 
 function greeting() {
@@ -112,6 +179,144 @@ function statusClass(b: BookingRow) {
   return "mid";
 }
 
+function MonthBars({
+  months,
+}: {
+  months: { label: string; bookings: number; freight?: number }[];
+}) {
+  const max = Math.max(1, ...months.map((m) => m.bookings));
+  const hasData = months.some((m) => m.bookings > 0);
+  return (
+    <>
+      {!hasData ? (
+        <p className="tbs-ov-empty">No data for this period</p>
+      ) : null}
+      <div className="tbs-ov-bars" role="img" aria-label="Bookings by month">
+        {months.map((m) => (
+          <div key={m.label} className="tbs-ov-bar-col">
+            <div className="tbs-ov-bar-track">
+              <div
+                className="tbs-ov-bar"
+                style={{
+                  height: `${Math.max(4, Math.round((m.bookings / max) * 100))}%`,
+                  opacity: m.bookings ? 1 : 0.38,
+                }}
+                title={`${m.label}: ${m.bookings} LR${m.freight ? ` · ${inr(m.freight)}` : ""}`}
+              />
+            </div>
+            {hasData ? <strong>{m.bookings || ""}</strong> : null}
+            <span>{m.label}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function TrendLine({
+  months,
+}: {
+  months: { label: string; bookings: number }[];
+}) {
+  const w = 320;
+  const h = 118;
+  const padX = 14;
+  const padY = 18;
+  const max = Math.max(1, ...months.map((m) => m.bookings));
+  const hasData = months.some((m) => m.bookings > 0);
+  const innerW = w - padX * 2;
+  const innerH = h - padY * 2;
+  const pts = months.map((m, i) => {
+    const x =
+      padX +
+      (months.length <= 1 ? innerW / 2 : (i * innerW) / (months.length - 1));
+    const y = padY + innerH - (m.bookings / max) * innerH;
+    return { x, y, label: m.label };
+  });
+  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+  const last = pts[pts.length - 1];
+  const first = pts[0];
+  const area =
+    first && last
+      ? `${line} L ${last.x} ${h - padY} L ${first.x} ${h - padY} Z`
+      : "";
+  return (
+    <>
+      {!hasData ? (
+        <p className="tbs-ov-empty">No monthly trend yet</p>
+      ) : null}
+      <svg
+        className="tbs-ov-line"
+        viewBox={`0 0 ${w} ${h}`}
+        role="img"
+        aria-label="Monthly booking trend"
+      >
+        {area ? <path d={area} className="tbs-ov-area" /> : null}
+        <path d={line} className="tbs-ov-polyline" />
+        {hasData
+          ? pts.map((p) => (
+              <circle key={p.label} cx={p.x} cy={p.y} r="3.2" />
+            ))
+          : null}
+      </svg>
+      <div className="tbs-ov-x">
+        {months.map((m) => (
+          <span key={m.label}>{m.label}</span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function BillDonut({ billed, pending }: { billed: number; pending: number }) {
+  const total = billed + pending;
+  const r = 38;
+  const c = 2 * Math.PI * r;
+  const pendingLen = total ? (pending / total) * c : 0;
+  const billedLen = total ? (billed / total) * c : 0;
+  return (
+    <div className="tbs-donut-wrap">
+      <div className="tbs-donut">
+        <svg viewBox="0 0 120 120" aria-hidden>
+          <circle cx="60" cy="60" r={r} className="tbs-donut-track" />
+          {total > 0 ? (
+            <>
+              <circle
+                cx="60"
+                cy="60"
+                r={r}
+                className="tbs-donut-pending"
+                strokeDasharray={`${pendingLen} ${c}`}
+                strokeDashoffset={c / 4}
+              />
+              <circle
+                cx="60"
+                cy="60"
+                r={r}
+                className="tbs-donut-billed"
+                strokeDasharray={`${billedLen} ${c}`}
+                strokeDashoffset={c / 4 - pendingLen}
+              />
+            </>
+          ) : null}
+        </svg>
+        <div className="tbs-donut-center">
+          <strong>{total}</strong>
+          <span>Total</span>
+        </div>
+      </div>
+      <ul className="tbs-donut-legend">
+        <li>
+          <i className="billed" /> Billed <b>{billed}</b>
+        </li>
+        <li>
+          <i className="pending" /> Pending <b>{pending}</b>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 const quickActions = [
   { href: "/admin/transport/booking", title: "New Booking", desc: "Create LR", tone: "red", mark: "LR" },
   { href: "/admin/registration/parties", title: "Party", desc: "Add customer", tone: "navy", mark: "P" },
@@ -127,6 +332,8 @@ export default function AdminMasterPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [wiping, setWiping] = useState(false);
+  const [q, setQ] = useState("");
+  const [clock, setClock] = useState("");
 
   async function loadDash() {
     setLoading(true);
@@ -189,6 +396,9 @@ export default function AdminMasterPage() {
           challans: 0,
           receipts: 0,
         },
+        months: json.months || [],
+        vehicles: json.vehicles || { total: 0, onRoad: 0, idle: 0, list: [] },
+        recentBookings: json.recentBookings || [],
       });
     } catch (e) {
       setErr(
@@ -232,7 +442,23 @@ export default function AdminMasterPage() {
   useEffect(() => {
     if (!ready) return;
     void loadDash();
+    const refresh = window.setInterval(() => void loadDash(), 60000);
+    return () => window.clearInterval(refresh);
   }, [ready]);
+
+  useEffect(() => {
+    const tick = () =>
+      setClock(
+        new Date().toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+      );
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   if (!ready) return <div className="tbs-empty">Loading…</div>;
 
@@ -248,6 +474,56 @@ export default function AdminMasterPage() {
     data.counts.parties === 0 &&
     data.counts.bookings === 0 &&
     data.counts.bills === 0;
+  const today = weekdayParts();
+  const tw = data?.todayWork;
+  const week = data?.week || [];
+  const aging = data?.aging;
+  const months =
+    data?.months && data.months.length > 0
+      ? data.months
+      : last6MonthShell();
+  const vehicles = data?.vehicles || { total: 0, onRoad: 0, idle: 0, list: [] };
+  const weekMax = Math.max(1, ...week.map((d) => d.bookings + (d.collected > 0 ? 1 : 0)));
+  const needle = q.trim().toLowerCase();
+  const recentBookings = (data?.recentBookings || []).filter((r) =>
+    matchRow(r, needle),
+  );
+  const pendingRows = (data?.pendingList || []).filter((r) =>
+    matchRow(r, needle),
+  );
+  const completedRows = (data?.completedList || []).filter((r) =>
+    matchRow(r, needle),
+  );
+  const outstandingRows = (data?.outstandingTop || []).filter((r) => {
+    if (!needle) return true;
+    return (
+      partyLabel(r.party).toLowerCase().includes(needle) ||
+      String(r.billNo).toLowerCase().includes(needle)
+    );
+  });
+  const nextMove = !data
+    ? null
+    : data.counts.parties === 0
+      ? { href: "/admin/registration/parties", label: "Add a party" }
+      : data.counts.bookings === 0
+        ? { href: "/admin/transport/booking", label: "Create the first LR" }
+        : (p?.deliveredNotBilled || 0) > 0
+          ? { href: "/admin/transport/bill", label: "Prepare pending bills" }
+          : (p?.outstandingAmt || 0) > 0
+            ? {
+                href: "/admin/transport/money-receipt/new",
+                label: "Collect outstanding",
+              }
+            : (p?.hireCount || 0) > 0
+              ? { href: "/admin/transport/lhp/new", label: "Pay lorry hire" }
+              : (p?.enquiries || 0) > 0
+                ? { href: "/admin/website/enquiries", label: "Follow website leads" }
+                : { href: "/admin/transport/booking", label: "New booking" };
+  const pipeTotal =
+    (p?.notDeliveredNotBilled || 0) +
+    (p?.deliveredNotBilled || 0) +
+    (p?.billedNotDelivered || 0) +
+    (c?.lrs || 0);
 
   const attention: { href: string; label: string; value: string; tone: string }[] = [];
   if (p) {
@@ -293,12 +569,27 @@ export default function AdminMasterPage() {
       <section className="tbs-dash-hero">
         <div className="tbs-dash-hero-top">
           <div>
-            <span className="tbs-dash-eyebrow">{todayLabel()}</span>
+            <span className="tbs-dash-eyebrow">
+              Live operations · {today.date}
+            </span>
             <h1>
               {greeting()}
               <span className="tbs-dash-brand"> · SHYAM LOGISTICS</span>
             </h1>
-            <p>Today&apos;s work, collections, and pending LRs in one place.</p>
+            <p>
+              {today.shift}. Track bookings, collections, hire, and pending LRs
+              from one desk.
+            </p>
+          </div>
+          <div className="tbs-dash-today" aria-label={`Today is ${today.weekday}`}>
+            <span className="tbs-dash-today-kicker">
+              Today · Live IST
+            </span>
+            <strong>{today.weekday}</strong>
+            <span className="tbs-dash-today-clock">{clock || "—"}</span>
+            <span>
+              {today.date} · Week {today.week}
+            </span>
           </div>
           <div className="tbs-dash-hero-actions">
             <Link href="/admin/transport/booking" className="tbs-dash-cta">
@@ -324,7 +615,7 @@ export default function AdminMasterPage() {
         </div>
         {data && (
           <>
-            <div className="tbs-dash-hero-stats tbs-dash-hero-stats-4">
+            <div className="tbs-dash-hero-stats tbs-dash-hero-stats-6">
               <div>
                 <strong>{p!.lrTotal}</strong>
                 <span>Pending LR</span>
@@ -343,6 +634,35 @@ export default function AdminMasterPage() {
                 </strong>
                 <span>Gross profit</span>
               </div>
+              <div>
+                <strong>{tw?.bookings ?? 0}</strong>
+                <span>Today LR</span>
+              </div>
+              <div>
+                <strong>{inr(tw?.collected ?? 0)}</strong>
+                <span>Today collection</span>
+              </div>
+            </div>
+            <div className="tbs-hero-pulse">
+              <div>
+                <span>Today freight</span>
+                <strong>{inr(tw?.freight ?? 0)}</strong>
+              </div>
+              <div>
+                <span>Today bills</span>
+                <strong>
+                  {tw?.bills ?? 0}
+                  <small> {inr(tw?.billAmt ?? 0)}</small>
+                </strong>
+              </div>
+              <div>
+                <span>Vehicles on road</span>
+                <strong>{tw?.vehicles ?? 0}</strong>
+              </div>
+              <div>
+                <span>Collection rate</span>
+                <strong>{data.collectionPct ?? 0}%</strong>
+              </div>
             </div>
             <div className="tbs-dash-progress" aria-hidden>
               <div
@@ -353,8 +673,13 @@ export default function AdminMasterPage() {
             <p className="tbs-dash-progress-label">
               {totalLr === 0
                 ? "No bookings yet — start with a party, then create an LR."
-                : `${donePct}% of LRs delivered and billed · ${totalLr} total`}
+                : `${donePct}% of LRs delivered and billed · ${totalLr} total · Today ${tw?.bookings || 0} LR / ${inr(tw?.collected || 0)} collected`}
             </p>
+            {nextMove ? (
+              <Link href={nextMove.href} className="tbs-next-move">
+                Next action · {nextMove.label} →
+              </Link>
+            ) : null}
           </>
         )}
       </section>
@@ -374,6 +699,222 @@ export default function AdminMasterPage() {
           </Link>
         ))}
       </div>
+
+      {data ? (
+        <section className="tbs-cmd" aria-label="Dashboard controls">
+          <label className="tbs-cmd-search">
+            <span>Jump LR / party / station</span>
+            <input
+              className="tbs-input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Type LR no, party, From or To…"
+              autoComplete="off"
+            />
+          </label>
+          <div className="tbs-cmd-chips">
+            <span className="tbs-chip tbs-chip-ok">
+              DB · {(data.storage || "sqlite").toUpperCase()}
+            </span>
+            <span className="tbs-chip">
+              Collection {data.collectionPct ?? 0}%
+            </span>
+            <span className="tbs-chip">
+              Today vehicles {tw?.vehicles ?? 0}
+            </span>
+            <span className="tbs-chip">Auto-refresh 60s</span>
+          </div>
+        </section>
+      ) : null}
+
+      {data ? (
+        <>
+          <section className="tbs-overview" aria-label="Booking charts">
+            <article className="tbs-ov-card">
+              <header className="tbs-ov-head">
+                <h2>Booking Overview</h2>
+                <Link href="/admin/reports/booking">View list</Link>
+              </header>
+              <MonthBars months={months} />
+            </article>
+
+            <article className="tbs-ov-card">
+              <header className="tbs-ov-head">
+                <h2>Pending Bills</h2>
+                <Link href="/admin/transport/bill">View list</Link>
+              </header>
+              <BillDonut
+                billed={c?.billsPaid || 0}
+                pending={p?.outstandingBills || 0}
+              />
+            </article>
+
+            <article className="tbs-ov-card">
+              <header className="tbs-ov-head">
+                <h2>Monthly Booking Trend</h2>
+              </header>
+              <TrendLine months={months} />
+            </article>
+          </section>
+
+          <section className="tbs-ov-row2" aria-label="Vehicles and recent bookings">
+            <article className="tbs-ov-card">
+              <header className="tbs-ov-head">
+                <h2>Vehicle Status</h2>
+                <Link href="/admin/transport/lhc">View list</Link>
+              </header>
+              {vehicles.total === 0 ? (
+                <p className="tbs-ov-empty">No vehicles recorded yet</p>
+              ) : (
+                <>
+                  <div className="tbs-veh-stats">
+                    <div className="tbs-veh-stat on">
+                      <span>On road</span>
+                      <strong>{vehicles.onRoad}</strong>
+                    </div>
+                    <div className="tbs-veh-stat idle">
+                      <span>Idle</span>
+                      <strong>{vehicles.idle}</strong>
+                    </div>
+                  </div>
+                  {vehicles.list.length > 0 ? (
+                    <div className="tbs-veh-list">
+                      {vehicles.list.map((v) => (
+                        <span key={v} className="tbs-veh-tag">
+                          {v}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="tbs-ov-empty">No vehicles moving today</p>
+                  )}
+                </>
+              )}
+            </article>
+
+            <article className="tbs-ov-card">
+              <header className="tbs-ov-head">
+                <h2>Recent Booking</h2>
+                <Link href="/admin/transport/booking">View list</Link>
+              </header>
+              {recentBookings.length === 0 ? (
+                <p className="tbs-ov-empty">No bookings yet</p>
+              ) : (
+                <ul className="tbs-recent-list">
+                  {recentBookings.slice(0, 6).map((r) => (
+                    <li key={r.id}>
+                      <div>
+                        <Link href="/admin/transport/booking" className="tbs-recent-lr">
+                          {r.lrNo}
+                        </Link>
+                        <span>
+                          {partyLabel(r.party)} · {r.from} → {r.to}
+                        </span>
+                      </div>
+                      <div className="tbs-recent-meta">
+                        <strong>{inr(r.amount)}</strong>
+                        <em className={`tbs-recent-st ${statusClass(r)}`}>
+                          {statusLabel(r)}
+                        </em>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          </section>
+        </>
+      ) : null}
+
+      {data ? (
+        <section className="tbs-adv-row" aria-label="Operations snapshot">
+          <div className="tbs-adv-card">
+            <h2>LR pipeline</h2>
+            <p>Open work vs completed</p>
+            <div className="tbs-pipe" aria-hidden={pipeTotal === 0}>
+              <span
+                className="tbs-pipe-seg warn"
+                style={{
+                  flex: Math.max(p?.notDeliveredNotBilled || 0, 0.01),
+                }}
+                title="Not delivered / not billed"
+              />
+              <span
+                className="tbs-pipe-seg amber"
+                style={{ flex: Math.max(p?.deliveredNotBilled || 0, 0.01) }}
+                title="Bill pending"
+              />
+              <span
+                className="tbs-pipe-seg navy"
+                style={{ flex: Math.max(p?.billedNotDelivered || 0, 0.01) }}
+                title="Delivery pending"
+              />
+              <span
+                className="tbs-pipe-seg ok"
+                style={{ flex: Math.max(c?.lrs || 0, 0.01) }}
+                title="Completed"
+              />
+            </div>
+            <ul className="tbs-pipe-legend">
+              <li>
+                <i className="warn" /> Open {p?.notDeliveredNotBilled || 0}
+              </li>
+              <li>
+                <i className="amber" /> Bill due {p?.deliveredNotBilled || 0}
+              </li>
+              <li>
+                <i className="navy" /> Delivery due {p?.billedNotDelivered || 0}
+              </li>
+              <li>
+                <i className="ok" /> Done {c?.lrs || 0}
+              </li>
+            </ul>
+          </div>
+
+          <div className="tbs-adv-card">
+            <h2>Last 7 days</h2>
+            <p>Bookings per day</p>
+            <div className="tbs-week">
+              {week.map((d) => (
+                <div key={d.date} className="tbs-week-col" title={`${d.date}: ${d.bookings} LR · ${inr(d.collected)} collected`}>
+                  <div className="tbs-week-bar-wrap">
+                    <div
+                      className="tbs-week-bar"
+                      style={{
+                        height: `${Math.max(8, Math.round((d.bookings / weekMax) * 72))}px`,
+                      }}
+                    />
+                  </div>
+                  <strong>{d.bookings}</strong>
+                  <span>{d.date === tw?.date ? "Today" : d.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tbs-adv-card">
+            <h2>Outstanding aging</h2>
+            <p>Unpaid bills by age</p>
+            <div className="tbs-age">
+              <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell">
+                <span>0–15 days</span>
+                <strong>{inr(aging?.d0_15.amount || 0)}</strong>
+                <small>{aging?.d0_15.count || 0} bills</small>
+              </Link>
+              <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell mid">
+                <span>16–30 days</span>
+                <strong>{inr(aging?.d16_30.amount || 0)}</strong>
+                <small>{aging?.d16_30.count || 0} bills</small>
+              </Link>
+              <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell hot">
+                <span>30+ days</span>
+                <strong>{inr(aging?.d30plus.amount || 0)}</strong>
+                <small>{aging?.d30plus.count || 0} bills</small>
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {data && attention.length > 0 && !isFresh ? (
         <section className="tbs-attention" aria-label="Needs attention">
@@ -396,7 +937,7 @@ export default function AdminMasterPage() {
         </section>
       ) : null}
 
-      {data && data.persistent === false && (
+      {data && data.storage === "local" && data.persistent === false && (
         <details className="tbs-setup-compact">
           <summary>
             Save / Delete works in this browser until Redis is set
@@ -548,13 +1089,13 @@ export default function AdminMasterPage() {
                     View all →
                   </Link>
                 </div>
-                {data.pendingList.length === 0 ? (
+                {pendingRows.length === 0 ? (
                   <div className="tbs-empty-box">
-                    <p>No pending LRs.</p>
+                    <p>{needle ? "No pending LRs match search." : "No pending LRs."}</p>
                     <Link href="/admin/transport/booking">Create booking →</Link>
                   </div>
                 ) : (
-                  <LrTable rows={data.pendingList} />
+                  <LrTable rows={pendingRows} />
                 )}
               </div>
             </section>
@@ -623,13 +1164,13 @@ export default function AdminMasterPage() {
                     View all →
                   </Link>
                 </div>
-                {data.completedList.length === 0 ? (
+                {completedRows.length === 0 ? (
                   <div className="tbs-empty-box">
-                    <p>No completed LRs yet.</p>
+                    <p>{needle ? "No completed LRs match search." : "No completed LRs yet."}</p>
                     <Link href="/admin/reports/booking">Open booking report →</Link>
                   </div>
                 ) : (
-                  <LrTable rows={data.completedList} completed />
+                  <LrTable rows={completedRows} completed />
                 )}
               </div>
             </section>
@@ -685,9 +1226,9 @@ export default function AdminMasterPage() {
             <section>
               <h2 className="tbs-dash-section">Top outstanding</h2>
               <div className="tbs-dash-table-wrap tbs-dash-table-card">
-                {data.outstandingTop.length === 0 ? (
+                {outstandingRows.length === 0 ? (
                   <div className="tbs-empty-box">
-                    <p>No outstanding bills.</p>
+                    <p>{needle ? "No matching bills." : "No outstanding bills."}</p>
                     <Link href="/admin/transport/bill">Prepare a bill →</Link>
                   </div>
                 ) : (
@@ -701,9 +1242,9 @@ export default function AdminMasterPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.outstandingTop.map((r) => (
+                        {outstandingRows.map((r) => (
                           <tr key={`${r.billNo}-${r.party}`}>
-                            <td>{r.party}</td>
+                            <td>{partyLabel(r.party)}</td>
                             <td>{r.billNo}</td>
                             <td className="tbs-amt-due">{inr(r.amount)}</td>
                           </tr>
@@ -718,6 +1259,74 @@ export default function AdminMasterPage() {
                 >
                   Full outstanding →
                 </Link>
+              </div>
+            </section>
+          </div>
+
+          <div className="tbs-dash-split">
+            <section>
+              <h2 className="tbs-dash-section">Top lanes</h2>
+              <div className="tbs-dash-table-wrap tbs-dash-table-card">
+                {(data.topRoutes || []).length === 0 ? (
+                  <div className="tbs-empty-box">
+                    <p>No routes yet.</p>
+                    <Link href="/admin/transport/booking">Create booking →</Link>
+                  </div>
+                ) : (
+                  <div className="tbs-table-scroll">
+                    <table className="tbs-grid tbs-dash-table">
+                      <thead>
+                        <tr>
+                          <th>From → To</th>
+                          <th>LRs</th>
+                          <th>Freight</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(data.topRoutes || []).map((r) => (
+                          <tr key={`${r.from}-${r.to}`}>
+                            <td>
+                              {r.from} → {r.to}
+                            </td>
+                            <td>{r.count}</td>
+                            <td>{inr(r.freight)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </section>
+            <section>
+              <h2 className="tbs-dash-section">Top billing parties</h2>
+              <div className="tbs-dash-table-wrap tbs-dash-table-card">
+                {(data.topParties || []).length === 0 ? (
+                  <div className="tbs-empty-box">
+                    <p>No party freight yet.</p>
+                  </div>
+                ) : (
+                  <div className="tbs-table-scroll">
+                    <table className="tbs-grid tbs-dash-table">
+                      <thead>
+                        <tr>
+                          <th>Party</th>
+                          <th>LRs</th>
+                          <th>Freight</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(data.topParties || []).map((r) => (
+                          <tr key={r.party}>
+                            <td>{r.party}</td>
+                            <td>{r.count}</td>
+                            <td>{inr(r.freight)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </section>
           </div>
@@ -786,7 +1395,7 @@ function LrTable({
                   </div>
                 </Link>
               </td>
-              <td>{b.party}</td>
+              <td>{partyLabel(b.party)}</td>
               <td>
                 <span
                   className={`tbs-status-pill ${completed ? "ok" : statusClass(b)}`}

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { isValidElement, useEffect, useState } from "react";
+import { partyLabel } from "@/lib/tbs/partyLabel";
 
 /** Parse manually typed amount (no spinner, commas OK). */
 export function parseManualNumber(raw: string): number {
@@ -88,7 +89,7 @@ export function StatusBanner({
   message: string;
   onClear?: () => void;
 }) {
-  const isErr = /fail|error|nahi|required|pehle|cannot|expire|select|enter /i.test(
+  const isErr = /fail|error|not found|nahi|required|pehle|cannot|expire|select|enter /i.test(
     message,
   );
 
@@ -233,6 +234,14 @@ export function PrintCellButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+function toCell(node: React.ReactNode): React.ReactNode {
+  if (node == null || typeof node === "boolean") return node ?? "";
+  if (typeof node === "string" || typeof node === "number") return node;
+  if (Array.isArray(node) || isValidElement(node)) return node;
+  if (typeof node === "object") return partyLabel(node);
+  return "";
+}
+
 export function DataGrid<T extends { id: string }>({
   columns,
   rows,
@@ -274,7 +283,7 @@ export function DataGrid<T extends { id: string }>({
                 style={{ cursor: onSelect ? "pointer" : undefined }}
               >
                 {columns.map((c) => (
-                  <td key={c.key}>{renderCell(row, c.key, i)}</td>
+                  <td key={c.key}>{toCell(renderCell(row, c.key, i))}</td>
                 ))}
               </tr>
             ))

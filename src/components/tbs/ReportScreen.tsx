@@ -8,6 +8,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useAdminAuth } from "@/components/tbs/useTbs";
 import { downloadAsExcel } from "@/lib/tbs/excel";
+import { partyLabel, partyNamesFrom } from "@/lib/tbs/partyLabel";
 import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 
 type ReportKind =
@@ -57,8 +58,8 @@ export function ReportScreen({
     }
     const json = await res.json();
     setData(json);
-    if (Array.isArray(json.parties)) setParties(json.parties);
-    if (needParty && !partyFilter && json.party) setParty(json.party);
+    if (Array.isArray(json.parties)) setParties(partyNamesFrom(json.parties));
+    if (needParty && !partyFilter && json.party) setParty(partyLabel(json.party));
   }
 
   useEffect(() => {

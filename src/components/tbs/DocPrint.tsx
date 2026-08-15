@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { fmtDate } from "@/components/tbs/FormPrimitives";
 import { DEFAULT_LR_COMPANY, LrPrintSheet } from "@/components/tbs/LrPrintSheet";
+import { LrPdfFrame } from "@/components/tbs/LrPdfFrame";
 import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 import { amountInWordsINR } from "@/lib/tbs/amountWords";
 import type {
@@ -15,7 +16,7 @@ import type {
   Party,
 } from "@/lib/tbs/types";
 
-const LOGO = "/brand/shyam-peacock-mark-print.png";
+const LOGO = "/brand/shyam-peacock-mark.png";
 const co = DEFAULT_LR_COMPANY;
 
 /** Tax Invoice header address (matches sample bill PDF). */
@@ -196,59 +197,146 @@ export function ChallanPrint({
   bookings: Booking[];
 }) {
   const lrs = bookings.filter((b) => challan.lrIds.includes(b.id));
+  const pkgTotal = lrs.reduce((s, b) => s + (Number(b.noOfArticles) || 0), 0);
+  const wtTotal = lrs.reduce(
+    (s, b) => s + (Number(b.actualWt || b.chargedWt) || 0),
+    0,
+  );
+  const padRows = Math.max(10, 14 - lrs.length);
+  const money = (n: number) => {
+    const v = Number(n) || 0;
+    return v % 1 ? v.toFixed(2) : String(v);
+  };
+
+  useEffect(() => {
+    document.documentElement.classList.add("lm-print-root");
+    const style = document.createElement("style");
+    style.id = "lm-page-size";
+    style.textContent = "@media print { @page { size: A4 portrait; margin: 7mm; } }";
+    document.head.appendChild(style);
+    return () => {
+      document.documentElement.classList.remove("lm-print-root");
+      style.remove();
+    };
+  }, []);
+
+  const kv = (label: string, value: string) => (
+    <div className="lm-kv">
+      <span className="lm-k">{label}</span>
+      <span className="lm-v">{value}</span>
+    </div>
+  );
+
   return (
-    <Shell title="LORRY HIRE CONTRACT / CHALLAN" docNo={challan.challanNo}>
-      <div className="doc-grid">
-        <div>
-          <b>Date:</b> {fmtDate(challan.challanDate)}
+    <div className="lm">
+      <div className="lm-top">
+        <span>GST : {co.gstin}</span>
+        <span>|| Shree Ganesh Prasanna ||</span>
+        <span className="lm-mob">
+          Mob :{co.phone}
+          <br />
+          {co.phone2}
+        </span>
+      </div>
+
+      <div className="lm-brand">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={LOGO} alt="" className="lm-logo" />
+        <div className="lm-co">SHYAM LOGISTICS</div>
+      </div>
+      <div className="lm-addr">
+        {BILL_ADDRESS} E-mail :{co.email}
+      </div>
+
+      <div className="lm-title">LORRY MEMO</div>
+
+      <div className="lm-meta">
+        <div className="lm-meta-col">
+          {kv("Lorry No", challan.vehicleNo)}
+          {kv("Broker Name", challan.brokerOwner)}
+          {kv("Driver Name", challan.driverName)}
+          {kv("Owner Name", challan.owner)}
         </div>
-        <div>
-          <b>Vehicle:</b> {challan.vehicleNo}
+        <div className="lm-meta-col">
+          {kv("Date", fmtDate(challan.challanDate))}
+          {kv("PAN No.", challan.brokerPan)}
+          {kv("From", challan.fromStation)}
+          {kv("PAN No.", challan.panNo)}
         </div>
-        <div>
-          <b>Broker/Owner:</b> {challan.brokerOwner}
-        </div>
-        <div>
-          <b>PAN:</b> {challan.brokerPan || challan.panNo}
-        </div>
-        <div>
-          <b>From:</b> {challan.fromStation}
-        </div>
-        <div>
-          <b>To:</b> {challan.toStation}
-        </div>
-        <div>
-          <b>Driver:</b> {challan.driverName}
-        </div>
-        <div>
-          <b>Licence:</b> {challan.licenceNo}
-        </div>
-        <div>
-          <b>Freight:</b> {challan.freight}
-        </div>
-        <div>
-          <b>Advance:</b> {challan.advance}
-        </div>
-        <div>
-          <b>Cash / Fuel:</b> {challan.cash} / {challan.fuel}
-        </div>
-        <div>
-          <b>Balance:</b> {challan.balance}
+        <div className="lm-meta-col">
+          {kv("Memo No", challan.challanNo)}
+          {kv("Engine No.", challan.engine)}
+          {kv("To", challan.toStation)}
+          {kv("Chessy", challan.chessy)}
         </div>
       </div>
-      <h4 style={{ margin: "10px 0 4px" }}>Attached LRs</h4>
-      <Table
-        columns={["LR No", "Date", "Party", "From", "To", "Freight"]}
-        rows={lrs.map((b) => [
-          b.lrNo,
-          fmtDate(b.lrDate),
-          b.billingParty,
-          b.from,
-          b.to,
-          b.freight,
-        ])}
-      />
-    </Shell>
+
+      <div className="lm-main">
+        <table className="lm-table">
+          <thead>
+            <tr>
+              <th className="lm-c-sr">Sr</th>
+              <th className="lm-c-lr">LR No</th>
+              <th className="lm-c-pkg">No of Pkg.</th>
+              <th className="lm-c-ct">Content</th>
+              <th className="lm-c-wt">Act.Weight</th>
+              <th className="lm-c-from">From</th>
+              <th className="lm-c-to">To</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lrs.map((b, i) => (
+              <tr key={b.id || i}>
+                <td>{i + 1}</td>
+                <td>{b.lrNo}</td>
+                <td>{b.noOfArticles || ""}</td>
+                <td>{b.particulars}</td>
+                <td>{blank(b.actualWt || b.chargedWt)}</td>
+                <td>{b.from || b.bookingFrom}</td>
+                <td>{b.to}</td>
+              </tr>
+            ))}
+            {Array.from({ length: padRows }).map((_, i) => (
+              <tr key={`pad-${i}`} className="lm-pad">
+                <td>&nbsp;</td>
+                <td />
+                <td />
+                <td />
+                <td />
+                <td />
+                <td />
+              </tr>
+            ))}
+            {[
+              ["Total Freight", money(challan.freight), true],
+              ["Advance", money(challan.advance), false],
+              ["Transfer", money(challan.transfer), false],
+              ["Cash", Number(challan.cash) ? money(challan.cash) : "0.00", false],
+              ["Fuel", money(challan.fuel), false],
+              ["Balance", money(challan.balance), false],
+            ].map(([lab, val, first], i) => (
+              <tr key={String(lab)} className="lm-ch">
+                <td className="lm-tot">{first ? lrs.length || "" : ""}</td>
+                <td />
+                <td className="lm-tot">{first ? pkgTotal || "" : ""}</td>
+                <td />
+                <td className="lm-tot">{first ? wtTotal || "" : ""}</td>
+                <td className="lm-ch-lab">{lab}</td>
+                <td className="lm-ch-num">{val}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="lm-foot">
+        <div className="lm-driver">Driver Sign</div>
+        <div className="lm-sign">
+          <div>For Shyam Logistics</div>
+          <ShyamStamp size="md" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -448,8 +536,10 @@ export function BookingBillPrint({
 }: {
   booking: Booking;
   parties?: Party[];
+  showReferenceOverlay?: boolean;
 }) {
-  return <LrPrintSheet booking={booking} parties={parties} />;
+  // Original form PDF + pdf-lib fill (sends booking body so local IDB rows work).
+  return <LrPdfFrame booking={booking} parties={parties} />;
 }
 
 export function BillPrint({

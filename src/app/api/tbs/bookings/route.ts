@@ -191,20 +191,25 @@ export async function PUT(req: Request) {
     const body = (await req.json()) as Booking;
     if (!body.id) return bad("id required");
     const bookings = await getBookings();
-    const idx = bookings.findIndex((b) => b.id === body.id);
-    if (idx < 0) return bad("Not found", 404);
+    let idx = bookings.findIndex((b) => b.id === body.id);
+    if (idx < 0 && body.lrNo) {
+      idx = bookings.findIndex((b) => b.lrNo === String(body.lrNo));
+    }
     const t = totals(body);
     const vehicleNo = (body.vehicleNo || "").trim().toUpperCase();
     const gstAmt = Number(body.gstAmt) || 0;
-    bookings[idx] = {
-      ...bookings[idx],
+    const merged: Booking = {
+      ...(idx >= 0 ? bookings[idx] : { id: body.id }),
       ...body,
+      id: idx >= 0 ? bookings[idx].id : body.id || uid("b"),
       vehicleNo,
       ...t,
       gstAmt,
-      gstLabel: body.gstLabel || bookings[idx].gstLabel || "GST @ 0%",
+      gstLabel: body.gstLabel || (idx >= 0 ? bookings[idx].gstLabel : "") || "GST @ 0%",
       grandTotal: t.total + gstAmt,
     };
+    if (idx < 0) bookings.unshift(merged);
+    else bookings[idx] = merged;
     await saveBookings(bookings);
     await rememberVehicle(vehicleNo);
     await rememberParticular(body.particulars);
@@ -212,7 +217,7 @@ export async function PUT(req: Request) {
     await rememberListValue("gstPaidBy", body.gstPaidBy);
     await rememberListValue("lrTypes", body.lrType);
     await rememberListValue("gstLabels", body.gstLabel || "");
-    return ok(bookings[idx]);
+    return ok(idx < 0 ? bookings[0] : bookings[idx]);
   } catch (e) {
     return failSave(e);
   }

@@ -57,10 +57,26 @@ function jsonResponse(data: unknown, status = 200) {
   });
 }
 
+function isRecordRows(value: unknown): boolean {
+  if (!Array.isArray(value)) return false;
+  if (value.length === 0) return true;
+  const first = value[0];
+  return Boolean(first && typeof first === "object" && "id" in first);
+}
+
 function pullCollections(payload: Record<string, unknown>) {
   const out: Partial<Record<Col, unknown>> = {};
   for (const name of COLLECTIONS) {
-    if (payload[name] != null) out[name] = payload[name];
+    const value = payload[name];
+    if (value == null) continue;
+    if (name === "masters") {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        out[name] = value;
+      }
+      continue;
+    }
+    // Reports APIs reuse the key "parties" as a string[] of names — never store those.
+    if (isRecordRows(value)) out[name] = value;
   }
   return out;
 }
@@ -197,18 +213,23 @@ async function tbsHandle(
   const path = pathnameOf(url);
 
   if (method === "GET") {
+    const isCollectionGet = Boolean(PATH_COL[path]);
     if (res.ok) {
       const data = (await res.clone().json()) as Record<string, unknown>;
-      await saveCollections(pullCollections(data), persistent);
-      if (!persistent) return jsonResponse(await overlayPayload(data));
+      if (isCollectionGet) {
+        await saveCollections(pullCollections(data), persistent);
+        if (!persistent) return jsonResponse(await overlayPayload(data));
+      }
       return res;
     }
-    try {
-      const data = {} as Record<string, unknown>;
-      const over = await overlayPayload(data);
-      if (Object.keys(over).length) return jsonResponse(over);
-    } catch {
-      /* ignore */
+    if (isCollectionGet) {
+      try {
+        const data = {} as Record<string, unknown>;
+        const over = await overlayPayload(data);
+        if (Object.keys(over).length) return jsonResponse(over);
+      } catch {
+        /* ignore */
+      }
     }
     return res;
   }
@@ -261,23 +282,18 @@ async function tbsHandle(
     return jsonResponse({ ok: true, local: true }, 200);
   }
 
+  // Local-only rows (IndexedDB) can 404 on server PUT — still save locally.
+  if (res.status === 404 && method === "PUT") {
+    const applied = await applyMutation(url, method, init);
+    if (applied && "row" in applied && applied.row) {
+      return jsonResponse(applied.row, 200);
+    }
+  }
+
   return res;
 }
 
 export function installTbsPersist() {
-  if (typeof window === "undefined") return;
-  const w = window as Window & { __tbsPersist?: boolean };
-  if (w.__tbsPersist) return;
-  w.__tbsPersist = true;
-  const orig = window.fetch.bind(window);
-  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
-    const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.href
-          : input.url;
-    if (url.includes("/api/tbs")) return tbsHandle(orig, input, init);
-    return orig(input, init);
-  };
+  // SQLite is the project database. IndexedDB overlay is disabled.
+  return;
 }

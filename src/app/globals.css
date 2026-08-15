@@ -117,6 +117,7 @@ canvas {
   max-width: 1180px;
   margin-inline: auto;
   padding-inline: 1rem;
+  min-width: 0;
 }
 
 @media (min-width: 400px) {
@@ -372,6 +373,20 @@ canvas {
   .page-hero h1 {
     font-size: clamp(1.65rem, 8vw, 2.25rem);
   }
+
+  .site-container table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+main,
+header,
+footer,
+section {
+  min-width: 0;
 }
 
 .sr-only {

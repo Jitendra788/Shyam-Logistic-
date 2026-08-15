@@ -53,6 +53,18 @@ export async function isAuthenticated(): Promise<boolean> {
   return verifySessionToken(jar.get(COOKIE_NAME)?.value);
 }
 
+export async function getSessionUsername(): Promise<string | null> {
+  const jar = await cookies();
+  const token = jar.get(COOKIE_NAME)?.value;
+  if (!verifySessionToken(token)) return null;
+  return token?.split(".")[0] || null;
+}
+
+export function adminDisplayName(username: string) {
+  if (username.toLowerCase() === "admin") return "Admin User";
+  return username;
+}
+
 export function sessionCookieOptions(token: string) {
   return {
     name: COOKIE_NAME,

@@ -9,6 +9,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useAdminAuth } from "@/components/tbs/useTbs";
 import { downloadAsExcel } from "@/lib/tbs/excel";
+import { partyLabel, partyNamesFrom } from "@/lib/tbs/partyLabel";
 import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 
 type StatusKey =
@@ -140,7 +141,7 @@ export default function BookingReportPage() {
     }
     const json = await res.json();
     setRows(json.rows || []);
-    setParties(json.parties || []);
+    setParties(partyNamesFrom(json.parties || []));
     setCounts(json.counts || {});
   }
 
@@ -266,7 +267,7 @@ export default function BookingReportPage() {
                     <td>{r.sr}</td>
                     <td>{r.lrNo}</td>
                     <td>{fmtDate(r.lrDate)}</td>
-                    <td>{r.party}</td>
+                    <td>{partyLabel(r.party)}</td>
                     <td>{r.from}</td>
                     <td>{r.to}</td>
                     <td>{r.particulars}</td>

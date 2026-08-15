@@ -34,13 +34,12 @@ export async function POST(req: Request) {
   if (denied) return denied;
   try {
     const body = (await req.json()) as Partial<Bill>;
-    if (!body.partyName?.trim()) return bad("Select Party required");
     const bills = await getBills();
     const bill: Bill = {
       id: uid("bill"),
       billNo: body.billNo || nextCode(bills, "billNo", 1),
       billDate: body.billDate || new Date().toISOString().slice(0, 10),
-      partyName: body.partyName.trim(),
+      partyName: (body.partyName || "").trim(),
       totalAmount: Number(body.totalAmount) || 0,
       remark: body.remark || "",
       submissionDate:

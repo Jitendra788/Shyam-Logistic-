@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
+import Script from "next/script";
 import { JsonLd } from "@/components/JsonLd";
 import { getSettings } from "@/lib/store";
 import {
@@ -154,6 +155,10 @@ export default async function RootLayout({
         className="flex min-h-full flex-col antialiased"
         suppressHydrationWarning
       >
+        {/* Bitdefender / similar extensions inject bis_skin_checked before hydrate. */}
+        <Script id="strip-extension-attrs" strategy="beforeInteractive">
+          {`(function(){try{if(localStorage.getItem("tbs-theme")==="dark")document.documentElement.classList.add("tbs-theme-dark")}catch(e){}function s(){document.querySelectorAll("[bis_skin_checked]").forEach(function(e){e.removeAttribute("bis_skin_checked")})}s();try{new MutationObserver(s).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:["bis_skin_checked"]})}catch(e){}})();`}
+        </Script>
         <JsonLd
           data={[
             buildOrganizationJsonLd(settings),

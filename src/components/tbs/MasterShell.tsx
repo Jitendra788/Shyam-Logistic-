@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { AdminChrome } from "@/components/tbs/AdminChrome";
 import { downloadExcelBackup } from "@/lib/tbs/excel";
 import { installTbsPersist } from "@/lib/tbs/tbsPersist";
 
@@ -105,7 +106,9 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    transport: true,
+  });
   const [backingUp, setBackingUp] = useState(false);
   const meta = useMemo(() => pageMeta(pathname), [pathname]);
 
@@ -116,15 +119,25 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMobileNav(false);
     const id = groupOpenForPath(pathname);
-    setOpenGroups((prev) => ({ ...prev, [id]: true }));
+    setOpenGroups({ [id]: true });
   }, [pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = mobileNav ? "hidden" : "";
+    const isShell =
+      pathname !== "/admin/login" &&
+      !pathname.startsWith("/admin/transport/booking/print") &&
+      !pathname.startsWith("/admin/print");
+    if (!isShell) return;
+
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
     };
-  }, [mobileNav]);
+  }, [pathname]);
 
   if (pathname === "/admin/login") {
     return <>{children}</>;
@@ -138,7 +151,11 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
   }
 
   function toggleGroup(id: string) {
-    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+    setOpenGroups((prev) => {
+      const closing = !!prev[id];
+      if (closing) return { [id]: false };
+      return { [id]: true };
+    });
   }
 
   async function onBackup() {
@@ -184,7 +201,7 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
       </Link>
 
       {navGroups.map((group) => {
-        const open = openGroups[group.id] ?? group.id === "transport";
+        const open = Boolean(openGroups[group.id]);
         const groupActive = group.links.some((l) => isActive(pathname, l.href));
         return (
           <div
@@ -265,9 +282,13 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="tbs-topbar-brand">
-            <Link href="/admin" className="tbs-topbar-logo">
-              <BrandLogo companyName="SHYAM LOGISTICS" size="sm" variant="light" />
-            </Link>
+            <BrandLogo
+              href="/admin"
+              className="tbs-topbar-logo"
+              companyName="SHYAM LOGISTICS"
+              size="sm"
+              variant="light"
+            />
             <span className="tbs-admin-badge">Admin</span>
             <div className="tbs-page-meta" aria-live="polite">
               <span className="tbs-page-crumb">{meta.crumb}</span>
@@ -275,32 +296,11 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="tbs-topbar-actions">
-            <button
-              type="button"
-              className="tbs-top-btn tbs-top-btn-gold"
-              disabled={backingUp}
-              onClick={() => void onBackup()}
-              aria-label="Download Excel backup"
-            >
-              <span className="tbs-btn-label-full">
-                {backingUp ? "Saving…" : "Excel Backup"}
-              </span>
-              <span className="tbs-btn-label-short">
-                {backingUp ? "…" : "Backup"}
-              </span>
-            </button>
-            <Link href="/" className="tbs-top-btn tbs-top-btn-ghost">
-              View site
-            </Link>
-            <button
-              type="button"
-              className="tbs-top-btn tbs-top-btn-navy"
-              onClick={() => void onLogout()}
-            >
-              Logout
-            </button>
-          </div>
+          <AdminChrome
+            backingUp={backingUp}
+            onBackup={() => void onBackup()}
+            onLogout={() => void onLogout()}
+          />
         </div>
       </header>
 
