@@ -9,6 +9,7 @@ import {
   uid,
 } from "@/lib/tbs/store";
 import type { Challan } from "@/lib/tbs/types";
+import { challanHireBalance } from "@/lib/tbs/challanHire";
 
 async function rememberBroker(brokerOwner: string) {
   const name = brokerOwner.trim();
@@ -58,7 +59,10 @@ export async function GET() {
       getMasters(),
     ]);
     return ok({
-      challans,
+      challans: challans.map((c) => ({
+        ...c,
+        balance: challanHireBalance(c),
+      })),
       bookings,
       masters,
       nextChallan: nextCode(challans, "challanNo", 1),
@@ -93,7 +97,7 @@ export async function POST(req: Request) {
       transfer,
       cash,
       fuel,
-      balance: freight - advance - transfer - cash - fuel,
+      balance: challanHireBalance({ freight, advance, transfer, cash, fuel }),
       driverName: body.driverName || "",
       licenceNo: body.licenceNo || "",
       engine: body.engine || "",
@@ -132,7 +136,7 @@ export async function PUT(req: Request) {
       ...challans[idx],
       ...body,
       vehicleNo: (body.vehicleNo || "").trim().toUpperCase(),
-      balance: freight - advance - transfer - cash - fuel,
+      balance: challanHireBalance({ freight, advance, transfer, cash, fuel }),
     };
     await saveChallans(challans);
     await rememberVehicle(challans[idx].vehicleNo);

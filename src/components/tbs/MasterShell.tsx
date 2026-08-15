@@ -10,8 +10,9 @@ import { installTbsPersist } from "@/lib/tbs/tbsPersist";
 
 if (typeof window !== "undefined") installTbsPersist();
 
-type NavLink = { href: string; label: string };
-type NavGroup = { id: string; label: string; mark: string; links: NavLink[] };
+type NavLeaf = { href: string; label: string };
+type NavItem = NavLeaf & { children?: NavLeaf[] };
+type NavGroup = { id: string; label: string; mark: string; links: NavItem[] };
 
 const navGroups: NavGroup[] = [
   {
@@ -26,14 +27,32 @@ const navGroups: NavGroup[] = [
     mark: "T",
     links: [
       { href: "/admin/transport/booking", label: "Booking" },
-      { href: "/admin/transport/lhc", label: "LHC — Hire Contract" },
-      { href: "/admin/transport/lhp/new", label: "LHP — New Payment" },
-      { href: "/admin/transport/lhp/update", label: "LHP — Update Payment" },
+      { href: "/admin/transport/lhc", label: "LHC - Lorry Hire Contract" },
+      {
+        href: "/admin/transport/lhp/new",
+        label: "LHP - Lorry Hire Payment",
+        children: [
+          { href: "/admin/transport/lhp/new", label: "New Payment" },
+          { href: "/admin/transport/lhp/update", label: "Update Payment" },
+        ],
+      },
       { href: "/admin/transport/bill", label: "Bill Preparation" },
-      { href: "/admin/transport/money-receipt/new", label: "Money Receipt — New" },
-      { href: "/admin/transport/money-receipt/edit", label: "Money Receipt — Edit" },
-      { href: "/admin/transport/other-payments/debit-note", label: "Debit Note" },
-      { href: "/admin/transport/other-payments/credit-note", label: "Credit Note" },
+      {
+        href: "/admin/transport/money-receipt/new",
+        label: "Money Receipt",
+        children: [
+          { href: "/admin/transport/money-receipt/new", label: "New Money Receipt Entry" },
+          { href: "/admin/transport/money-receipt/edit", label: "Edit Money Receipt Entry" },
+        ],
+      },
+      {
+        href: "/admin/transport/other-payments/debit-note",
+        label: "Other Payments",
+        children: [
+          { href: "/admin/transport/other-payments/debit-note", label: "Debit Note" },
+          { href: "/admin/transport/other-payments/credit-note", label: "Credit Note" },
+        ],
+      },
       { href: "/admin/transport/expense-voucher", label: "Expense Voucher" },
     ],
   },
@@ -45,17 +64,33 @@ const navGroups: NavGroup[] = [
       { href: "/admin/reports/booking", label: "Booking Report" },
       {
         href: "/admin/reports/party-outstanding/billingwise",
-        label: "Outstanding — Billingwise",
-      },
-      {
-        href: "/admin/reports/party-outstanding/dayswise",
-        label: "Outstanding — Daywise",
+        label: "Party Outstanding",
+        children: [
+          {
+            href: "/admin/reports/party-outstanding/billingwise",
+            label: "Billingwise Outstanding",
+          },
+          {
+            href: "/admin/reports/party-outstanding/dayswise",
+            label: "Dayswise Outstanding",
+          },
+          {
+            href: "/admin/reports/party-outstanding/partywise",
+            label: "Partywise Outstanding",
+          },
+        ],
       },
       {
         href: "/admin/reports/party-ledger/billwise",
-        label: "Party Ledger — Billwise",
+        label: "Party Ledger",
+        children: [
+          {
+            href: "/admin/reports/party-ledger/billwise",
+            label: "Billwise Customer Ledger",
+          },
+        ],
       },
-      { href: "/admin/reports/gst-summary", label: "GST Summary" },
+      { href: "/admin/reports/gst-summary", label: "GST Summary Report" },
       { href: "/admin/reports/profit", label: "Profit Report" },
     ],
   },
@@ -83,12 +118,26 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function itemIsActive(pathname: string, item: NavItem) {
+  if (item.children?.length) {
+    return item.children.some((c) => isActive(pathname, c.href));
+  }
+  return isActive(pathname, item.href);
+}
+
+function nestKey(groupId: string, label: string) {
+  return `${groupId}:${label}`;
+}
+
 function pageMeta(pathname: string): { crumb: string; title: string } {
   if (pathname === "/admin") return { crumb: "Home", title: "Dashboard" };
   for (const group of navGroups) {
-    for (const link of group.links) {
-      if (isActive(pathname, link.href)) {
-        return { crumb: group.label, title: link.label };
+    for (const item of group.links) {
+      if (item.children?.length) {
+        const child = item.children.find((c) => isActive(pathname, c.href));
+        if (child) return { crumb: item.label, title: child.label };
+      } else if (isActive(pathname, item.href)) {
+        return { crumb: group.label, title: item.label };
       }
     }
   }
@@ -109,6 +158,7 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     transport: true,
   });
+  const [openNests, setOpenNests] = useState<Record<string, boolean>>({});
   const [backingUp, setBackingUp] = useState(false);
   const meta = useMemo(() => pageMeta(pathname), [pathname]);
 
@@ -120,6 +170,15 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
     setMobileNav(false);
     const id = groupOpenForPath(pathname);
     setOpenGroups({ [id]: true });
+    const nests: Record<string, boolean> = {};
+    for (const group of navGroups) {
+      for (const item of group.links) {
+        if (item.children?.some((c) => isActive(pathname, c.href))) {
+          nests[nestKey(group.id, item.label)] = true;
+        }
+      }
+    }
+    setOpenNests(nests);
   }, [pathname]);
 
   useEffect(() => {
@@ -148,6 +207,10 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/admin/print")
   ) {
     return <>{children}</>;
+  }
+
+  function toggleNest(key: string) {
+    setOpenNests((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   function toggleGroup(id: string) {
@@ -202,7 +265,7 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
 
       {navGroups.map((group) => {
         const open = Boolean(openGroups[group.id]);
-        const groupActive = group.links.some((l) => isActive(pathname, l.href));
+        const groupActive = group.links.some((l) => itemIsActive(pathname, l));
         return (
           <div
             key={group.id}
@@ -226,16 +289,52 @@ export function MasterShell({ children }: { children: React.ReactNode }) {
             </button>
             {open && (
               <div className="tbs-nav-links">
-                {group.links.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`tbs-nav-link ${isActive(pathname, link.href) ? "active" : ""}`}
-                    onClick={() => setMobileNav(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                {group.links.map((item) => {
+                  if (item.children?.length) {
+                    const key = nestKey(group.id, item.label);
+                    const nestOpen = Boolean(openNests[key]);
+                    const childActive = itemIsActive(pathname, item);
+                    return (
+                      <div
+                        key={key}
+                        className={`tbs-nav-nest ${nestOpen ? "open" : ""} ${childActive ? "active" : ""}`}
+                      >
+                        <button
+                          type="button"
+                          className="tbs-nav-nest-btn"
+                          onClick={() => toggleNest(key)}
+                          aria-expanded={nestOpen}
+                        >
+                          <span>{item.label}</span>
+                          <span className="tbs-nav-chevron" aria-hidden>
+                            {nestOpen ? "▾" : "▸"}
+                          </span>
+                        </button>
+                        {nestOpen &&
+                          item.children.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className={`tbs-nav-link tbs-nav-child ${isActive(pathname, child.href) ? "active" : ""}`}
+                              onClick={() => setMobileNav(false)}
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`tbs-nav-link ${isActive(pathname, item.href) ? "active" : ""}`}
+                      onClick={() => setMobileNav(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>

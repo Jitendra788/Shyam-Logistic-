@@ -12,13 +12,13 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { openPrint } from "@/lib/tbs/print";
-import type { Booking, Challan, LhpPayment, Masters } from "@/lib/tbs/types";
+import { challanHireDue } from "@/lib/tbs/challanHire";
+import type { Challan, LhpPayment, Masters } from "@/lib/tbs/types";
 
 type Payload = {
   payments: LhpPayment[];
   challans: Challan[];
   masters: Masters;
-  bookings?: Booking[];
 };
 
 type Row = {
@@ -33,27 +33,6 @@ type Row = {
   balance: number;
   narration: string;
 };
-
-/** Pending hire on a challan before this screen's new payment. */
-function challanDue(c: Challan, bookings: Booking[]): number {
-  const adv =
-    Number(c.advance || 0) +
-    Number(c.transfer || 0) +
-    Number(c.cash || 0) +
-    Number(c.fuel || 0);
-  const fromParts = Number(c.freight || 0) - adv;
-  const stored = Number(c.balance);
-  let due = Number.isFinite(stored) ? stored : fromParts;
-  if (!(due > 0) && fromParts > 0) due = fromParts;
-  if (!(due > 0)) {
-    const lrSum = (c.lrIds || []).reduce((s, id) => {
-      const b = bookings.find((x) => x.id === id);
-      return s + Number(b?.freight || 0);
-    }, 0);
-    if (lrSum > 0) due = lrSum - adv;
-  }
-  return Math.max(0, due);
-}
 
 export default function LhpNewPage() {
   const { data, loading, error, reload } = useTbsApi<Payload>("/api/tbs/lhp");
@@ -75,11 +54,10 @@ export default function LhpNewPage() {
 
   const grid: Row[] = useMemo(() => {
     if (rows) return rows;
-    const bookings = data?.bookings || [];
     return (data?.challans || [])
       .map((c) => {
         const paid = paidMap.get(c.challanNo) || 0;
-        const out = Math.max(0, challanDue(c, bookings) - paid);
+        const out = challanHireDue(c, paid);
         return {
           id: c.id,
           challanNo: c.challanNo,

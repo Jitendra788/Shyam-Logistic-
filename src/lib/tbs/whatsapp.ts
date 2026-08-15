@@ -99,7 +99,7 @@ export function challanWhatsAppText(c: {
     "",
     `Challan No: *${c.challanNo}*`,
     `Date: ${fmt(c.challanDate)}`,
-    `Broker/Owner: ${c.brokerOwner || "—"}`,
+    `Broker: ${c.brokerOwner || "—"}`,
     `Vehicle: ${c.vehicleNo || "—"}`,
     `From: ${c.fromStation || "—"} → To: ${c.toStation || "—"}`,
     `Freight: ₹ ${Number(c.freight || 0).toFixed(2)}`,

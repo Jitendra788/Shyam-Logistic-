@@ -15,6 +15,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
+import { challanHireBalance } from "@/lib/tbs/challanHire";
 import type { Booking, Challan, Masters } from "@/lib/tbs/types";
 
 type Payload = {
@@ -72,12 +73,7 @@ export default function LhcPage() {
 
   function patch(partial: Partial<Challan>) {
     const next = { ...current, ...partial };
-    const balance =
-      Number(next.freight) -
-      Number(next.advance) -
-      Number(next.transfer) -
-      Number(next.cash) -
-      Number(next.fuel);
+    const balance = challanHireBalance(next);
     setForm({ ...next, balance });
   }
 
@@ -113,14 +109,14 @@ export default function LhcPage() {
   }
 
   function loadChallan(c: Challan) {
-    setForm(c);
+    setForm({ ...c, balance: challanHireBalance(c) });
     setSelectedLrs(c.lrIds || []);
   }
 
   async function addBroker() {
     const name = current.brokerOwner.trim();
     if (!name) {
-      setMsg("Type Broker/Owner Name first");
+      setMsg("Type Broker first");
       return;
     }
     patch({ brokerOwner: name, owner: name });
@@ -223,7 +219,7 @@ export default function LhcPage() {
               </datalist>
             </div>
             <div className="tbs-field" style={{ flex: 1 }}>
-              <label>Broker/Owner Name</label>
+              <label>Broker</label>
               <input
                 className="tbs-input w-full"
                 value={current.brokerOwner}

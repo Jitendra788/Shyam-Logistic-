@@ -11,6 +11,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { openPrint } from "@/lib/tbs/print";
+import { challanHireDue } from "@/lib/tbs/challanHire";
 import type { Challan, LhpPayment, Masters } from "@/lib/tbs/types";
 
 type Payload = { payments: LhpPayment[]; challans: Challan[]; masters: Masters };
@@ -37,10 +38,10 @@ export default function LhpUpdatePage() {
         date: c.challanDate,
         broker: c.brokerOwner,
         vehNo: c.vehicleNo,
-        outstanding: c.balance,
+        outstanding: challanHireDue(c),
         paidAmt: 0,
         deduction: 0,
-        balance: c.balance,
+        balance: challanHireDue(c),
         narration: "",
         _kind: "challan" as const,
       }));

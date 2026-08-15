@@ -12,6 +12,7 @@ import {
   tbsStorageKind,
 } from "@/lib/tbs/store";
 import { partyLabel } from "@/lib/tbs/partyLabel";
+import { challanHireDue } from "@/lib/tbs/challanHire";
 
 function todayISO() {
   const d = new Date();
@@ -231,7 +232,7 @@ export async function GET() {
   let pendingHireCount = 0;
   for (const c of challans) {
     const paid = paidByChallan.get(c.challanNo) || 0;
-    const hireDue = Math.max(0, Number(c.balance || 0) - paid);
+    const hireDue = challanHireDue(c, paid);
     if (hireDue > 0.5) {
       pendingHireAmt += hireDue;
       pendingHireCount += 1;
@@ -360,7 +361,7 @@ export async function GET() {
   const onRoadSet = new Set(todayVehicles.map((v) => v.trim().toUpperCase()));
   for (const c of challans) {
     const paid = paidByChallan.get(c.challanNo) || 0;
-    const hireDue = Math.max(0, Number(c.balance || 0) - paid);
+    const hireDue = challanHireDue(c, paid);
     if (hireDue > 0.5) {
       const v = (c.vehicleNo || "").trim().toUpperCase();
       if (v) onRoadSet.add(v);
