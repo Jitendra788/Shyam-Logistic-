@@ -21,7 +21,7 @@ type Bucket = { count: number; amount: number };
 
 type Dash = {
   persistent?: boolean;
-  storage?: "sqlite" | "redis" | "local";
+  storage?: "redis" | "local";
   collectionPct?: number;
   todayWork?: {
     date: string;
@@ -714,7 +714,7 @@ export default function AdminMasterPage() {
           </label>
           <div className="tbs-cmd-chips">
             <span className="tbs-chip tbs-chip-ok">
-              DB · {(data.storage || "sqlite").toUpperCase()}
+              DB · {(data.storage || "local").toUpperCase()}
             </span>
             <span className="tbs-chip">
               Collection {data.collectionPct ?? 0}%

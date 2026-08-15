@@ -1,6 +1,5 @@
 import { requireAuth, ok } from "@/lib/tbs/api";
 import { getEnquiries } from "@/lib/store";
-import { isSqliteReady } from "@/lib/db/sqlite";
 import {
   getBills,
   getBookings,
@@ -427,7 +426,7 @@ export async function GET() {
     topRoutes,
     topParties,
     collectionPct,
-    storage: isSqliteReady() ? "sqlite" : isTbsPersistent() ? "redis" : "local",
+    storage: isTbsPersistent() ? "redis" : "local",
     months,
     vehicles: {
       total: allVehicles.size,
@@ -503,7 +502,7 @@ export async function GET() {
       topRoutes: [],
       topParties: [],
       collectionPct: 0,
-      storage: isSqliteReady() ? "sqlite" : "local",
+      storage: isTbsPersistent() ? "redis" : "local",
       months: [],
       vehicles: { total: 0, onRoad: 0, idle: 0, list: [] as string[] },
       recentBookings: [],
