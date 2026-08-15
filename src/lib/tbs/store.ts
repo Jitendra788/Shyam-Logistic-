@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { Redis } from "@upstash/redis";
+import { isLibsqlRemote, sqliteGet, sqliteKind, sqliteSet } from "@/lib/db/sqlite";
 import type {
   Bill,
   Booking,
@@ -39,9 +40,17 @@ function redisClient(): Redis | null {
   return new Redis({ url, token });
 }
 
-/** True when writes survive across deploys / cold starts (Upstash / Vercel KV). */
+/** True when every visitor sees the same saved records. */
 export function isTbsPersistent(): boolean {
-  return Boolean(redisClient());
+  if (isLibsqlRemote() || redisClient()) return true;
+  // Vercel disk is not shared. Local next-dev can use a SQLite file / JSON.
+  return !process.env.VERCEL;
+}
+
+export function tbsStorageKind(): "sqlite" | "redis" | "local" {
+  if (sqliteKind() === "sqlite") return "sqlite";
+  if (redisClient()) return "redis";
+  return "local";
 }
 
 function redisKey(file: string) {
@@ -79,9 +88,25 @@ async function writeToFs<T>(file: string, data: T): Promise<boolean> {
   }
 }
 
+function isEmptyStoreValue(value: unknown) {
+  return Array.isArray(value) && value.length === 0;
+}
+
 async function readJson<T>(file: string, fallback: T): Promise<T> {
   if (mem.has(file)) {
     return mem.get(file) as T;
+  }
+
+  const fromDisk = await readFromFs<T>(file);
+  const fromSql = await sqliteGet<T>(file);
+  if (fromSql !== undefined) {
+    if (isEmptyStoreValue(fromSql) && fromDisk && !isEmptyStoreValue(fromDisk)) {
+      mem.set(file, fromDisk);
+      await sqliteSet(file, fromDisk);
+      return fromDisk;
+    }
+    mem.set(file, fromSql);
+    return fromSql;
   }
 
   const redis = redisClient();
@@ -90,6 +115,7 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
       const val = await redis.get<T>(redisKey(file));
       if (val !== null && val !== undefined) {
         mem.set(file, val);
+        await sqliteSet(file, val);
         return val;
       }
     } catch (err) {
@@ -97,9 +123,9 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
     }
   }
 
-  const fromDisk = await readFromFs<T>(file);
   if (fromDisk !== null) {
     mem.set(file, fromDisk);
+    await sqliteSet(file, fromDisk);
     if (redis) {
       try {
         await redis.set(redisKey(file), fromDisk);
@@ -111,13 +137,14 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
   }
 
   mem.set(file, fallback);
+  await sqliteSet(file, fallback);
   if (redis) {
     try {
       await redis.set(redisKey(file), fallback);
     } catch {
       /* ignore */
     }
-  } else {
+  } else if (!process.env.VERCEL) {
     await writeToFs(file, fallback);
   }
   return fallback;
@@ -126,21 +153,24 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 async function writeJson<T>(file: string, data: T): Promise<void> {
   mem.set(file, data);
 
+  const sqlOk = await sqliteSet(file, data);
   const redis = redisClient();
+  let redisOk = false;
   if (redis) {
     try {
       await redis.set(redisKey(file), data);
-      return;
+      redisOk = true;
     } catch (err) {
       console.error("Upstash write failed", file, err);
-      throw new Error("Server data save failed (Redis). Check Upstash env vars.");
     }
   }
+
+  if (sqlOk || redisOk) return;
 
   const ok = await writeToFs(file, data);
   if (!ok) {
     throw new Error(
-      "Server cannot save data. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN on Vercel, then Redeploy.",
+      "Server cannot save shared data. On Vercel set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN (SQLite), then Redeploy.",
     );
   }
 }

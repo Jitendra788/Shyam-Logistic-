@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
     "@upstash/redis": "^1.38.2",
     "next": "16.3.0",
     "pdf-lib": "^1.17.1",

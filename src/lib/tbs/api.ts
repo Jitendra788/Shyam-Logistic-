@@ -25,7 +25,7 @@ export function failSave(err: unknown) {
   const msg =
     err instanceof Error
       ? err.message
-      : "Save failed — set UPSTASH_REDIS on Vercel";
+      : "Save failed — set TURSO_DATABASE_URL on Vercel";
   return NextResponse.json(
     { error: msg },
     {

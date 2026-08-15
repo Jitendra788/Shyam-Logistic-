@@ -9,6 +9,7 @@ import {
   getNotes,
   getParties,
   isTbsPersistent,
+  tbsStorageKind,
 } from "@/lib/tbs/store";
 import { partyLabel } from "@/lib/tbs/partyLabel";
 
@@ -426,7 +427,7 @@ export async function GET() {
     topRoutes,
     topParties,
     collectionPct,
-    storage: isTbsPersistent() ? "redis" : "local",
+    storage: tbsStorageKind(),
     months,
     vehicles: {
       total: allVehicles.size,
@@ -502,7 +503,7 @@ export async function GET() {
       topRoutes: [],
       topParties: [],
       collectionPct: 0,
-      storage: isTbsPersistent() ? "redis" : "local",
+      storage: tbsStorageKind(),
       months: [],
       vehicles: { total: 0, onRoad: 0, idle: 0, list: [] as string[] },
       recentBookings: [],

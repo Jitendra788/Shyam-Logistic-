@@ -21,7 +21,7 @@ type Bucket = { count: number; amount: number };
 
 type Dash = {
   persistent?: boolean;
-  storage?: "redis" | "local";
+  storage?: "sqlite" | "redis" | "local";
   collectionPct?: number;
   todayWork?: {
     date: string;
@@ -938,35 +938,32 @@ export default function AdminMasterPage() {
       ) : null}
 
       {data && data.storage === "local" && data.persistent === false && (
-        <details className="tbs-setup-compact">
+        <details className="tbs-setup-compact" open>
           <summary>
-            Save / Delete works in this browser until Redis is set
+            Data is only in this browser until cloud SQLite is connected
           </summary>
           <ol className="tbs-setup-steps">
             <li>
-              Add, Update, and Delete are stored in this browser (Vercel disk is
-              read-only).
+              Vercel cannot keep a SQLite file on disk. That is why bookings stay
+              in one browser today.
             </li>
             <li>
-              To share data across devices, add Redis at{" "}
-              <a
-                href="https://console.upstash.com"
-                target="_blank"
-                rel="noreferrer"
-              >
-                console.upstash.com
+              Create a free SQLite database at{" "}
+              <a href="https://turso.tech" target="_blank" rel="noreferrer">
+                turso.tech
               </a>
+              , then copy the URL and token.
             </li>
             <li>
-              Vercel → Settings → Environment Variables:{" "}
-              <code>UPSTASH_REDIS_REST_URL</code> +{" "}
-              <code>UPSTASH_REDIS_REST_TOKEN</code> (Production) → Redeploy
+              Vercel → Settings → Environment Variables (Production):{" "}
+              <code>TURSO_DATABASE_URL</code> + <code>TURSO_AUTH_TOKEN</code> →
+              Redeploy
+            </li>
+            <li>
+              After redeploy, dashboard chip should show <strong>DB · SQLITE</strong>.
+              Then every login sees the same parties, LRs, and bills.
             </li>
           </ol>
-          <p>
-            Take Excel Backup regularly — clearing browser cache can remove
-            local data.
-          </p>
         </details>
       )}
 
