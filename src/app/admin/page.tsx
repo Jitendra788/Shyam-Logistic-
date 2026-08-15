@@ -483,7 +483,6 @@ export default function AdminMasterPage() {
       ? data.months
       : last6MonthShell();
   const vehicles = data?.vehicles || { total: 0, onRoad: 0, idle: 0, list: [] };
-  const weekMax = Math.max(1, ...week.map((d) => d.bookings + (d.collected > 0 ? 1 : 0)));
   const needle = q.trim().toLowerCase();
   const recentBookings = (data?.recentBookings || []).filter((r) =>
     matchRow(r, needle),
@@ -524,6 +523,23 @@ export default function AdminMasterPage() {
     (p?.deliveredNotBilled || 0) +
     (p?.billedNotDelivered || 0) +
     (c?.lrs || 0);
+  const pipeOpen = p?.notDeliveredNotBilled || 0;
+  const pipeBill = p?.deliveredNotBilled || 0;
+  const pipeDel = p?.billedNotDelivered || 0;
+  const pipeDone = c?.lrs || 0;
+  const pipeDonePct = pipeTotal ? Math.round((pipeDone / pipeTotal) * 100) : 0;
+  const weekLr = week.reduce((s, d) => s + d.bookings, 0);
+  const weekColl = week.reduce((s, d) => s + d.collected, 0);
+  const weekBarMax = Math.max(1, ...week.map((d) => d.bookings));
+  const weekCollMax = Math.max(1, ...week.map((d) => d.collected));
+  const ageAmt =
+    (aging?.d0_15.amount || 0) +
+    (aging?.d16_30.amount || 0) +
+    (aging?.d30plus.amount || 0);
+  const ageCount =
+    (aging?.d0_15.count || 0) +
+    (aging?.d16_30.count || 0) +
+    (aging?.d30plus.count || 0);
 
   const attention: { href: string; label: string; value: string; tone: string }[] = [];
   if (p) {
@@ -828,91 +844,215 @@ export default function AdminMasterPage() {
 
       {data ? (
         <section className="tbs-adv-row" aria-label="Operations snapshot">
-          <div className="tbs-adv-card">
-            <h2>LR pipeline</h2>
-            <p>Open work vs completed</p>
-            <div className="tbs-pipe" aria-hidden={pipeTotal === 0}>
-              <span
-                className="tbs-pipe-seg warn"
-                style={{
-                  flex: Math.max(p?.notDeliveredNotBilled || 0, 0.01),
-                }}
-                title="Not delivered / not billed"
-              />
-              <span
-                className="tbs-pipe-seg amber"
-                style={{ flex: Math.max(p?.deliveredNotBilled || 0, 0.01) }}
-                title="Bill pending"
-              />
-              <span
-                className="tbs-pipe-seg navy"
-                style={{ flex: Math.max(p?.billedNotDelivered || 0, 0.01) }}
-                title="Delivery pending"
-              />
-              <span
-                className="tbs-pipe-seg ok"
-                style={{ flex: Math.max(c?.lrs || 0, 0.01) }}
-                title="Completed"
-              />
-            </div>
-            <ul className="tbs-pipe-legend">
-              <li>
-                <i className="warn" /> Open {p?.notDeliveredNotBilled || 0}
-              </li>
-              <li>
-                <i className="amber" /> Bill due {p?.deliveredNotBilled || 0}
-              </li>
-              <li>
-                <i className="navy" /> Delivery due {p?.billedNotDelivered || 0}
-              </li>
-              <li>
-                <i className="ok" /> Done {c?.lrs || 0}
-              </li>
-            </ul>
-          </div>
-
-          <div className="tbs-adv-card">
-            <h2>Last 7 days</h2>
-            <p>Bookings per day</p>
-            <div className="tbs-week">
-              {week.map((d) => (
-                <div key={d.date} className="tbs-week-col" title={`${d.date}: ${d.bookings} LR · ${inr(d.collected)} collected`}>
-                  <div className="tbs-week-bar-wrap">
-                    <div
-                      className="tbs-week-bar"
-                      style={{
-                        height: `${Math.max(8, Math.round((d.bookings / weekMax) * 72))}px`,
-                      }}
-                    />
-                  </div>
-                  <strong>{d.bookings}</strong>
-                  <span>{d.date === tw?.date ? "Today" : d.label}</span>
+          <article className="tbs-adv-card">
+            <header className="tbs-adv-head">
+              <div>
+                <h2>LR pipeline</h2>
+                <p>Open work vs completed</p>
+              </div>
+              <div className="tbs-adv-kpi">
+                <strong>{pipeDonePct}%</strong>
+                <span>done</span>
+              </div>
+            </header>
+            {pipeTotal === 0 ? (
+              <p className="tbs-adv-empty">No LRs yet — pipeline fills after the first booking.</p>
+            ) : (
+              <>
+                <div className="tbs-pipe" role="img" aria-label="LR status mix">
+                  <span
+                    className="tbs-pipe-seg warn"
+                    style={{ flex: Math.max(pipeOpen, 0) || 0 }}
+                    title={`Open ${pipeOpen}`}
+                  />
+                  <span
+                    className="tbs-pipe-seg amber"
+                    style={{ flex: Math.max(pipeBill, 0) || 0 }}
+                    title={`Bill due ${pipeBill}`}
+                  />
+                  <span
+                    className="tbs-pipe-seg navy"
+                    style={{ flex: Math.max(pipeDel, 0) || 0 }}
+                    title={`Delivery due ${pipeDel}`}
+                  />
+                  <span
+                    className="tbs-pipe-seg ok"
+                    style={{ flex: Math.max(pipeDone, 0) || 0 }}
+                    title={`Done ${pipeDone}`}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
+                <p className="tbs-adv-meta">
+                  {pipeOpen + pipeBill + pipeDel} open · {pipeDone} completed · {pipeTotal} total
+                </p>
+                <div className="tbs-pipe-grid">
+                  <Link
+                    href="/admin/reports/booking?status=not_delivered_not_billed"
+                    className="tbs-pipe-tile warn"
+                  >
+                    <span>Open</span>
+                    <strong>{pipeOpen}</strong>
+                    <small>{pipeTotal ? Math.round((pipeOpen / pipeTotal) * 100) : 0}%</small>
+                  </Link>
+                  <Link
+                    href="/admin/reports/booking?status=delivered_not_billed"
+                    className="tbs-pipe-tile amber"
+                  >
+                    <span>Bill due</span>
+                    <strong>{pipeBill}</strong>
+                    <small>{pipeTotal ? Math.round((pipeBill / pipeTotal) * 100) : 0}%</small>
+                  </Link>
+                  <Link
+                    href="/admin/reports/booking?status=billed_not_delivered"
+                    className="tbs-pipe-tile navy"
+                  >
+                    <span>Delivery due</span>
+                    <strong>{pipeDel}</strong>
+                    <small>{pipeTotal ? Math.round((pipeDel / pipeTotal) * 100) : 0}%</small>
+                  </Link>
+                  <Link href="/admin/reports/booking" className="tbs-pipe-tile ok">
+                    <span>Done</span>
+                    <strong>{pipeDone}</strong>
+                    <small>{pipeDonePct}%</small>
+                  </Link>
+                </div>
+              </>
+            )}
+          </article>
 
-          <div className="tbs-adv-card">
-            <h2>Outstanding aging</h2>
-            <p>Unpaid bills by age</p>
-            <div className="tbs-age">
-              <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell">
-                <span>0–15 days</span>
-                <strong>{inr(aging?.d0_15.amount || 0)}</strong>
-                <small>{aging?.d0_15.count || 0} bills</small>
-              </Link>
-              <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell mid">
-                <span>16–30 days</span>
-                <strong>{inr(aging?.d16_30.amount || 0)}</strong>
-                <small>{aging?.d16_30.count || 0} bills</small>
-              </Link>
-              <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell hot">
-                <span>30+ days</span>
-                <strong>{inr(aging?.d30plus.amount || 0)}</strong>
-                <small>{aging?.d30plus.count || 0} bills</small>
-              </Link>
+          <article className="tbs-adv-card">
+            <header className="tbs-adv-head">
+              <div>
+                <h2>Last 7 days</h2>
+                <p>Bookings and collection</p>
+              </div>
+              <div className="tbs-adv-kpi">
+                <strong>{weekLr}</strong>
+                <span>LR</span>
+              </div>
+            </header>
+            {weekLr === 0 && weekColl === 0 ? (
+              <p className="tbs-adv-empty">No movement this week yet.</p>
+            ) : null}
+            <div className="tbs-week" role="img" aria-label="Last 7 days bookings">
+              {week.map((d) => {
+                const isToday = d.date === tw?.date;
+                return (
+                  <div
+                    key={d.date}
+                    className={`tbs-week-col${isToday ? " today" : ""}`}
+                    title={`${d.date}: ${d.bookings} LR · ${inr(d.collected)} collected`}
+                  >
+                    <em>{d.bookings}</em>
+                    <div className="tbs-week-bar-wrap">
+                      <div
+                        className="tbs-week-bar"
+                        style={{
+                          height: `${Math.max(6, Math.round((d.bookings / weekBarMax) * 78))}px`,
+                          opacity: d.bookings ? 1 : 0.28,
+                        }}
+                      />
+                      <div
+                        className="tbs-week-bar coll"
+                        style={{
+                          height: `${d.collected ? Math.max(4, Math.round((d.collected / weekCollMax) * 78)) : 4}px`,
+                          opacity: d.collected ? 1 : 0.22,
+                        }}
+                      />
+                    </div>
+                    <span>{isToday ? "Today" : d.label}</span>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+            <div className="tbs-week-foot">
+              <span>
+                <i className="lr" /> Bookings
+              </span>
+              <span>
+                <i className="rs" /> Collection {inr(weekColl)}
+              </span>
+            </div>
+          </article>
+
+          <article className="tbs-adv-card">
+            <header className="tbs-adv-head">
+              <div>
+                <h2>Outstanding aging</h2>
+                <p>Unpaid bills by age</p>
+              </div>
+              <div className="tbs-adv-kpi">
+                <strong>{inr(ageAmt)}</strong>
+                <span>{ageCount} bills</span>
+              </div>
+            </header>
+            {ageAmt === 0 ? (
+              <p className="tbs-adv-empty">No unpaid bills — collection is clear.</p>
+            ) : (
+              <>
+                <div className="tbs-age-mix" aria-hidden>
+                  <span
+                    className="a0"
+                    style={{ flex: Math.max(aging?.d0_15.amount || 0, 0.01) }}
+                  />
+                  <span
+                    className="a1"
+                    style={{ flex: Math.max(aging?.d16_30.amount || 0, 0.01) }}
+                  />
+                  <span
+                    className="a2"
+                    style={{ flex: Math.max(aging?.d30plus.amount || 0, 0.01) }}
+                  />
+                </div>
+                <div className="tbs-age">
+                  <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell">
+                    <span>0–15 days</span>
+                    <strong>{inr(aging?.d0_15.amount || 0)}</strong>
+                    <div className="tbs-age-bar">
+                      <i
+                        style={{
+                          width: `${ageAmt ? Math.round(((aging?.d0_15.amount || 0) / ageAmt) * 100) : 0}%`,
+                        }}
+                      />
+                    </div>
+                    <small>
+                      {aging?.d0_15.count || 0} bills ·{" "}
+                      {ageAmt ? Math.round(((aging?.d0_15.amount || 0) / ageAmt) * 100) : 0}%
+                    </small>
+                  </Link>
+                  <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell mid">
+                    <span>16–30 days</span>
+                    <strong>{inr(aging?.d16_30.amount || 0)}</strong>
+                    <div className="tbs-age-bar">
+                      <i
+                        style={{
+                          width: `${ageAmt ? Math.round(((aging?.d16_30.amount || 0) / ageAmt) * 100) : 0}%`,
+                        }}
+                      />
+                    </div>
+                    <small>
+                      {aging?.d16_30.count || 0} bills ·{" "}
+                      {ageAmt ? Math.round(((aging?.d16_30.amount || 0) / ageAmt) * 100) : 0}%
+                    </small>
+                  </Link>
+                  <Link href="/admin/reports/party-outstanding/dayswise" className="tbs-age-cell hot">
+                    <span>30+ days</span>
+                    <strong>{inr(aging?.d30plus.amount || 0)}</strong>
+                    <div className="tbs-age-bar">
+                      <i
+                        style={{
+                          width: `${ageAmt ? Math.round(((aging?.d30plus.amount || 0) / ageAmt) * 100) : 0}%`,
+                        }}
+                      />
+                    </div>
+                    <small>
+                      {aging?.d30plus.count || 0} bills ·{" "}
+                      {ageAmt ? Math.round(((aging?.d30plus.amount || 0) / ageAmt) * 100) : 0}%
+                    </small>
+                  </Link>
+                </div>
+              </>
+            )}
+          </article>
         </section>
       ) : null}
 
