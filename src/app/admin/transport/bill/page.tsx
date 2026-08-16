@@ -19,9 +19,6 @@ import { needsPartyBill } from "@/lib/tbs/lrType";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
 import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
-import { needSelectAlert, openPrint } from "@/lib/tbs/print";
-import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
-import type { Bill, Booking, Party } from "@/lib/tbs/types";
 
 type Payload = {
   bills: Bill[];
