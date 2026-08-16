@@ -1,6 +1,8 @@
 "use client";
 
 import { idbClearAll, idbGet, idbSet } from "@/lib/tbs/idb";
+import { applyVehicleToLrs } from "@/lib/tbs/legacySkdb";
+import { nextAvailableCode, nextCode, unusedOrNext } from "@/lib/tbs/nextCode";
 
 const COLLECTIONS = [
   "bookings",
@@ -84,9 +86,18 @@ function pullCollections(payload: Record<string, unknown>) {
 async function saveCollections(found: Partial<Record<Col, unknown>>, overwrite: boolean) {
   for (const name of COLLECTIONS) {
     if (found[name] == null) continue;
-    if (!overwrite) {
-      const existing = await getCol(name);
-      if (existing != null) continue;
+    const existing = await getCol(name);
+    if (!overwrite && existing != null) continue;
+    const incoming = found[name];
+    // Never wipe a filled local collection with an empty API payload
+    // (LHP GET can return challans: [] while Part Challan still has rows in IDB).
+    if (
+      Array.isArray(incoming) &&
+      incoming.length === 0 &&
+      Array.isArray(existing) &&
+      existing.length > 0
+    ) {
+      continue;
     }
     await setCol(name, found[name]);
   }
@@ -96,7 +107,32 @@ async function overlayPayload(payload: Record<string, unknown>) {
   const next = { ...payload };
   for (const name of COLLECTIONS) {
     const local = await getCol(name);
-    if (local != null) next[name] = local;
+    if (local == null) continue;
+    const cur = next[name];
+    const serverEmpty = Array.isArray(cur) && cur.length === 0;
+    const localHas =
+      (Array.isArray(local) && local.length > 0) ||
+      (!Array.isArray(local) && local && typeof local === "object");
+    // Keep server seed when IndexedDB has an empty array (old skdb import).
+    if (!localHas) continue;
+    if (cur == null || serverEmpty || localHas) {
+      next[name] = local;
+    }
+  }
+  if (Array.isArray(next.challans)) {
+    next.nextChallan = nextAvailableCode(next.challans as Record<string, unknown>[], "challanNo", 1);
+  }
+  if (Array.isArray(next.bookings)) {
+    next.nextLr = nextCode(next.bookings as Record<string, unknown>[], "lrNo", 1);
+  }
+  if (Array.isArray(next.bills)) {
+    next.nextBill = nextCode(next.bills as Record<string, unknown>[], "billNo", 1);
+  }
+  if (Array.isArray(next.receipts)) {
+    next.nextMr = nextCode(next.receipts as Record<string, unknown>[], "mrNo", 1);
+  }
+  if (Array.isArray(next.parties)) {
+    next.nextCode = nextCode(next.parties as Record<string, unknown>[], "partyCode", 1);
   }
   return next;
 }
@@ -104,6 +140,15 @@ async function overlayPayload(payload: Record<string, unknown>) {
 function withId(body: Record<string, unknown>, prefix: string) {
   if (!body.id) body.id = `${prefix}_${Date.now().toString(36)}`;
   return body;
+}
+
+async function syncLorryLocal(row: { lrIds?: string[]; vehicleNo?: string }) {
+  const lrIds = row.lrIds || [];
+  const veh = String(row.vehicleNo || "");
+  if (!lrIds.length || !veh.trim()) return;
+  const bookings = ((await getCol("bookings")) as { id: string; vehicleNo?: string }[]) || [];
+  const next = applyVehicleToLrs(bookings, lrIds, veh);
+  if (next.changed) await setCol("bookings", next.bookings);
 }
 
 async function applyMutation(url: string, method: string, init?: RequestInit) {
@@ -135,14 +180,15 @@ async function applyMutation(url: string, method: string, init?: RequestInit) {
   if (method === "PUT") {
     const row = body as { id?: string };
     if (!row.id) return { ok: false };
-    await setCol(
-      arrayKey,
-      current.map((item) =>
-        (item as { id?: string }).id === row.id
-          ? { ...(item as object), ...row }
-          : item,
-      ),
+    const nextRows = current.map((item) =>
+      (item as { id?: string }).id === row.id
+        ? { ...(item as object), ...row }
+        : item,
     );
+    await setCol(arrayKey, nextRows);
+    if (arrayKey === "challans") {
+      await syncLorryLocal(row as { lrIds?: string[]; vehicleNo?: string });
+    }
     return { ok: true, row };
   }
 
@@ -175,14 +221,33 @@ async function applyMutation(url: string, method: string, init?: RequestInit) {
       "items" in body &&
       Array.isArray((body as { items: unknown[] }).items)
     ) {
-      const items = (body as { items: Record<string, unknown>[] }).items.map(
-        (item) => withId({ ...item }, prefix),
+      const rawItems = (body as { items: Record<string, unknown>[] }).items;
+      let nextMr = Number(
+        nextAvailableCode(current as Record<string, unknown>[], "mrNo", 1),
       );
+      const items = rawItems.map((item) => {
+        const row = withId({ ...item }, prefix);
+        if (arrayKey === "receipts" && !row.mrNo) {
+          row.mrNo = String(nextMr++);
+        }
+        return row;
+      });
       await setCol(arrayKey, [...items, ...current]);
       return { ok: true, items };
     }
     const row = withId({ ...(body as Record<string, unknown>) }, prefix);
+    if (arrayKey === "challans") {
+      row.challanNo = unusedOrNext(
+        current as Record<string, unknown>[],
+        "challanNo",
+        String(row.challanNo || ""),
+        1,
+      );
+    }
     await setCol(arrayKey, [row, ...current]);
+    if (arrayKey === "challans") {
+      await syncLorryLocal(row as { lrIds?: string[]; vehicleNo?: string });
+    }
     return { ok: true, row };
   }
 
@@ -218,7 +283,7 @@ async function tbsHandle(
       const data = (await res.clone().json()) as Record<string, unknown>;
       if (isCollectionGet) {
         await saveCollections(pullCollections(data), persistent);
-        if (!persistent) return jsonResponse(await overlayPayload(data));
+        return jsonResponse(await overlayPayload(data));
       }
       return res;
     }
@@ -266,7 +331,7 @@ async function tbsHandle(
             particulars: [],
             partyTypes: ["Consigner/Consignee", "Broker"],
             gstPaidBy: ["Consignor", "Consignee", "Broker", "Company", "Transporter"],
-            lrTypes: ["Paid", "ToPay", "To Pay", "TBB", "Cancel"],
+            lrTypes: ["Paid", "ToPay", "TBB", "Cancel"],
             gstLabels: ["GST @ 0%", "GST @ 5%", "GST @ 12%", "GST @ 18%"],
           });
         } else {

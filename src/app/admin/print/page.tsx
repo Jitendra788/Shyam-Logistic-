@@ -33,6 +33,7 @@ import {
   mrWhatsAppText,
   shareOnWhatsApp,
 } from "@/lib/tbs/whatsapp";
+import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
 import "../doc-print.css";
 import "../tbs.css";
 
@@ -304,6 +305,10 @@ function PrintInner() {
     type === "booking" && id
       ? data.bookings?.find((x) => x.id === id || x.lrNo === id)
       : undefined;
+  const bill =
+    type === "bill" && id
+      ? data.bills?.find((x) => x.id === id || x.billNo === id)
+      : undefined;
 
   useEffect(() => {
     if (auto && content && !loading) {
@@ -343,6 +348,20 @@ function PrintInner() {
           >
             WhatsApp
           </button>
+        ) : bill ? (
+          <button
+            type="button"
+            className="tbs-btn tbs-btn-wa"
+            onClick={() =>
+              void shareBillPdfOnWhatsApp({
+                bill,
+                bookings: data.bookings || [],
+                parties: data.parties || [],
+              })
+            }
+          >
+            WhatsApp
+          </button>
         ) : shareText ? (
           <button
             type="button"
@@ -354,7 +373,10 @@ function PrintInner() {
         ) : null}
         <span style={{ fontSize: 12 }}>
           {type}
-          {id ? ` #${id}` : ""} — {isBookingPdf ? "Original PDF form" : "Print / Save as PDF / WhatsApp"}
+          {id ? ` #${id}` : ""} —{" "}
+          {isBookingPdf || bill
+            ? "PDF / WhatsApp"
+            : "Print / Save as PDF / WhatsApp"}
         </span>
       </div>
       {loading ? (

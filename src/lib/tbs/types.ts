@@ -20,6 +20,10 @@ export type Booking = {
   to: string;
   vehicleNo: string;
   deliveryAt: string;
+  /** lrdetails.expdel — days or a date string */
+  expectedDelivery?: string;
+  /** lrdetails.paymode — NA / Credit */
+  payMode?: string;
   billingParty: string;
   consignor: string;
   consignee: string;

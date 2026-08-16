@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FormWindow,
   ManualAmountInput,
@@ -34,6 +35,7 @@ type Row = {
 };
 
 export default function MoneyReceiptNewPage() {
+  const router = useRouter();
   const { data, loading, error, reload } = useTbsApi<Payload>("/api/tbs/money-receipts");
   const [txDate, setTxDate] = useState(todayISO());
   const [party, setParty] = useState("");
@@ -114,6 +116,7 @@ export default function MoneyReceiptNewPage() {
     setMsg("Added successfully");
     setRows(null);
     await reload();
+    router.push("/admin/transport/money-receipt/edit?saved=1");
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;

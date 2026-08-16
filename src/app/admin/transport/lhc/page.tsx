@@ -6,7 +6,6 @@ import {
   DataGrid,
   FormWindow,
   ManualAmountInput,
-  PrintCellButton,
   StatusBanner,
   fmtDate,
   readApiError,
@@ -16,6 +15,9 @@ import {
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
 import { challanHireBalance } from "@/lib/tbs/challanHire";
+import { lrFreeForChallan, oldDash } from "@/lib/tbs/legacySkdb";
+import { nextAvailableCode } from "@/lib/tbs/nextCode";
+import { normalizeLrType } from "@/lib/tbs/lrType";
 import type { Booking, Challan, Masters } from "@/lib/tbs/types";
 
 type Payload = {
@@ -60,16 +62,43 @@ export default function LhcPage() {
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const current = form || blank(data?.nextChallan || "1");
+  const [reuseNo, setReuseNo] = useState("");
 
-  const lrRows = data?.bookings || [];
+  const nextNo = useMemo(() => {
+    const auto = nextAvailableCode(
+      (data?.challans || []) as unknown as Record<string, unknown>[],
+      "challanNo",
+      1,
+    );
+    return reuseNo || auto;
+  }, [data, reuseNo]);
+  const current = form || blank(nextNo);
+
+  const lrRows = useMemo(() => {
+    const list = data?.bookings || [];
+    const others = data?.challans || [];
+    return list.filter(
+      (b) =>
+        normalizeLrType(b.lrType) !== "Cancel" &&
+        lrFreeForChallan(b.id, others, current.id),
+    );
+  }, [data, current.id]);
 
   const sideList = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = data?.challans || [];
+    const list = [...(data?.challans || [])].sort(
+      (a, b) => Number(a.challanNo) - Number(b.challanNo),
+    );
     if (!q) return list;
-    return list.filter((c) => c.challanNo.includes(q));
+    return list.filter((c) => String(c.challanNo).toLowerCase().includes(q));
   }, [data, search]);
+
+  function resetEntry() {
+    setForm(null);
+    setSelectedLrs([]);
+    setSearch("");
+    setReuseNo("");
+  }
 
   function patch(partial: Partial<Challan>) {
     const next = { ...current, ...partial };
@@ -77,35 +106,14 @@ export default function LhcPage() {
     setForm({ ...next, balance });
   }
 
-  function lrFreightSum(ids: string[]) {
-    return ids.reduce((s, id) => {
-      const b = data?.bookings.find((x) => x.id === id);
-      return s + Number(b?.freight || 0);
-    }, 0);
-  }
-
   function toggleLr(id: string) {
-    const next = selectedLrs.includes(id)
-      ? selectedLrs.filter((x) => x !== id)
-      : [...selectedLrs, id];
-    setSelectedLrs(next);
-    const sum = lrFreightSum(next);
-    patch({ freight: sum });
+    setSelectedLrs((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
   }
 
   function pickLr(row: Booking) {
-    const fromStation = row.from || row.bookingFrom || current.fromStation;
-    const toStation = row.to || current.toStation;
-    const nextIds = selectedLrs.includes(row.id)
-      ? selectedLrs
-      : [...selectedLrs, row.id];
-    setSelectedLrs(nextIds);
-    patch({
-      vehicleNo: row.vehicleNo || current.vehicleNo,
-      fromStation,
-      toStation,
-      freight: lrFreightSum(nextIds),
-    });
+    setSelectedLrs((prev) => (prev.includes(row.id) ? prev : [...prev, row.id]));
   }
 
   function loadChallan(c: Challan) {
@@ -116,10 +124,10 @@ export default function LhcPage() {
   async function addBroker() {
     const name = current.brokerOwner.trim();
     if (!name) {
-      setMsg("Type Broker first");
+      setMsg("Type Broker name first");
       return;
     }
-    patch({ brokerOwner: name, owner: name });
+    patch({ brokerOwner: name });
     const res = await fetch("/api/tbs/masters", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -138,6 +146,14 @@ export default function LhcPage() {
       await update();
       return;
     }
+    if (!current.fromStation.trim()) {
+      setMsg("Please Select From Station");
+      return;
+    }
+    if (!current.toStation.trim()) {
+      setMsg("Please Select To Station");
+      return;
+    }
     setSaving(true);
     setMsg("");
     const res = await fetch("/api/tbs/challans", {
@@ -151,13 +167,20 @@ export default function LhcPage() {
       return;
     }
     setMsg("Added successfully");
-    setForm(null);
-    setSelectedLrs([]);
+    resetEntry();
     await reload();
   }
 
   async function update() {
     if (!current.id) return;
+    if (!current.fromStation.trim()) {
+      setMsg("Please Select From Station");
+      return;
+    }
+    if (!current.toStation.trim()) {
+      setMsg("Please Select To Station");
+      return;
+    }
     setSaving(true);
     const res = await fetch("/api/tbs/challans", {
       method: "PUT",
@@ -173,17 +196,17 @@ export default function LhcPage() {
     await reload();
   }
 
-  async function remove() {
-    if (!current.id) {
-      setMsg("Select a record first, then Delete");
-      return;
-    }
-    if (!confirm("Delete challan?")) return;
+  async function removeById(id: string) {
+    const deletedNo =
+      (data?.challans || []).find((c) => c.id === id)?.challanNo || "";
+    if (!confirm(`Delete challan ${deletedNo || ""}?`.trim())) return;
     setSaving(true);
     try {
-      await apiDelete(`/api/tbs/challans?id=${current.id}`);
+      await apiDelete(`/api/tbs/challans?id=${id}`);
       setForm(null);
       setSelectedLrs([]);
+      setSearch("");
+      setReuseNo(deletedNo);
       setMsg("Deleted successfully");
       await reload();
     } catch (e) {
@@ -191,6 +214,14 @@ export default function LhcPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function remove() {
+    if (!current.id) {
+      setMsg("Select a record first, then Delete");
+      return;
+    }
+    await removeById(current.id);
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;
@@ -219,12 +250,12 @@ export default function LhcPage() {
               </datalist>
             </div>
             <div className="tbs-field" style={{ flex: 1 }}>
-              <label>Broker</label>
+              <label>Broker name</label>
               <input
                 className="tbs-input w-full"
                 value={current.brokerOwner}
                 onChange={(e) =>
-                  patch({ brokerOwner: e.target.value, owner: e.target.value })
+                  patch({ brokerOwner: e.target.value })
                 }
                 placeholder="Type or select…"
                 list="lhc-broker-suggestions"
@@ -252,7 +283,7 @@ export default function LhcPage() {
               <input
                 className="tbs-input w-full"
                 value={current.brokerPan}
-                onChange={(e) => patch({ brokerPan: e.target.value, panNo: e.target.value })}
+                onChange={(e) => patch({ brokerPan: e.target.value })}
               />
             </div>
           </div>
@@ -290,7 +321,8 @@ export default function LhcPage() {
               <input
                 className="tbs-input w-sm"
                 value={current.challanNo}
-                onChange={(e) => patch({ challanNo: e.target.value })}
+                readOnly
+                title="Auto number — next after last saved challan"
               />
             </div>
           </div>
@@ -422,6 +454,7 @@ export default function LhcPage() {
             columns={[
               { key: "select", label: "Select" },
               { key: "sr", label: "Sr No" },
+              { key: "challanNo", label: "Challan No" },
               { key: "loadFor", label: "Load For" },
               { key: "lrNo", label: "LR No" },
               { key: "lrDate", label: "LR Date" },
@@ -445,6 +478,10 @@ export default function LhcPage() {
                   />
                 );
               if (key === "sr") return i + 1;
+              if (key === "challanNo")
+                return selectedLrs.includes(row.id)
+                  ? current.challanNo || "-"
+                  : oldDash("");
               if (key === "loadFor") return row.bookingFrom;
               if (key === "lrDate") return fmtDate(row.lrDate);
               if (key === "weight") return row.chargedWt || row.actualWt;
@@ -455,8 +492,7 @@ export default function LhcPage() {
           <ActionButtons
             onSave={save}
             onNew={() => {
-              setForm(null);
-              setSelectedLrs([]);
+              resetEntry();
               setMsg("");
             }}
             onUpdate={update}
@@ -473,12 +509,13 @@ export default function LhcPage() {
           />
         </div>
 
-        <aside className="tbs-side-list">
+        <aside className="tbs-side-list tbs-side-list-challan">
           <div className="head">
             <span>🔍</span>
+            <span>Enter Challan No For Search</span>
             <input
               className="tbs-input w-full"
-              placeholder="Enter Challan N…"
+              placeholder="Challan No"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -488,25 +525,50 @@ export default function LhcPage() {
               <thead>
                 <tr>
                   <th>Sr No</th>
-                  <th>Challan</th>
-                  <th>Print</th>
+                  <th>Challan No</th>
+                  <th>Date</th>
+                  <th>Veh No</th>
+                  <th>Broker Name</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {sideList.map((c, i) => (
-                  <tr
-                    key={c.id}
-                    className={current.id === c.id ? "selected" : ""}
-                    onClick={() => loadChallan(c)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{i + 1}</td>
-                    <td>{c.challanNo}</td>
-                    <td>
-                      <PrintCellButton onClick={() => openPrint("challan", c.id)} />
+                {sideList.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: "center", padding: 20, color: "#666" }}>
+                      {search ? "No challan matches search" : "No challans yet"}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  sideList.map((c) => (
+                    <tr
+                      key={c.id}
+                      className={current.id === c.id ? "selected" : ""}
+                      onClick={() => loadChallan(c)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td>{c.challanNo}</td>
+                      <td>{c.challanNo}</td>
+                      <td>{fmtDate(c.challanDate)}</td>
+                      <td>{c.vehicleNo}</td>
+                      <td>{c.brokerOwner}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="tbs-btn"
+                          style={{ height: 24, minWidth: 58, padding: "0 8px" }}
+                          disabled={saving}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void removeById(c.id);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

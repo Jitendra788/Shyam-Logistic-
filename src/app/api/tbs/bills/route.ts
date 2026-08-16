@@ -8,6 +8,11 @@ import {
   uid,
 } from "@/lib/tbs/store";
 import type { Bill } from "@/lib/tbs/types";
+import { needsPartyBill } from "@/lib/tbs/lrType";
+
+function blockedBillLrs(bookings: Awaited<ReturnType<typeof getBookings>>, lrIds: string[]) {
+  return bookings.filter((b) => lrIds.includes(b.id) && !needsPartyBill(b.lrType));
+}
 
 export async function GET() {
   const denied = await requireAuth();
@@ -34,7 +39,14 @@ export async function POST(req: Request) {
   if (denied) return denied;
   try {
     const body = (await req.json()) as Partial<Bill>;
-    const bills = await getBills();
+    const lrIds = body.lrIds || [];
+    const [bills, bookings] = await Promise.all([getBills(), getBookings()]);
+    const blocked = blockedBillLrs(bookings, lrIds);
+    if (blocked.length) {
+      return bad(
+        `Paid / Cancel LRs cannot be billed (LR ${blocked.map((b) => b.lrNo).join(", ")}). Use TBB or ToPay.`,
+      );
+    }
     const bill: Bill = {
       id: uid("bill"),
       billNo: body.billNo || nextCode(bills, "billNo", 1),
@@ -44,7 +56,7 @@ export async function POST(req: Request) {
       remark: body.remark || "",
       submissionDate:
         body.submissionDate || new Date().toISOString().slice(0, 10),
-      lrIds: body.lrIds || [],
+      lrIds,
     };
     bills.unshift(bill);
     await saveBills(bills);
@@ -60,7 +72,13 @@ export async function PUT(req: Request) {
   try {
     const body = (await req.json()) as Bill;
     if (!body.id) return bad("id required");
-    const bills = await getBills();
+    const [bills, bookings] = await Promise.all([getBills(), getBookings()]);
+    const blocked = blockedBillLrs(bookings, body.lrIds || []);
+    if (blocked.length) {
+      return bad(
+        `Paid / Cancel LRs cannot be billed (LR ${blocked.map((b) => b.lrNo).join(", ")}). Use TBB or ToPay.`,
+      );
+    }
     const idx = bills.findIndex((b) => b.id === body.id);
     if (idx < 0) return bad("Not found", 404);
     bills[idx] = { ...bills[idx], ...body };

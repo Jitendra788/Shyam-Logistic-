@@ -3,13 +3,21 @@ import {
   getBookings,
   getChallans,
   getMasters,
-  nextCode,
+  saveBookings,
   saveChallans,
   saveMasters,
   uid,
 } from "@/lib/tbs/store";
 import type { Challan } from "@/lib/tbs/types";
 import { challanHireBalance } from "@/lib/tbs/challanHire";
+import { applyVehicleToLrs } from "@/lib/tbs/legacySkdb";
+import { nextAvailableCode, unusedOrNext } from "@/lib/tbs/nextCode";
+
+async function syncLorryNo(lrIds: string[] | undefined, vehicleNo: string) {
+  const bookings = await getBookings();
+  const next = applyVehicleToLrs(bookings, lrIds || [], vehicleNo);
+  if (next.changed) await saveBookings(next.bookings);
+}
 
 async function rememberBroker(brokerOwner: string) {
   const name = brokerOwner.trim();
@@ -65,7 +73,7 @@ export async function GET() {
       })),
       bookings,
       masters,
-      nextChallan: nextCode(challans, "challanNo", 1),
+      nextChallan: nextAvailableCode(challans, "challanNo", 1),
     });
   } catch (e) {
     return failSave(e);
@@ -85,7 +93,7 @@ export async function POST(req: Request) {
     const fuel = Number(body.fuel) || 0;
     const challan: Challan = {
       id: uid("c"),
-      challanNo: body.challanNo || nextCode(challans, "challanNo", 1),
+      challanNo: unusedOrNext(challans, "challanNo", body.challanNo, 1),
       challanDate: body.challanDate || new Date().toISOString().slice(0, 10),
       vehicleNo: (body.vehicleNo || "").trim().toUpperCase(),
       brokerOwner: body.brokerOwner || "",
@@ -109,6 +117,7 @@ export async function POST(req: Request) {
     };
     challans.unshift(challan);
     await saveChallans(challans);
+    await syncLorryNo(challan.lrIds, challan.vehicleNo);
     await rememberVehicle(challan.vehicleNo);
     await rememberBroker(challan.brokerOwner);
     await rememberStation(challan.fromStation, challan.toStation);
@@ -139,6 +148,7 @@ export async function PUT(req: Request) {
       balance: challanHireBalance({ freight, advance, transfer, cash, fuel }),
     };
     await saveChallans(challans);
+    await syncLorryNo(challans[idx].lrIds, challans[idx].vehicleNo);
     await rememberVehicle(challans[idx].vehicleNo);
     await rememberBroker(challans[idx].brokerOwner);
     await rememberStation(challans[idx].fromStation, challans[idx].toStation);

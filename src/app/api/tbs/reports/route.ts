@@ -4,10 +4,11 @@ import {
   getBills,
   getBookings,
   getChallans,
-  getLhpPayments,
   getMoneyReceipts,
+  getNotes,
   getParties,
 } from "@/lib/tbs/store";
+import { lrCountsAsBilled, normalizeLrType } from "@/lib/tbs/lrType";
 
 export async function GET(req: Request) {
   const denied = await requireAuth();
@@ -19,13 +20,13 @@ export async function GET(req: Request) {
   const to = searchParams.get("to") || "";
   const party = searchParams.get("party") || "";
 
-  const [parties, bookings, bills, receipts, challans, lhp] = await Promise.all([
+  const [parties, bookings, bills, receipts, challans, notes] = await Promise.all([
     getParties(),
     getBookings(),
     getBills(),
     getMoneyReceipts(),
     getChallans(),
-    getLhpPayments(),
+    getNotes(),
   ]);
 
   const inRange = (date: string) => {
@@ -54,7 +55,7 @@ export async function GET(req: Request) {
     const statusFilter = searchParams.get("status") || "";
 
     const mapped = rows.map((b, i) => {
-      const billed = billByLr.has(b.id);
+      const billed = lrCountsAsBilled(b.lrType, billByLr.has(b.id));
       const delivered = Boolean(b.delivered);
       let status: "not_delivered_not_billed" | "billed_not_delivered" | "delivered_not_billed" | "delivered_billed";
       if (!delivered && !billed) status = "not_delivered_not_billed";
@@ -74,7 +75,13 @@ export async function GET(req: Request) {
         freight: b.freight,
         total: b.grandTotal || b.total,
         lrType: b.lrType,
-        billNo: billByLr.get(b.id) || "",
+        billNo:
+          billByLr.get(b.id) ||
+          (normalizeLrType(b.lrType) === "Paid"
+            ? "PAID"
+            : normalizeLrType(b.lrType) === "Cancel"
+              ? "CANCEL"
+              : ""),
         challanNo: challanByLr.get(b.id) || "",
         delivered,
         billed,
@@ -223,6 +230,18 @@ export async function GET(req: Request) {
     const rows = billRows.map((r, i) => ({ sr: i + 1, ...r }));
 
     if (kind === "outstanding") {
+      const creditBy = new Map<string, number>();
+      const debitBy = new Map<string, number>();
+      for (const n of notes) {
+        const name = n.partyName || "";
+        if (!name) continue;
+        if (n.type === "credit") {
+          creditBy.set(name, (creditBy.get(name) || 0) + Number(n.amount || 0));
+        }
+        if (n.type === "debit") {
+          debitBy.set(name, (debitBy.get(name) || 0) + Number(n.amount || 0));
+        }
+      }
       const byParty = new Map<
         string,
         { party: string; billAmt: number; paid: number; outstanding: number; bills: number }
@@ -240,6 +259,28 @@ export async function GET(req: Request) {
         cur.outstanding += r.outstanding;
         cur.bills += 1;
         byParty.set(r.party, cur);
+      }
+      for (const [name, amt] of creditBy) {
+        const cur = byParty.get(name) || {
+          party: name,
+          billAmt: 0,
+          paid: 0,
+          outstanding: 0,
+          bills: 0,
+        };
+        cur.outstanding = Math.max(0, cur.outstanding - amt);
+        byParty.set(name, cur);
+      }
+      for (const [name, amt] of debitBy) {
+        const cur = byParty.get(name) || {
+          party: name,
+          billAmt: 0,
+          paid: 0,
+          outstanding: 0,
+          bills: 0,
+        };
+        cur.outstanding += amt;
+        byParty.set(name, cur);
       }
       const partyRows = [...byParty.values()]
         .sort((a, b) => b.outstanding - a.outstanding)
@@ -292,7 +333,18 @@ export async function GET(req: Request) {
         credit: Number(r.paidAmt) + Number(r.deduction),
         narr: r.narration || `Against Bill ${r.billNo}`,
       }));
-    const lines = [...billRows, ...mrRows].sort((a, b) => a.date.localeCompare(b.date));
+    const noteRows = notes
+      .filter((n) => n.partyName === name && inRange(n.date) && (n.type === "debit" || n.type === "credit"))
+      .map((n) => ({
+        id: n.id,
+        date: n.date,
+        docNo: n.voucherNo,
+        type: n.type === "debit" ? "Debit Note" : "Credit Note",
+        debit: n.type === "debit" ? Number(n.amount || 0) : 0,
+        credit: n.type === "credit" ? Number(n.amount || 0) : 0,
+        narr: n.narration || "",
+      }));
+    const lines = [...billRows, ...mrRows, ...noteRows].sort((a, b) => a.date.localeCompare(b.date));
     let bal = 0;
     const rows = lines.map((l, i) => {
       bal += l.debit - l.credit;
@@ -388,31 +440,81 @@ export async function GET(req: Request) {
   }
 
   if (kind === "profit") {
-    const bookingFreight = bookings
-      .filter((b) => inRange(b.lrDate))
-      .reduce((s, b) => s + Number(b.grandTotal || b.total || b.freight || 0), 0);
-    const billAmt = bills
-      .filter((b) => inRange(b.billDate))
-      .reduce((s, b) => s + Number(b.totalAmount || 0), 0);
-    const hirePaid = lhp
-      .filter((p) => inRange(p.transactionDate))
-      .reduce((s, p) => s + Number(p.paidAmt || 0) + Number(p.deduction || 0), 0);
-    const challanHire = challans
-      .filter((c) => inRange(c.challanDate))
-      .reduce((s, c) => s + Number(c.freight || 0), 0);
-    const income = billAmt || bookingFreight;
-    const expense = hirePaid || challanHire;
+    const bookingById = new Map(bookings.map((b) => [b.id, b]));
+    const usedBookingIds = new Set<string>();
+    const vehKey = (v: string) => String(v || "").replace(/\s+/g, "").toUpperCase();
+    const bookingAmtOf = (b: (typeof bookings)[number]) =>
+      Number(b.grandTotal || b.total || b.freight || 0);
+    const marginOf = (difference: number, bookingAmt: number) =>
+      bookingAmt > 0 ? Math.round((difference / bookingAmt) * 10000) / 100 : 0;
+
+    const rows: {
+      id: string;
+      vehNo: string;
+      date: string;
+      freight: number;
+      bookingAmt: number;
+      difference: number;
+      marginPct: number;
+    }[] = [];
+
+    for (const c of challans.filter((x) => inRange(x.challanDate))) {
+      let linked = (c.lrIds || [])
+        .map((id) => bookingById.get(id))
+        .filter((b): b is NonNullable<typeof b> => Boolean(b));
+      if (linked.length === 0) {
+        const key = vehKey(c.vehicleNo);
+        linked = bookings.filter(
+          (b) =>
+            !usedBookingIds.has(b.id) &&
+            key &&
+            vehKey(b.vehicleNo) === key &&
+            b.lrDate === c.challanDate,
+        );
+      }
+      for (const b of linked) usedBookingIds.add(b.id);
+
+      const freight = Number(c.freight || 0);
+      const bookingAmt = linked.reduce((s, b) => s + bookingAmtOf(b), 0);
+      const difference = bookingAmt - freight;
+      rows.push({
+        id: c.id,
+        vehNo: c.vehicleNo || linked[0]?.vehicleNo || "",
+        date: c.challanDate,
+        freight,
+        bookingAmt,
+        difference,
+        marginPct: marginOf(difference, bookingAmt),
+      });
+    }
+
+    for (const b of bookings) {
+      if (!inRange(b.lrDate) || usedBookingIds.has(b.id)) continue;
+      const freight = 0;
+      const bookingAmt = bookingAmtOf(b);
+      const difference = bookingAmt - freight;
+      rows.push({
+        id: b.id,
+        vehNo: b.vehicleNo || "",
+        date: b.lrDate,
+        freight,
+        bookingAmt,
+        difference,
+        marginPct: marginOf(difference, bookingAmt),
+      });
+    }
+
+    rows.sort((a, b) => a.date.localeCompare(b.date) || a.vehNo.localeCompare(b.vehNo));
+    const numbered = rows.map((r, i) => ({ sr: i + 1, ...r }));
+
     return ok({
       kind,
-      parties: parties.map((p) => p.partyName),
-      rows: [
-        { label: "Booking / Freight Income", amount: bookingFreight },
-        { label: "Bill Amount (Party)", amount: billAmt },
-        { label: "Lorry Hire (Challan Freight)", amount: challanHire },
-        { label: "Lorry Hire Payments (LHP)", amount: hirePaid },
-        { label: "Gross Profit (Income - Hire)", amount: income - expense },
-      ],
-      totals: { income, expense, profit: income - expense },
+      rows: numbered,
+      totals: {
+        freight: numbered.reduce((s, r) => s + r.freight, 0),
+        bookingAmt: numbered.reduce((s, r) => s + r.bookingAmt, 0),
+        difference: numbered.reduce((s, r) => s + r.difference, 0),
+      },
     });
   }
 

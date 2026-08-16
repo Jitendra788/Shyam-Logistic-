@@ -11,6 +11,7 @@ import {
   uid,
 } from "@/lib/tbs/store";
 import type { Booking } from "@/lib/tbs/types";
+import { normalizeLrType } from "@/lib/tbs/lrType";
 
 async function rememberVehicle(vehicleNo: string) {
   const v = vehicleNo.trim().toUpperCase();
@@ -147,7 +148,9 @@ export async function POST(req: Request) {
       from: body.from || "",
       to: body.to || "",
       vehicleNo: (body.vehicleNo || "").trim().toUpperCase(),
-      deliveryAt: body.deliveryAt || "",
+      deliveryAt: body.deliveryAt || "DOOR",
+      expectedDelivery: body.expectedDelivery || "",
+      payMode: body.payMode || "",
       billingParty: body.billingParty || "",
       consignor: body.consignor || "",
       consignee: body.consignee || "",
@@ -166,7 +169,7 @@ export async function POST(req: Request) {
       gstPaidBy: body.gstPaidBy || "",
       ewayBillNo: body.ewayBillNo || "",
       validDate: body.validDate || new Date().toISOString().slice(0, 10),
-      lrType: body.lrType || "",
+      lrType: normalizeLrType(body.lrType || "") || body.lrType || "",
       valueRs: Number(body.valueRs) || 0,
       delivered: Boolean(body.delivered),
     };
@@ -207,6 +210,7 @@ export async function PUT(req: Request) {
       gstAmt,
       gstLabel: body.gstLabel || (idx >= 0 ? bookings[idx].gstLabel : "") || "GST @ 0%",
       grandTotal: t.total + gstAmt,
+      lrType: normalizeLrType(body.lrType || "") || body.lrType || "",
     };
     if (idx < 0) bookings.unshift(merged);
     else bookings[idx] = merged;

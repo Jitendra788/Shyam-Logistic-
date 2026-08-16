@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ActionButtons,
   DataGrid,
@@ -19,10 +20,18 @@ import type { MoneyReceipt } from "@/lib/tbs/types";
 type Payload = { receipts: MoneyReceipt[] };
 
 export default function MoneyReceiptEditPage() {
+  const searchParams = useSearchParams();
+  const justSaved = searchParams.get("saved") === "1";
   const { data, loading, error, reload } = useTbsApi<Payload>("/api/tbs/money-receipts");
   const [selected, setSelected] = useState<MoneyReceipt | null>(null);
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!justSaved || !data?.receipts?.length) return;
+    setSelected(data.receipts[0]);
+    setMsg("Saved — receipt is in Edit Money Receipt");
+  }, [justSaved, data]);
 
   async function update() {
     if (!selected) return;

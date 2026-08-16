@@ -14,6 +14,8 @@ import {
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
+import { oldDash } from "@/lib/tbs/legacySkdb";
+import { LR_TYPES, normalizeLrType } from "@/lib/tbs/lrType";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
 import type { Bill, Booking, Challan, Masters, Party } from "@/lib/tbs/types";
 
@@ -37,7 +39,9 @@ function blank(nextLr: string): Booking {
     from: "Sangli",
     to: "",
     vehicleNo: "",
-    deliveryAt: "",
+    deliveryAt: "DOOR",
+    expectedDelivery: "",
+    payMode: "Credit",
     billingParty: "",
     consignor: "",
     consignee: "",
@@ -386,6 +390,21 @@ export default function BookingPage() {
                 className="tbs-input w-md"
                 value={current.deliveryAt}
                 onChange={(e) => patch({ deliveryAt: e.target.value })}
+                placeholder="DOOR"
+                list="booking-delivery-at"
+              />
+              <datalist id="booking-delivery-at">
+                <option value="DOOR" />
+                <option value="GODOWN" />
+              </datalist>
+            </div>
+            <div className="tbs-field">
+              <label>Exp. Del.</label>
+              <input
+                className="tbs-input w-sm"
+                value={current.expectedDelivery || ""}
+                onChange={(e) => patch({ expectedDelivery: e.target.value })}
+                placeholder="Days / date"
               />
             </div>
           </div>
@@ -615,31 +634,25 @@ export default function BookingPage() {
           <label className="total-label">Grand Total</label>
           <input className="tbs-input" value={current.grandTotal.toFixed(2)} readOnly />
           <label>GST Paid By</label>
-          <div className="tbs-gst-pay-by">
-            {(
-              [
-                { label: "Consigner", value: "Consignor" },
-                { label: "Consignee", value: "Consignee" },
-                { label: "Transporter", value: "Transporter" },
-              ] as const
-            ).map((opt) => {
-              const paid = (current.gstPaidBy || "").toLowerCase();
-              const checked =
-                opt.value === "Consignor"
-                  ? paid.includes("consignor") || paid.includes("consigner") || !paid
-                  : paid.includes(opt.value.toLowerCase());
-              return (
-                <label key={opt.value} className="tbs-gst-pay-opt">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => patch({ gstPaidBy: opt.value })}
-                  />
-                  {opt.label}
-                </label>
-              );
-            })}
-          </div>
+          <select
+            className="tbs-select"
+            value={current.gstPaidBy}
+            onChange={(e) => patch({ gstPaidBy: e.target.value })}
+          >
+            <option value="" />
+            {Array.from(
+              new Set([
+                ...(data?.masters.gstPaidBy || []),
+                current.gstPaidBy,
+              ]),
+            )
+              .filter(Boolean)
+              .map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt.toLowerCase() === "consignor" ? "Consigner" : opt}
+                </option>
+              ))}
+          </select>
           <label>Eway Bill No</label>
           <input
             className="tbs-input"
@@ -653,20 +666,44 @@ export default function BookingPage() {
             value={current.validDate}
             onChange={(e) => patch({ validDate: e.target.value })}
           />
+          <label>Pay Mode</label>
+          <select
+            className="tbs-select"
+            value={current.payMode || ""}
+            onChange={(e) => patch({ payMode: e.target.value })}
+          >
+            <option value="" />
+            <option value="NA">NA</option>
+            <option value="Credit">Credit</option>
+          </select>
           <label>Lr Type</label>
-          <input
-            className="tbs-input"
-            value={current.lrType}
-            onChange={(e) => patch({ lrType: e.target.value })}
-            placeholder="Type or select…"
-            list="booking-lr-types"
-            autoComplete="off"
-          />
-          <datalist id="booking-lr-types">
-            {(data?.masters.lrTypes || []).map((t) => (
-              <option key={t} value={t} />
-            ))}
-          </datalist>
+          <select
+            className="tbs-select"
+            value={normalizeLrType(current.lrType) || current.lrType}
+            onChange={(e) => {
+              const lrType = e.target.value;
+              const payMode =
+                lrType === "Paid"
+                  ? "NA"
+                  : current.payMode === "NA" || !current.payMode
+                    ? "Credit"
+                    : current.payMode;
+              patch({ lrType, payMode });
+            }}
+          >
+            {Array.from(
+              new Set([
+                ...LR_TYPES,
+                normalizeLrType(current.lrType) || current.lrType,
+              ]),
+            )
+              .filter(Boolean)
+              .map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+          </select>
           <label>Value Rs.</label>
           <ManualAmountInput
             className="tbs-input"
@@ -742,8 +779,8 @@ export default function BookingPage() {
           if (key === "lrDate") return fmtDate(row.lrDate);
           if (key === "weight") return row.chargedWt || row.actualWt;
           if (key === "freight") return row.freight;
-          if (key === "billNo") return billNoByLr[row.id] || "—";
-          if (key === "challanNo") return challanNoByLr[row.id] || "—";
+          if (key === "billNo") return oldDash(billNoByLr[row.id]);
+          if (key === "challanNo") return oldDash(challanNoByLr[row.id]);
           if (key === "print")
             return <PrintCellButton onClick={() => openPrint("booking", row.id)} />;
           return (row as unknown as Record<string, string>)[key];

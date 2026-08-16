@@ -20,6 +20,6 @@
     "Company",
     "Transporter"
   ],
-  "lrTypes": ["Paid", "ToPay", "To Pay", "TBB", "Cancel"],
+  "lrTypes": ["Paid", "ToPay", "TBB", "Cancel"],
   "gstLabels": ["GST @ 0%", "GST @ 5%", "GST @ 12%", "GST @ 18%"]
 }

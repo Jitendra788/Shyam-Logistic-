@@ -146,9 +146,11 @@ export function ActionButtons({
   onDelete,
   onPrint,
   onPrintList,
+  onWhatsApp,
   canUpdate = false,
   canDelete = false,
   canPrint = false,
+  canWhatsApp = false,
   saving = false,
   printLabel = "Print",
   extra,
@@ -160,9 +162,11 @@ export function ActionButtons({
   onDelete?: () => void;
   onPrint?: () => void;
   onPrintList?: () => void;
+  onWhatsApp?: () => void;
   canUpdate?: boolean;
   canDelete?: boolean;
   canPrint?: boolean;
+  canWhatsApp?: boolean;
   saving?: boolean;
   printLabel?: string;
   extra?: React.ReactNode;
@@ -210,6 +214,17 @@ export function ActionButtons({
           title="Print full register / list"
         >
           <span className="dot print">🖨</span> Print List
+        </button>
+      )}
+      {onWhatsApp && (
+        <button
+          type="button"
+          className="tbs-btn tbs-btn-wa"
+          onClick={onWhatsApp}
+          disabled={!canWhatsApp || saving}
+          title={canWhatsApp ? "Share bill PDF on WhatsApp" : "Select a bill first"}
+        >
+          WhatsApp
         </button>
       )}
       {extra}

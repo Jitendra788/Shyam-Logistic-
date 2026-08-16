@@ -191,7 +191,7 @@ export const defaultMasters: Masters = {
   particulars: [],
   partyTypes: ["Consigner/Consignee", "Broker"],
   gstPaidBy: ["Consignor", "Consignee", "Broker", "Company", "Transporter"],
-  lrTypes: ["Paid", "ToPay", "To Pay", "TBB", "Cancel"],
+  lrTypes: ["Paid", "ToPay", "TBB", "Cancel"],
   gstLabels: ["GST @ 0%", "GST @ 5%", "GST @ 12%", "GST @ 18%"],
 };
 
@@ -270,24 +270,7 @@ export async function saveNotes(data: NoteVoucher[]) {
   return writeJson("notes.json", data);
 }
 
-export function nextCode(
-  items: {
-    partyCode?: string;
-    lrNo?: string;
-    challanNo?: string;
-    billNo?: string;
-    mrNo?: string;
-    voucherNo?: string;
-  }[],
-  key: string,
-  start = 1000,
-) {
-  const nums = items
-    .map((i) => Number((i as Record<string, string>)[key]))
-    .filter((n) => Number.isFinite(n));
-  const max = nums.length ? Math.max(...nums) : start - 1;
-  return String(max + 1);
-}
+export { nextCode } from "./nextCode";
 
 export function uid(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;

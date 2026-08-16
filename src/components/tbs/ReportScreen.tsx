@@ -17,8 +17,7 @@ type ReportKind =
   | "billingwise"
   | "dayswise"
   | "ledger"
-  | "gst"
-  | "profit";
+  | "gst";
 
 export function ReportScreen({
   title,
@@ -164,7 +163,7 @@ export function ReportScreen({
             type="button"
             className="tbs-btn tbs-btn-excel"
             onClick={() => {
-              if (!rows.length && kind !== "profit") {
+              if (!rows.length) {
                 alert("Click Show first, then Generate as Excel.");
                 return;
               }
@@ -194,15 +193,11 @@ export function ReportScreen({
                           "IGST %",
                           "IGST Amt",
                         ]
-                      : kind === "profit"
-                        ? ["Particulars", "Amount"]
-                        : kind === "outstanding"
+                      : kind === "outstanding"
                           ? ["Sr", "Party", "Bills", "Bill Amt", "Paid", "Outstanding"]
                           : ["Sr", "Data"];
               const excelRows =
-                kind === "profit"
-                  ? rows.map((r) => [String(r.label), Number(r.amount)])
-                  : kind === "billingwise"
+                kind === "billingwise"
                     ? rows.map((r) => [
                         String(r.sr),
                         String(r.billNo),
@@ -265,7 +260,7 @@ export function ReportScreen({
           type="button"
           className="tbs-btn tbs-btn-print"
           onClick={() => window.print()}
-          disabled={!rows.length && kind !== "profit"}
+          disabled={!rows.length}
         >
           Print
         </button>
@@ -510,29 +505,6 @@ export function ReportScreen({
           </div>
         )}
 
-        {kind === "profit" && (
-          <div className="tbs-grid-wrap" style={{ maxWidth: 520 }}>
-            <table className="tbs-grid">
-              <thead>
-                <tr>
-                  <th>Particulars</th>
-                  <th>Amount (₹)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={String(r.label)}>
-                    <td>{String(r.label)}</td>
-                    <td>
-                      <b>{Number(r.amount).toFixed(2)}</b>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
         {!!Object.keys(totals).length && (
           <div style={{ marginTop: 10, fontWeight: 700 }}>
             {Object.entries(totals).map(([k, v]) => {
@@ -555,7 +527,7 @@ export function ReportScreen({
           </div>
         )}
 
-        {!loading && rows.length === 0 && kind !== "profit" && (
+        {!loading && rows.length === 0 && (
           <div className="tbs-empty">No records for selected filters</div>
         )}
 

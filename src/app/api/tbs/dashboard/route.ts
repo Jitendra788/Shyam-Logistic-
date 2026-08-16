@@ -13,6 +13,7 @@ import {
 } from "@/lib/tbs/store";
 import { partyLabel } from "@/lib/tbs/partyLabel";
 import { challanHireDue } from "@/lib/tbs/challanHire";
+import { lrCountsAsBilled } from "@/lib/tbs/lrType";
 
 function todayISO() {
   const d = new Date();
@@ -83,7 +84,7 @@ export async function GET() {
   let freightTotal = 0;
 
   for (const b of bookings) {
-    const billed = billedLrIds.has(b.id);
+    const billed = lrCountsAsBilled(b.lrType, billedLrIds.has(b.id));
     const delivered = Boolean(b.delivered);
     freightTotal += Number(b.grandTotal || b.total || b.freight || 0);
     if (!delivered) pendingDelivery += 1;
@@ -292,11 +293,11 @@ export async function GET() {
       to: b.to,
       amount: Number(b.grandTotal || b.total || b.freight || 0),
       delivered: Boolean(b.delivered),
-      billed: billedLrIds.has(b.id),
+      billed: lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)),
     }));
 
   const pendingList = [...bookings]
-    .filter((b) => !(Boolean(b.delivered) && billedLrIds.has(b.id)))
+    .filter((b) => !(Boolean(b.delivered) && lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))))
     .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
     .slice(0, 8)
     .map((b) => ({
@@ -308,10 +309,10 @@ export async function GET() {
       to: b.to,
       amount: Number(b.grandTotal || b.total || b.freight || 0),
       delivered: Boolean(b.delivered),
-      billed: billedLrIds.has(b.id),
+      billed: lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)),
     }));
   const completedList = [...bookings]
-    .filter((b) => Boolean(b.delivered) && billedLrIds.has(b.id))
+    .filter((b) => Boolean(b.delivered) && lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)))
     .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
     .slice(0, 6)
     .map((b) => ({

@@ -13,7 +13,9 @@ import {
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
+import { needsPartyBill } from "@/lib/tbs/lrType";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
+import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
 
 type Payload = {
@@ -46,7 +48,9 @@ export default function BillPage() {
   }, [data, editId]);
 
   const partyLrs = useMemo(() => {
-    const all = (data?.bookings || []).filter((b) => !billedLrIds.has(b.id));
+    const all = (data?.bookings || []).filter(
+      (b) => !billedLrIds.has(b.id) && needsPartyBill(b.lrType),
+    );
     const q = party.trim().toLowerCase();
     if (!q) return all;
     return all.filter(
@@ -179,6 +183,25 @@ export default function BillPage() {
     }
   }
 
+  async function shareBill(bill?: Bill) {
+    const row =
+      bill ||
+      (data?.bills || []).find((b) => b.id === editId);
+    if (!row) {
+      needSelectAlert("bill");
+      return;
+    }
+    try {
+      await shareBillPdfOnWhatsApp({
+        bill: row,
+        bookings: data?.bookings || [],
+        parties: data?.parties || [],
+      });
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "WhatsApp PDF share failed");
+    }
+  }
+
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;
 
   return (
@@ -235,6 +258,7 @@ export default function BillPage() {
           { key: "particulars", label: "Particulars" },
           { key: "weight", label: "Weight" },
           { key: "freight", label: "Freight" },
+          { key: "lrType", label: "Lr Type" },
           { key: "haulting", label: "Haulting" },
           { key: "hamali", label: "Hamali" },
           { key: "other", label: "Other" },
@@ -286,9 +310,11 @@ export default function BillPage() {
             openPrint("bill", editId);
           }}
           onPrintList={() => openPrint("bills")}
+          onWhatsApp={() => void shareBill()}
           canUpdate={!!editId}
           canDelete={!!editId}
           canPrint={!!editId}
+          canWhatsApp={!!editId}
           saving={saving}
           printLabel="Print Bill"
           extra={
@@ -313,6 +339,7 @@ export default function BillPage() {
             { key: "partyName", label: "Party Name", width: "180px" },
             { key: "billAmount", label: "Bill Amount" },
             { key: "print", label: "Print" },
+            { key: "wa", label: "WhatsApp" },
           ]}
           rows={billsFiltered}
           selectedId={editId}
@@ -322,6 +349,20 @@ export default function BillPage() {
             if (key === "billAmount") return row.totalAmount;
             if (key === "print")
               return <PrintCellButton onClick={() => openPrint("bill", row.id)} />;
+            if (key === "wa")
+              return (
+                <button
+                  type="button"
+                  className="tbs-btn tbs-btn-wa"
+                  style={{ height: 24, minWidth: 64, padding: "0 8px" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void shareBill(row);
+                  }}
+                >
+                  WhatsApp
+                </button>
+              );
             return (row as unknown as Record<string, string | number>)[key];
           }}
         />
