@@ -3,6 +3,8 @@
 import { idbClearAll, idbGet, idbSet } from "@/lib/tbs/idb";
 import { applyVehicleToLrs } from "@/lib/tbs/legacySkdb";
 import { nextAvailableCode, nextCode, unusedOrNext } from "@/lib/tbs/nextCode";
+import { buildTbsReport } from "@/lib/tbs/reportBuild";
+import type { Bill, Booking, Challan, MoneyReceipt, NoteVoucher, Party } from "@/lib/tbs/types";
 
 const COLLECTIONS = [
   "bookings",
@@ -135,6 +137,47 @@ async function overlayPayload(payload: Record<string, unknown>) {
     next.nextCode = nextCode(next.parties as Record<string, unknown>[], "partyCode", 1);
   }
   return next;
+}
+
+async function overlayAnyReport(url: string) {
+  let kind = "";
+  let from = "";
+  let to = "";
+  let party = "";
+  let asOf = "";
+  let status = "";
+  try {
+    const u = new URL(url, window.location.origin);
+    kind = u.searchParams.get("kind") || "";
+    from = u.searchParams.get("from") || "";
+    to = u.searchParams.get("to") || "";
+    party = u.searchParams.get("party") || "";
+    asOf = u.searchParams.get("asOf") || "";
+    status = u.searchParams.get("status") || "";
+  } catch {
+    return null;
+  }
+  const parties = ((await getCol("parties")) as Party[] | null) || [];
+  const bookings = ((await getCol("bookings")) as Booking[] | null) || [];
+  const bills = ((await getCol("bills")) as Bill[] | null) || [];
+  const receipts = ((await getCol("receipts")) as MoneyReceipt[] | null) || [];
+  const challans = ((await getCol("challans")) as Challan[] | null) || [];
+  const notes = ((await getCol("notes")) as NoteVoucher[] | null) || [];
+  if (
+    !parties.length &&
+    !bookings.length &&
+    !bills.length &&
+    !receipts.length &&
+    !challans.length &&
+    !notes.length
+  ) {
+    return null;
+  }
+  return buildTbsReport(
+    kind || "booking",
+    { parties, bookings, bills, receipts, challans, notes },
+    { from, to, party, asOf, status },
+  );
 }
 
 function withId(body: Record<string, unknown>, prefix: string) {
@@ -285,7 +328,15 @@ async function tbsHandle(
         await saveCollections(pullCollections(data), persistent);
         return jsonResponse(await overlayPayload(data));
       }
+      if (path.includes("/api/tbs/reports")) {
+        const rebuilt = await overlayAnyReport(url);
+        if (rebuilt) return jsonResponse(rebuilt);
+      }
       return res;
+    }
+    if (path.includes("/api/tbs/reports")) {
+      const rebuilt = await overlayAnyReport(url);
+      if (rebuilt) return jsonResponse(rebuilt);
     }
     if (isCollectionGet) {
       try {

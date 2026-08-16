@@ -40,6 +40,9 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Partial<Bill>;
     const lrIds = body.lrIds || [];
+    if (!(body.partyName || "").trim() && !lrIds.length) {
+      return bad("Please Enter Billing Party");
+    }
     const [bills, bookings] = await Promise.all([getBills(), getBookings()]);
     const blocked = blockedBillLrs(bookings, lrIds);
     if (blocked.length) {
@@ -53,6 +56,12 @@ export async function POST(req: Request) {
       billDate: body.billDate || new Date().toISOString().slice(0, 10),
       partyName: (body.partyName || "").trim(),
       totalAmount: Number(body.totalAmount) || 0,
+      lrCharges: Number(body.lrCharges) || 0,
+      detention: Number(body.detention) || 0,
+      hamali: Number(body.hamali) || 0,
+      doorDelivery: Number(body.doorDelivery) || 0,
+      doorCollection: Number(body.doorCollection) || 0,
+      other: Number(body.other) || 0,
       remark: body.remark || "",
       submissionDate:
         body.submissionDate || new Date().toISOString().slice(0, 10),

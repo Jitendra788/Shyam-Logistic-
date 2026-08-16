@@ -1,24 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FormWindow,
   fmtDate,
   todayISO,
 } from "@/components/tbs/FormPrimitives";
-import { useAdminAuth } from "@/components/tbs/useTbs";
+import { useTbsApi } from "@/components/tbs/useTbs";
 import { downloadAsExcel } from "@/lib/tbs/excel";
+import { buildProfitReport } from "@/lib/tbs/profitReport";
+import type { Booking, Challan, NoteVoucher } from "@/lib/tbs/types";
 
-type ProfitRow = {
-  sr: number;
-  id: string;
-  vehNo: string;
-  date: string;
-  freight: number;
-  bookingAmt: number;
-  difference: number;
-  marginPct: number;
-};
+type ChallanPayload = { challans: Challan[]; bookings: Booking[] };
+type NotesPayload = { notes: NoteVoucher[] };
 
 function firstOfPrevMonthISO() {
   const d = new Date();
@@ -36,36 +30,34 @@ function fmtIntLike(n: number) {
 }
 
 export default function ProfitReportPage() {
-  const ready = useAdminAuth();
+  const ch = useTbsApi<ChallanPayload>("/api/tbs/challans");
+  const exp = useTbsApi<NotesPayload>("/api/tbs/notes?type=expense");
   const [from, setFrom] = useState(firstOfPrevMonthISO);
   const [to, setTo] = useState(todayISO);
-  const [rows, setRows] = useState<ProfitRow[]>([]);
+  const [applied, setApplied] = useState({ from: firstOfPrevMonthISO(), to: todayISO() });
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  async function load() {
-    setLoading(true);
-    setError("");
-    const q = new URLSearchParams({ kind: "profit", from, to });
-    const res = await fetch(`/api/tbs/reports?${q}`);
-    setLoading(false);
-    if (!res.ok) {
-      setError("Failed to load profit report");
-      return;
-    }
-    const json = await res.json();
-    const next = (json.rows || []) as ProfitRow[];
-    setRows(next);
-    setSelectedId(next[0]?.id || null);
+  const { rows, totals } = useMemo(
+    () =>
+      buildProfitReport(
+        ch.data?.challans || [],
+        ch.data?.bookings || [],
+        exp.data?.notes || [],
+        applied.from,
+        applied.to,
+      ),
+    [ch.data, exp.data, applied],
+  );
+
+  const loading = ch.loading || exp.loading;
+  const error = ch.error || exp.error;
+
+  async function show() {
+    setApplied({ from, to });
+    await Promise.all([ch.reload(), exp.reload()]);
   }
 
-  useEffect(() => {
-    if (ready) void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready]);
-
-  if (!ready) return <div className="tbs-empty">Loading…</div>;
+  if (!ch.data && !exp.data && loading) return <div className="tbs-empty">Loading…</div>;
 
   return (
     <FormWindow title="Frm_ProfitReport">
@@ -90,7 +82,7 @@ export default function ProfitReportPage() {
             onChange={(e) => setTo(e.target.value)}
           />
         </div>
-        <button type="button" className="tbs-btn" onClick={() => load()} disabled={loading}>
+        <button type="button" className="tbs-btn" onClick={() => void show()} disabled={loading}>
           Show
         </button>
         <button
@@ -102,7 +94,7 @@ export default function ProfitReportPage() {
               return;
             }
             downloadAsExcel(
-              `Profit_Report_${from}_to_${to}.xlsx`,
+              `Profit_Report_${applied.from}_to_${applied.to}.xlsx`,
               ["Sr No", "Veh No", "Date", "Freight", "Booking Amt", "Difference", "Margin %"],
               rows.map((r) => [
                 r.sr,
@@ -120,7 +112,7 @@ export default function ProfitReportPage() {
         </button>
       </div>
 
-      <div className="tbs-grid-wrap" style={{ maxHeight: 520 }}>
+      <div className="tbs-grid-wrap" style={{ maxHeight: 420 }}>
         <table className="tbs-grid">
           <thead>
             <tr>
@@ -137,7 +129,9 @@ export default function ProfitReportPage() {
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ textAlign: "center", padding: 28, color: "#666" }}>
-                  {loading ? "Loading…" : "No records — click Show"}
+                  {loading
+                    ? "Loading…"
+                    : "No part challan in this date range. Save LHC first, then Show."}
                 </td>
               </tr>
             ) : (
@@ -159,6 +153,29 @@ export default function ProfitReportPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="tbs-row" style={{ marginTop: 12, flexWrap: "wrap", gap: 16 }}>
+        <div className="tbs-field">
+          <label>Total Freight</label>
+          <input className="tbs-input w-sm" readOnly value={fmtIntLike(totals.freight)} />
+        </div>
+        <div className="tbs-field">
+          <label>+ Total Expense</label>
+          <input className="tbs-input w-sm" readOnly value={fmtIntLike(totals.expense)} />
+        </div>
+        <div className="tbs-field">
+          <label>Total Booking</label>
+          <input className="tbs-input w-sm" readOnly value={fmtIntLike(totals.bookingAmt)} />
+        </div>
+        <div className="tbs-field">
+          <label>Difference</label>
+          <input className="tbs-input w-sm" readOnly value={totals.difference.toFixed(2)} />
+        </div>
+        <div className="tbs-field">
+          <label>Profit %</label>
+          <input className="tbs-input w-sm" readOnly value={`${totals.profitPct.toFixed(2)}%`} />
+        </div>
       </div>
     </FormWindow>
   );

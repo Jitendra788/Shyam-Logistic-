@@ -5,6 +5,7 @@ import {
   ActionButtons,
   DataGrid,
   FormWindow,
+  ManualAmountInput,
   PrintCellButton,
   StatusBanner,
   fmtDate,
@@ -13,7 +14,11 @@ import {
   todayISO,
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
+import { billGrandTotal } from "@/lib/tbs/billAmount";
 import { needsPartyBill } from "@/lib/tbs/lrType";
+import { needSelectAlert, openPrint } from "@/lib/tbs/print";
+import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
+import type { Bill, Booking, Party } from "@/lib/tbs/types";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
 import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
@@ -33,6 +38,12 @@ export default function BillPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [remark, setRemark] = useState("");
   const [submissionDate, setSubmissionDate] = useState(todayISO());
+  const [lrCharges, setLrCharges] = useState(0);
+  const [detention, setDetention] = useState(0);
+  const [hamali, setHamali] = useState(0);
+  const [doorDelivery, setDoorDelivery] = useState(0);
+  const [doorCollection, setDoorCollection] = useState(0);
+  const [other, setOther] = useState(0);
   const [editId, setEditId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState("");
@@ -77,6 +88,16 @@ export default function BillPage() {
     [partyLrs, selected],
   );
 
+  const extras = {
+    lrCharges,
+    detention,
+    hamali,
+    doorDelivery,
+    doorCollection,
+    other,
+  };
+  const grand = billGrandTotal(total, extras);
+
   const billsFiltered = useMemo(() => {
     const q = search.trim();
     const list = data?.bills || [];
@@ -96,6 +117,12 @@ export default function BillPage() {
     setSelected(b.lrIds || []);
     setRemark(b.remark);
     setSubmissionDate(b.submissionDate);
+    setLrCharges(Number(b.lrCharges) || 0);
+    setDetention(Number(b.detention) || 0);
+    setHamali(Number(b.hamali) || 0);
+    setDoorDelivery(Number(b.doorDelivery) || 0);
+    setDoorCollection(Number(b.doorCollection) || 0);
+    setOther(Number(b.other) || 0);
   }
 
   function partyForSave() {
@@ -110,6 +137,10 @@ export default function BillPage() {
       await update();
       return;
     }
+    if (!partyForSave()) {
+      setMsg("Please Enter Billing Party");
+      return;
+    }
     setSaving(true);
     setMsg("");
     const res = await fetch("/api/tbs/bills", {
@@ -119,7 +150,8 @@ export default function BillPage() {
         billNo: billNo || data?.nextBill,
         billDate,
         partyName: partyForSave(),
-        totalAmount: total,
+        totalAmount: grand,
+        ...extras,
         remark,
         submissionDate,
         lrIds: selected,
@@ -130,12 +162,14 @@ export default function BillPage() {
       setMsg(await readApiError(res, "Save failed"));
       return;
     }
-    setMsg("Added successfully");
-    setEditId(null);
+    const created = (await res.json()) as Bill;
+    setMsg("Bill Created..");
+    setEditId(created.id || null);
     setSelected([]);
-    setRemark("");
-    setBillNo("");
     await reload();
+    if (created.id && confirm("Do You want to print ??")) {
+      openPrint("bill", created.id);
+    }
   }
 
   async function update() {
@@ -149,7 +183,8 @@ export default function BillPage() {
         billNo,
         billDate,
         partyName: partyForSave(),
-        totalAmount: total,
+        totalAmount: grand,
+        ...extras,
         remark,
         submissionDate,
         lrIds: selected,
@@ -169,7 +204,7 @@ export default function BillPage() {
       setMsg("Select a record first, then Delete");
       return;
     }
-    if (!confirm("Delete bill?")) return;
+    if (!confirm("Are You Sure To Delete This Record ???")) return;
     setSaving(true);
     try {
       await apiDelete(`/api/tbs/bills?id=${editId}`);
@@ -251,7 +286,9 @@ export default function BillPage() {
       <DataGrid
         columns={[
           { key: "select", label: "Select" },
-          { key: "lrDate", label: "Date" },
+          { key: "loadFor", label: "Load For" },
+          { key: "lrNo", label: "LR No" },
+          { key: "lrDate", label: "LR Date" },
           { key: "billingParty", label: "Billing Party", width: "140px" },
           { key: "from", label: "From" },
           { key: "to", label: "To" },
@@ -262,7 +299,6 @@ export default function BillPage() {
           { key: "haulting", label: "Haulting" },
           { key: "hamali", label: "Hamali" },
           { key: "other", label: "Other" },
-          { key: "lrNo", label: "LR No" },
         ]}
         rows={partyLrs}
         renderCell={(row, key, i) => {
@@ -275,6 +311,7 @@ export default function BillPage() {
               />
             );
           if (key === "lrDate") return fmtDate(row.lrDate);
+          if (key === "loadFor") return row.bookingFrom || row.from;
           if (key === "weight") return row.chargedWt || row.actualWt;
           if (key === "freight") return row.freight;
           if (key === "haulting") return row.barrier || "";
@@ -301,6 +338,12 @@ export default function BillPage() {
             setRemark("");
             setBillNo("");
             setParty("");
+            setLrCharges(0);
+            setDetention(0);
+            setHamali(0);
+            setDoorDelivery(0);
+            setDoorCollection(0);
+            setOther(0);
             setMsg("");
           }}
           onUpdate={update}
@@ -371,6 +414,34 @@ export default function BillPage() {
             <div className="tbs-field" style={{ flex: 1 }}>
               <label>Total Amount</label>
               <input className="tbs-input w-full" value={total.toFixed(2)} readOnly />
+            </div>
+          </div>
+          {(
+            [
+              ["lrCharges", "LR Charges", lrCharges, setLrCharges],
+              ["detention", "Detention", detention, setDetention],
+              ["hamali", "Hamali", hamali, setHamali],
+              ["doorDelivery", "Door Delivery", doorDelivery, setDoorDelivery],
+              ["doorCollection", "Door Collection", doorCollection, setDoorCollection],
+              ["other", "Other", other, setOther],
+            ] as const
+          ).map(([key, label, value, setValue]) => (
+            <div className="tbs-row" key={key}>
+              <div className="tbs-field" style={{ flex: 1 }}>
+                <label>{label}</label>
+                <ManualAmountInput
+                  className="tbs-input w-full"
+                  syncKey={`${editId || "new"}-${key}`}
+                  value={value}
+                  onChange={setValue}
+                />
+              </div>
+            </div>
+          ))}
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label>Grand Total</label>
+              <input className="tbs-input w-full" value={grand.toFixed(2)} readOnly />
             </div>
           </div>
           <div className="tbs-row">

@@ -101,7 +101,14 @@ export type Bill = {
   billNo: string;
   billDate: string;
   partyName: string;
+  /** LR freight sum — old billmaster.bamt */
   totalAmount: number;
+  lrCharges?: number;
+  detention?: number;
+  hamali?: number;
+  doorDelivery?: number;
+  doorCollection?: number;
+  other?: number;
   remark: string;
   submissionDate: string;
   lrIds: string[];

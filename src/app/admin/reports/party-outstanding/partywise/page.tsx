@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function PartywiseRedirect() {
-  redirect("/admin/reports/party-outstanding/dayswise");
+import { ReportScreen } from "@/components/tbs/ReportScreen";
+
+export default function PartywiseOutstandingPage() {
+  return <ReportScreen title="Frm_Conoutstanding" kind="outstanding" />;
 }

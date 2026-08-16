@@ -62,9 +62,15 @@ export async function buildBillPdfBlob(opts: {
 }): Promise<Blob> {
   const { bill, bookings, parties = [] } = opts;
   const lrs = bookings.filter((b) => (bill.lrIds || []).includes(b.id));
-  const total =
-    Number(bill.totalAmount) ||
-    lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
+  const extras =
+    Number(bill.lrCharges || 0) +
+    Number(bill.detention || 0) +
+    Number(bill.hamali || 0) +
+    Number(bill.doorDelivery || 0) +
+    Number(bill.doorCollection || 0) +
+    Number(bill.other || 0);
+  const lrSum = lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
+  const total = Number(bill.totalAmount) || lrSum + extras;
   const party = partyOf(parties, bill.partyName);
   const address = party?.address || lrs[0]?.address || "";
   const gstNo = party?.gstTin || lrs[0]?.gstNo || "";
