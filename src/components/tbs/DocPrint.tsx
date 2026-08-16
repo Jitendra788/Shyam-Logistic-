@@ -6,6 +6,15 @@ import { DEFAULT_LR_COMPANY, LrPrintSheet } from "@/components/tbs/LrPrintSheet"
 import { LrPdfFrame } from "@/components/tbs/LrPdfFrame";
 import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 import { amountInWordsINR } from "@/lib/tbs/amountWords";
+import {
+  BILL_ADDRESS,
+  BILL_BANK,
+  billedPartyInfo,
+  billPrintTotal,
+  buildBillLines,
+  displayBillNo,
+  fmtBillDate,
+} from "@/lib/tbs/billPrint";
 import type {
   Bill,
   Booking,
@@ -18,44 +27,6 @@ import type {
 
 const LOGO = "/brand/shyam-peacock-mark.png";
 const co = DEFAULT_LR_COMPANY;
-
-/** Tax Invoice header address (matches sample bill PDF). */
-const BILL_ADDRESS =
-  "Jajal Petrol Pump, Pune-Bangalore Highway, Vikaswadi, Kolhapur 416 234(Mah.)";
-
-const BANK = {
-  holder: "Shyam Logistics",
-  accountNo: "50200116108322",
-  ifsc: "HDFC0005373",
-  branch: "Sangli (Current A/c)",
-};
-
-const MONTHS_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-function fmtLrDate(iso: string) {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-");
-  const mi = Number(m) - 1;
-  if (!y || !m || !d || mi < 0 || mi > 11) return fmtDate(iso);
-  return `${d}-${MONTHS_SHORT[mi]}-${y}`;
-}
-
-function partyOf(parties: Party[], name: string) {
-  return parties.find((p) => p.partyName === name);
-}
 
 function blank(n: number) {
   return n ? n : "";
@@ -202,30 +173,25 @@ export function ChallanPrint({
     (s, b) => s + (Number(b.actualWt || b.chargedWt) || 0),
     0,
   );
-  const padRows = Math.max(10, 14 - lrs.length);
-  const money = (n: number) => {
+  const padRows = Math.max(12, 16 - lrs.length);
+  const memoAmt = (n: number, cash = false) => {
     const v = Number(n) || 0;
-    return v % 1 ? v.toFixed(2) : String(v);
+    if (cash) return v.toFixed(2);
+    return Number.isInteger(v) ? String(v) : v.toFixed(2);
   };
 
   useEffect(() => {
     document.documentElement.classList.add("lm-print-root");
     const style = document.createElement("style");
     style.id = "lm-page-size";
-    style.textContent = "@media print { @page { size: A4 portrait; margin: 7mm; } }";
+    style.textContent =
+      "@media print { @page { size: letter portrait; margin: 8mm; } }";
     document.head.appendChild(style);
     return () => {
       document.documentElement.classList.remove("lm-print-root");
       style.remove();
     };
   }, []);
-
-  const kv = (label: string, value: string) => (
-    <div className="lm-kv">
-      <span className="lm-k">{label}</span>
-      <span className="lm-v">{value}</span>
-    </div>
-  );
 
   return (
     <div className="lm">
@@ -248,30 +214,46 @@ export function ChallanPrint({
         {BILL_ADDRESS} E-mail :{co.email}
       </div>
 
-      <div className="lm-title">LORRY MEMO</div>
+      <div className="lm-frame">
+        <div className="lm-title">LORRY MEMO</div>
 
-      <div className="lm-meta">
-        <div className="lm-meta-col">
-          {kv("Lorry No", challan.vehicleNo)}
-          {kv("Broker Name", challan.brokerOwner)}
-          {kv("Driver Name", challan.driverName)}
-          {kv("Owner Name", challan.owner)}
-        </div>
-        <div className="lm-meta-col">
-          {kv("Date", fmtDate(challan.challanDate))}
-          {kv("PAN No.", challan.brokerPan)}
-          {kv("From", challan.fromStation)}
-          {kv("PAN No.", challan.panNo)}
-        </div>
-        <div className="lm-meta-col">
-          {kv("Memo No", challan.challanNo)}
-          {kv("Engine No.", challan.engine)}
-          {kv("To", challan.toStation)}
-          {kv("Chessy", challan.chessy)}
-        </div>
-      </div>
+        <table className="lm-meta">
+          <tbody>
+            <tr>
+              <th>Lorry No</th>
+              <td>{challan.vehicleNo}</td>
+              <th>Date</th>
+              <td>{fmtBillDate(challan.challanDate)}</td>
+              <th>Memo No</th>
+              <td>{challan.challanNo}</td>
+            </tr>
+            <tr>
+              <th>Broker Name</th>
+              <td>{challan.brokerOwner}</td>
+              <th>PAN No.</th>
+              <td>{challan.brokerPan}</td>
+              <th>Engine No.</th>
+              <td>{challan.engine}</td>
+            </tr>
+            <tr>
+              <th>Driver Name</th>
+              <td>{challan.driverName}</td>
+              <th>From</th>
+              <td>{challan.fromStation}</td>
+              <th>To</th>
+              <td>{challan.toStation}</td>
+            </tr>
+            <tr>
+              <th>Owner Name</th>
+              <td>{challan.owner}</td>
+              <th>PAN No.</th>
+              <td>{challan.panNo}</td>
+              <th>Chessy</th>
+              <td>{challan.chessy}</td>
+            </tr>
+          </tbody>
+        </table>
 
-      <div className="lm-main">
         <table className="lm-table">
           <thead>
             <tr>
@@ -308,13 +290,13 @@ export function ChallanPrint({
               </tr>
             ))}
             {[
-              ["Total Freight", money(challan.freight), true],
-              ["Advance", money(challan.advance), false],
-              ["Transfer", money(challan.transfer), false],
-              ["Cash", Number(challan.cash) ? money(challan.cash) : "0.00", false],
-              ["Fuel", money(challan.fuel), false],
-              ["Balance", money(challan.balance), false],
-            ].map(([lab, val, first], i) => (
+              ["Total Freight", memoAmt(challan.freight), true],
+              ["Advance", memoAmt(challan.advance), false],
+              ["Transfer", memoAmt(challan.transfer), false],
+              ["Cash", memoAmt(challan.cash, true), false],
+              ["Fuel", memoAmt(challan.fuel), false],
+              ["Balance", memoAmt(challan.balance), false],
+            ].map(([lab, val, first]) => (
               <tr key={String(lab)} className="lm-ch">
                 <td className="lm-tot">{first ? lrs.length || "" : ""}</td>
                 <td />
@@ -327,13 +309,13 @@ export function ChallanPrint({
             ))}
           </tbody>
         </table>
-      </div>
 
-      <div className="lm-foot">
-        <div className="lm-driver">Driver Sign</div>
-        <div className="lm-sign">
-          <div>For Shyam Logistics</div>
-          <ShyamStamp size="md" />
+        <div className="lm-foot">
+          <div className="lm-driver">Driver Sign</div>
+          <div className="lm-sign">
+            <div>For Shyam Logistics</div>
+            <ShyamStamp size="md" />
+          </div>
         </div>
       </div>
     </div>
@@ -347,7 +329,7 @@ export function TaxInvoicePrint({
   lrs,
   parties = [],
   remark,
-  totalAmount,
+  bill,
 }: {
   partyName: string;
   billNo: string;
@@ -355,23 +337,20 @@ export function TaxInvoicePrint({
   lrs: Booking[];
   parties?: Party[];
   remark?: string;
-  totalAmount?: number;
+  bill?: Bill;
 }) {
-  const party = partyOf(parties, partyName);
-  const address = party?.address || lrs[0]?.address || "";
-  const gstNo = party?.gstTin || lrs[0]?.gstNo || "";
-  const total =
-    Number(totalAmount) ||
-    lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
-
-  const padRows = Math.max(0, 3 - lrs.length);
+  const { address, gstNo } = billedPartyInfo(partyName, lrs, parties);
+  const total = bill ? billPrintTotal(bill, lrs) : lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
+  const lines = buildBillLines(lrs, bill);
+  const shownNo = displayBillNo(billNo, billDate);
+  const padRows = Math.max(5, 8 - lines.length);
 
   useEffect(() => {
     document.documentElement.classList.add("tax-inv-print-root");
     const style = document.createElement("style");
     style.id = "tax-inv-page-size";
     style.textContent =
-      "@media print { @page { size: A4 landscape; margin: 6mm; } }";
+      "@media print { @page { size: letter landscape; margin: 7mm; } }";
     document.head.appendChild(style);
     return () => {
       document.documentElement.classList.remove("tax-inv-print-root");
@@ -388,46 +367,63 @@ export function TaxInvoicePrint({
         <img src={LOGO} alt="" className="tax-inv-logo" />
         <div className="tax-inv-brand-mid">
           <div className="tax-inv-co">SHYAM LOGISTICS</div>
-          <div className="tax-inv-addr">{BILL_ADDRESS}</div>
+          <div className="tax-inv-addr">
+            {BILL_ADDRESS} E-mail :{co.email}
+          </div>
           <div className="tax-inv-contact">
-            E-mail : {co.email}
-            <span className="tax-inv-sep">|</span>
             Mobile : {co.phone} / {co.phone2}
           </div>
           <div className="tax-inv-gst">GST : {co.gstin}</div>
         </div>
       </div>
 
-      <div className="tax-inv-title-bar">Tax Invoice</div>
+      <div className="tax-inv-frame">
+        <div className="tax-inv-title-bar">Tax Invoice</div>
 
-      <div className="tax-inv-party">
-        <div className="tax-inv-party-l">
-          <div className="tax-inv-line">
-            <span className="tax-inv-lab">Party Name</span>
-            <span className="tax-inv-val">{partyName}</span>
+        <div className="tax-inv-party">
+          <div className="tax-inv-party-l">
+            <div className="tax-inv-line">
+              <span className="tax-inv-lab">Party Name</span>
+              <span className="tax-inv-val">{partyName}</span>
+            </div>
+            <div className="tax-inv-line">
+              <span className="tax-inv-lab">Address</span>
+              <span className="tax-inv-val">{address || ""}</span>
+            </div>
+            <div className="tax-inv-line">
+              <span className="tax-inv-lab">GST No</span>
+              <span className="tax-inv-val">{gstNo || ""}</span>
+            </div>
           </div>
-          <div className="tax-inv-line">
-            <span className="tax-inv-lab">Address</span>
-            <span className="tax-inv-val">{address || "—"}</span>
-          </div>
-          <div className="tax-inv-line">
-            <span className="tax-inv-lab">GST No</span>
-            <span className="tax-inv-val">{gstNo || "—"}</span>
-          </div>
-        </div>
-        <div className="tax-inv-party-r">
-          <div className="tax-inv-line">
-            <span className="tax-inv-lab">Bill No</span>
-            <span className="tax-inv-val">{billNo}</span>
-          </div>
-          <div className="tax-inv-line">
-            <span className="tax-inv-lab">Date</span>
-            <span className="tax-inv-val">{fmtDate(billDate)}</span>
+          <div className="tax-inv-party-r">
+            <div className="tax-inv-line tax-inv-line-r">
+              <span className="tax-inv-lab">Bill No</span>
+              <span className="tax-inv-val">{shownNo}</span>
+            </div>
+            <div className="tax-inv-line tax-inv-line-r">
+              <span className="tax-inv-lab">Date</span>
+              <span className="tax-inv-val">{fmtBillDate(billDate)}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <table className="tax-inv-table">
+        <colgroup>
+          <col className="c-sr" />
+          <col className="c-lr" />
+          <col className="c-date" />
+          <col className="c-inv" />
+          <col className="c-wt" />
+          <col className="c-veh" />
+          <col className="c-from" />
+          <col className="c-to" />
+          <col className="c-frt" />
+          <col className="c-halt" />
+          <col className="c-ham" />
+          <col className="c-oth" />
+          <col className="c-tot" />
+        </colgroup>
         <thead>
           <tr>
             <th>Sr No</th>
@@ -446,37 +442,23 @@ export function TaxInvoicePrint({
           </tr>
         </thead>
         <tbody>
-          {lrs.map((b, i) => {
-            const fromStation = b.from || b.bookingFrom || "";
-            const other =
-              Number(b.otherChrg || 0) +
-              Number(b.stCharges || 0) +
-              Number(b.lrCharges || 0) +
-              Number(b.doorDelivery || 0) +
-              Number(b.doorColle || 0);
-            const freight = Number(b.freight || 0);
-            const hamali = Number(b.hamali || 0);
-            const halting = Number(b.barrier || 0);
-            const rowTotal =
-              Number(b.grandTotal) || freight + hamali + halting + other;
-            return (
-              <tr key={b.id || i}>
-                <td>{i + 1}</td>
-                <td>{b.lrNo}</td>
-                <td>{fmtLrDate(b.lrDate)}</td>
-                <td>{b.invNoDate || ""}</td>
-                <td>{blank(b.chargedWt || b.actualWt)}</td>
-                <td>{b.vehicleNo}</td>
-                <td>{fromStation}</td>
-                <td>{b.to}</td>
-                <td>{blank(freight)}</td>
-                <td>{blank(halting)}</td>
-                <td>{blank(hamali)}</td>
-                <td>{blank(other)}</td>
-                <td>{rowTotal || ""}</td>
-              </tr>
-            );
-          })}
+          {lines.map((row, i) => (
+            <tr key={i} className={row.chargeLabel ? "tax-inv-charge" : undefined}>
+              <td>{row.sr}</td>
+              <td>{row.lrNo}</td>
+              <td>{row.lrDate}</td>
+              <td>{row.invNo}</td>
+              <td>{row.weight}</td>
+              <td>{row.vehicle}</td>
+              <td>{row.from}</td>
+              <td>{row.to}</td>
+              <td>{row.freight}</td>
+              <td>{row.halting}</td>
+              <td>{row.hamali}</td>
+              <td>{row.other}</td>
+              <td>{row.total}</td>
+            </tr>
+          ))}
           {Array.from({ length: padRows }).map((_, i) => (
             <tr key={`pad-${i}`} className="tax-inv-pad">
               {Array.from({ length: 13 }).map((__, j) => (
@@ -489,7 +471,7 @@ export function TaxInvoicePrint({
 
       <div className="tax-inv-total-bar">
         <div className="tax-inv-total-l">
-          <b>Total Freight : -</b>
+          <span>Total Freight : -</span>
           <span className="tax-inv-amt">{total}</span>
         </div>
         <div className="tax-inv-total-r">
@@ -505,10 +487,10 @@ export function TaxInvoicePrint({
       <div className="tax-inv-bank">
         <div className="tax-inv-bank-title">Bank Details :</div>
         <div className="tax-inv-bank-grid">
-          <div>Account Holder : {BANK.holder}</div>
-          <div>Account No {BANK.accountNo}</div>
-          <div>IFSC Code {BANK.ifsc}</div>
-          <div>Branch : {BANK.branch}</div>
+          <div>Account Holder : {BILL_BANK.holder}</div>
+          <div>Account No {BILL_BANK.accountNo}</div>
+          <div>IFSC Code {BILL_BANK.ifsc}</div>
+          <div>Branch : {BILL_BANK.branch}</div>
         </div>
       </div>
 
@@ -552,9 +534,6 @@ export function BillPrint({
   parties?: Party[];
 }) {
   const lrs = bookings.filter((b) => bill.lrIds.includes(b.id));
-  const total =
-    Number(bill.totalAmount) ||
-    lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
 
   return (
     <TaxInvoicePrint
@@ -564,7 +543,7 @@ export function BillPrint({
       lrs={lrs}
       parties={parties}
       remark={bill.remark}
-      totalAmount={total}
+      bill={bill}
     />
   );
 }

@@ -34,6 +34,8 @@ import {
   shareOnWhatsApp,
 } from "@/lib/tbs/whatsapp";
 import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
+import { shareChallanPdfOnWhatsApp } from "@/lib/tbs/challanPdf";
+import { displayBillNo } from "@/lib/tbs/billPrint";
 import "../doc-print.css";
 import "../tbs.css";
 
@@ -215,7 +217,7 @@ function PrintInner() {
           columns={["Sr", "Bill No", "Date", "Party", "Amount"]}
           rows={(data.bills || []).map((b, i) => [
             i + 1,
-            b.billNo,
+            displayBillNo(b.billNo, b.billDate),
             fmtDate(b.billDate),
             b.partyName,
             b.totalAmount,
@@ -309,6 +311,10 @@ function PrintInner() {
     type === "bill" && id
       ? data.bills?.find((x) => x.id === id || x.billNo === id)
       : undefined;
+  const challan =
+    type === "challan" && id
+      ? data.challans?.find((x) => x.id === id || x.challanNo === id)
+      : undefined;
 
   useEffect(() => {
     if (auto && content && !loading) {
@@ -362,6 +368,19 @@ function PrintInner() {
           >
             WhatsApp
           </button>
+        ) : challan ? (
+          <button
+            type="button"
+            className="tbs-btn tbs-btn-wa"
+            onClick={() =>
+              void shareChallanPdfOnWhatsApp({
+                challan,
+                bookings: data.bookings || [],
+              })
+            }
+          >
+            WhatsApp
+          </button>
         ) : shareText ? (
           <button
             type="button"
@@ -374,7 +393,7 @@ function PrintInner() {
         <span style={{ fontSize: 12 }}>
           {type}
           {id ? ` #${id}` : ""} —{" "}
-          {isBookingPdf || bill
+          {isBookingPdf || bill || challan
             ? "PDF / WhatsApp"
             : "Print / Save as PDF / WhatsApp"}
         </span>

@@ -15,6 +15,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { billGrandTotal } from "@/lib/tbs/billAmount";
+import { displayBillNo } from "@/lib/tbs/billPrint";
 import { needsPartyBill } from "@/lib/tbs/lrType";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
 import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
@@ -99,7 +100,10 @@ export default function BillPage() {
     const q = search.trim();
     const list = data?.bills || [];
     if (!q) return list;
-    return list.filter((b) => b.billNo.includes(q));
+    return list.filter((b) => {
+      const shown = displayBillNo(b.billNo, b.billDate);
+      return b.billNo.includes(q) || shown.toLowerCase().includes(q.toLowerCase());
+    });
   }, [data, search]);
 
   function toggle(id: string) {
@@ -385,6 +389,7 @@ export default function BillPage() {
           selectedId={editId}
           onSelect={loadBill}
           renderCell={(row, key) => {
+            if (key === "billNo") return displayBillNo(row.billNo, row.billDate);
             if (key === "date") return fmtDate(row.billDate);
             if (key === "billAmount") return row.totalAmount;
             if (key === "print")

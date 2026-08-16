@@ -14,6 +14,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
+import { shareChallanPdfOnWhatsApp } from "@/lib/tbs/challanPdf";
 import { challanHireBalance } from "@/lib/tbs/challanHire";
 import { lrFreeForChallan, oldDash } from "@/lib/tbs/legacySkdb";
 import { nextAvailableCode } from "@/lib/tbs/nextCode";
@@ -161,14 +162,21 @@ export default function LhcPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...current, lrIds: selectedLrs }),
     });
+    const created = (await res.json().catch(() => null)) as
+      | (Challan & { error?: string })
+      | null;
     setSaving(false);
-    if (!res.ok) {
-      setMsg(await readApiError(res, "Save failed"));
+    if (!res.ok || !created?.id) {
+      setMsg(created?.error || "Save failed");
       return;
     }
     setMsg("Added successfully");
+    const printId = created.id;
     resetEntry();
     await reload();
+    if (confirm("Do You Want to Print ???")) {
+      openPrint("challan", printId);
+    }
   }
 
   async function update() {
@@ -222,6 +230,21 @@ export default function LhcPage() {
       return;
     }
     await removeById(current.id);
+  }
+
+  async function shareMemo() {
+    if (!current.id) {
+      needSelectAlert("challan");
+      return;
+    }
+    try {
+      await shareChallanPdfOnWhatsApp({
+        challan: current,
+        bookings: data?.bookings || [],
+      });
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "WhatsApp PDF share failed");
+    }
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;
@@ -502,10 +525,13 @@ export default function LhcPage() {
               openPrint("challan", current.id);
             }}
             onPrintList={() => openPrint("challans")}
+            onWhatsApp={() => void shareMemo()}
             canUpdate={!!current.id}
             canDelete={!!current.id}
             canPrint={!!current.id}
+            canWhatsApp={!!current.id}
             saving={saving}
+            printLabel="Print Bill"
           />
         </div>
 

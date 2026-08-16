@@ -172,99 +172,117 @@
   margin-top: 2px;
 }
 
-/* Tax Invoice — matches SHYAM LOGISTICS sample bill */
+/* Tax Invoice — old Frm_billprinting / SGL bill (letter landscape) */
 .tax-inv {
-  max-width: 297mm;
+  width: 279mm;
+  max-width: 100%;
   margin: 0 auto 16px;
   background: #fff;
-  border: 2px solid #000;
+  border: 2.2px solid #000;
   padding: 4px 8px 6px;
   color: #000;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
   box-sizing: border-box;
+  position: relative;
 }
 
 .tax-inv-bless {
   text-align: center;
   font-size: 11px;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
 .tax-inv-brand {
-  display: grid;
-  grid-template-columns: 52px 1fr;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 3px;
+  position: relative;
+  min-height: 72px;
+  margin-bottom: 4px;
 }
 
 .tax-inv-logo {
-  width: 50px;
-  height: 50px;
+  position: absolute;
+  left: 6px;
+  top: 4px;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
   background: #fff;
 }
 
 .tax-inv-brand-mid {
   text-align: center;
+  padding: 0 70px;
 }
 
 .tax-inv-co {
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: #c00000;
   line-height: 1.05;
 }
 
 .tax-inv-addr {
-  font-size: 11px;
-  margin-top: 2px;
-  line-height: 1.3;
+  font-size: 10.5px;
+  margin-top: 1px;
+  line-height: 1.25;
 }
 
 .tax-inv-contact {
   font-size: 11px;
   margin-top: 1px;
-}
-
-.tax-inv-sep {
-  margin: 0 8px;
-  opacity: 0.5;
+  font-weight: 600;
 }
 
 .tax-inv-gst {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   margin-top: 3px;
 }
 
-.tax-inv-title-bar {
+.tax-inv-frame {
   border: 2px solid #000;
+}
+
+.tax-inv-title-bar {
   text-align: center;
   font-size: 16px;
   font-weight: 800;
-  padding: 2px 8px;
-  margin: 3px 0 0;
+  padding: 2px 8px 3px;
+  border-bottom: 1.5px solid #000;
 }
 
 .tax-inv-party {
   display: grid;
-  grid-template-columns: 1.45fr 0.85fr;
-  gap: 0;
-  border: 1px solid #000;
-  border-top: none;
-  padding: 4px 8px;
-  margin-bottom: 0;
+  grid-template-columns: 1fr 220px;
+  min-height: 58px;
+}
+
+.tax-inv-party-l {
+  padding: 4px 10px 6px;
+}
+
+.tax-inv-party-r {
+  border-left: 1.5px solid #000;
+  padding: 8px 10px 6px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
 }
 
 .tax-inv-line {
   display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 6px;
+  grid-template-columns: 86px 1fr;
+  gap: 8px;
   margin-bottom: 3px;
-  align-items: start;
+  align-items: baseline;
+}
+
+.tax-inv-line-r {
+  grid-template-columns: 56px 1fr;
+  margin-bottom: 0;
 }
 
 .tax-inv-lab {
@@ -272,7 +290,7 @@
 }
 
 .tax-inv-val {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .tax-inv-table {
@@ -280,13 +298,28 @@
   border-collapse: collapse;
   table-layout: fixed;
   border: 2px solid #000;
+  border-top: none;
 }
+
+.tax-inv-table .c-sr { width: 5%; }
+.tax-inv-table .c-lr { width: 7%; }
+.tax-inv-table .c-date { width: 9%; }
+.tax-inv-table .c-inv { width: 10%; }
+.tax-inv-table .c-wt { width: 7%; }
+.tax-inv-table .c-veh { width: 10%; }
+.tax-inv-table .c-from { width: 8%; }
+.tax-inv-table .c-to { width: 8%; }
+.tax-inv-table .c-frt { width: 8%; }
+.tax-inv-table .c-halt { width: 7%; }
+.tax-inv-table .c-ham { width: 7%; }
+.tax-inv-table .c-oth { width: 6%; }
+.tax-inv-table .c-tot { width: 8%; }
 
 .tax-inv-table th,
 .tax-inv-table td {
   border: 1px solid #000;
-  padding: 2px 3px;
-  font-size: 9.5px;
+  padding: 3px 3px;
+  font-size: 10px;
   text-align: center;
   vertical-align: middle;
   word-break: break-word;
@@ -295,48 +328,49 @@
 .tax-inv-table th {
   background: #fff;
   font-weight: 800;
-  font-size: 10px;
+  font-size: 10.5px;
   line-height: 1.15;
 }
 
+.tax-inv-charge td {
+  font-weight: 700;
+}
+
 .tax-inv-pad td {
-  height: 14px;
-  border-top: none;
-  border-bottom: none;
+  height: 18px;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
 }
 
 .tax-inv-pad:last-child td {
-  border-bottom: 1px solid #000;
+  border-bottom-color: #000;
 }
 
 .tax-inv-total-bar {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 70px 88px;
   align-items: stretch;
-  border: 1px solid #000;
+  border: 2px solid #000;
   border-top: none;
-  min-height: 28px;
+  min-height: 26px;
 }
 
 .tax-inv-total-l {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
+  gap: 10px;
+  padding: 3px 10px;
   font-size: 13px;
+  font-weight: 700;
 }
 
 .tax-inv-amt {
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .tax-inv-total-r {
-  display: grid;
-  grid-template-columns: 70px 90px;
-  border-left: 1px solid #000;
-  text-align: center;
-  font-weight: 800;
+  display: contents;
 }
 
 .tax-inv-freight-lab,
@@ -344,26 +378,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 6px;
+  padding: 3px 4px;
   font-size: 13px;
+  font-weight: 800;
+  border-left: 1px solid #000;
 }
 
 .tax-inv-freight-val {
-  border-left: 1px solid #000;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .tax-inv-words {
-  border: 1px solid #000;
+  border: 2px solid #000;
   border-top: none;
-  padding: 5px 8px;
+  padding: 4px 10px;
   font-size: 12px;
 }
 
 .tax-inv-bank {
-  margin-top: 4px;
-  border: 1px solid #000;
-  padding: 4px 8px 5px;
+  margin-top: 5px;
+  padding: 2px 6px 4px;
 }
 
 .tax-inv-signs {
@@ -371,8 +405,8 @@
   grid-template-columns: 1fr 1fr 1fr;
   align-items: end;
   gap: 8px;
-  margin-top: 8px;
-  min-height: 72px;
+  margin-top: 10px;
+  min-height: 70px;
 }
 
 .tax-inv-sign-r {
@@ -381,32 +415,34 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  min-height: 72px;
+  min-height: 70px;
 }
 
 .tax-inv-bank-title {
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   font-size: 13px;
 }
 
 .tax-inv-bank-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3px 24px;
+  max-width: 62%;
+  gap: 2px 16px;
   font-size: 12.5px;
 }
 
 .tax-inv-remark {
   margin-top: 4px;
   font-size: 11px;
+  padding: 0 6px;
 }
 
 .tax-inv-sign-l,
 .tax-inv-sign-c,
 .tax-inv-sign-r {
   text-align: center;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
@@ -422,16 +458,17 @@
 
 /* —— Lorry Memo (Frm_PartChallan / 1151.pdf layout) —— */
 .lm {
-  width: 210mm;
+  width: 216mm;
   max-width: 100%;
   margin: 0 auto;
   background: #fff;
   border: 2px solid #000;
-  padding: 6px 10px 8px;
+  padding: 5px 8px 6px;
   color: #000;
   box-sizing: border-box;
   font-family: Arial, Tahoma, sans-serif;
   font-size: 11px;
+  position: relative;
 }
 
 .lm-top {
@@ -456,25 +493,28 @@
 }
 
 .lm-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: -4px;
+  position: relative;
+  min-height: 48px;
 }
 
 .lm-logo {
-  width: 52px;
-  height: 52px;
+  position: absolute;
+  left: 88px;
+  top: 2px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
 }
 
 .lm-co {
+  font-family: "Times New Roman", Times, serif;
   font-size: 34px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: #c00000;
   line-height: 1;
+  text-align: center;
+  padding: 2px 0 0;
 }
 
 .lm-addr {
@@ -483,57 +523,51 @@
   margin: 2px 0 4px;
 }
 
+.lm-frame {
+  border: 1.5px solid #000;
+}
+
 .lm-title {
-  border: 1px solid #000;
   text-align: center;
   font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.12em;
-  padding: 2px 0;
-  margin-bottom: 0;
+  padding: 2px 0 3px;
+  border-bottom: 1.5px solid #000;
 }
 
 .lm-meta {
-  display: grid;
-  grid-template-columns: 1.1fr 1.15fr 1.1fr;
-  border: 1px solid #000;
-  border-top: none;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-.lm-meta-col {
-  border-right: 1px solid #000;
-  padding: 3px 6px 4px 8px;
+.lm-meta th,
+.lm-meta td {
+  border: none;
+  padding: 2px 6px;
+  font-size: 11px;
+  text-align: left;
+  vertical-align: middle;
+  height: 17px;
 }
 
-.lm-meta-col:last-child {
-  border-right: none;
-}
-
-.lm-kv {
-  display: grid;
-  grid-template-columns: 78px 1fr;
-  gap: 4px;
-  min-height: 16px;
-  align-items: baseline;
-}
-
-.lm-k {
+.lm-meta th {
+  width: 11%;
   font-weight: 600;
+  background: #fff;
 }
 
-.lm-v {
-  font-weight: 700;
-}
-
-.lm-main {
-  border: 1px solid #000;
-  border-top: none;
+.lm-meta td {
+  width: 22.3%;
+  font-weight: 800;
 }
 
 .lm-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  border-top: 1.5px solid #000;
 }
 
 .lm-table th,
@@ -550,13 +584,13 @@
   font-weight: 800;
 }
 
-.lm-c-sr { width: 8%; }
-.lm-c-lr { width: 13%; }
-.lm-c-pkg { width: 13%; }
-.lm-c-ct { width: 16%; }
+.lm-c-sr { width: 6%; }
+.lm-c-lr { width: 11%; }
+.lm-c-pkg { width: 12%; }
+.lm-c-ct { width: 24%; }
 .lm-c-wt { width: 14%; }
-.lm-c-from { width: 18%; }
-.lm-c-to { width: 18%; }
+.lm-c-from { width: 16.5%; }
+.lm-c-to { width: 16.5%; }
 
 .lm-pad td {
   border-top-color: transparent;
@@ -582,13 +616,15 @@
 .lm-foot {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  min-height: 78px;
-  padding: 10px 16px 4px;
+  align-items: flex-start;
+  min-height: 88px;
+  padding: 8px 16px 4px;
 }
 
 .lm-driver {
   font-weight: 700;
+  align-self: flex-end;
+  padding-bottom: 8px;
 }
 
 .lm-sign {
@@ -602,6 +638,18 @@
 }
 
 @media print {
+  .doc-print-toolbar {
+    display: none !important;
+  }
+  .doc-print-page {
+    background: #fff;
+    padding: 0;
+  }
+  .doc-sheet {
+    border-width: 1px;
+    max-width: none;
+    break-inside: avoid;
+  }
   html.lm-print-root {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
@@ -619,23 +667,12 @@
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
-  @page {
-    size: A4;
-    margin: 8mm;
-  }
-  .doc-print-toolbar {
-    display: none !important;
-  }
-  .doc-print-page {
+  html.tax-inv-print-root .doc-print-page {
     background: #fff;
     padding: 0;
   }
-  .doc-sheet {
-    border-width: 1px;
-    max-width: none;
-    break-inside: avoid;
-  }
   .tax-inv {
+    width: auto;
     max-width: none;
     margin: 0;
     break-inside: avoid;
