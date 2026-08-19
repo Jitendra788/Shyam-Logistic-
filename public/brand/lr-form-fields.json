@@ -1,0 +1,153 @@
+{
+  "pagePts": [
+    595.3200073242188,
+    841.9200439453125
+  ],
+  "copy2OffsetPct": 49.8622,
+  "fields": {
+    "lorryNo": {
+      "left": 11.893,
+      "top": 7.922
+    },
+    "bookingFrom": {
+      "left": 16.831,
+      "top": 10.844
+    },
+    "deliveryAt": {
+      "left": 53.114,
+      "top": 10.844
+    },
+    "lrNo": {
+      "left": 81.334,
+      "top": 10.844
+    },
+    "from": {
+      "left": 16.932,
+      "top": 13.03
+    },
+    "to": {
+      "left": 48.025,
+      "top": 13.03
+    },
+    "date": {
+      "left": 81.234,
+      "top": 13.03
+    },
+    "consignor": {
+      "left": 12.766,
+      "top": 15.583
+    },
+    "consignorAddr": {
+      "left": 4.435,
+      "top": 17.401
+    },
+    "consignorGst": {
+      "left": 12.766,
+      "top": 20.572
+    },
+    "consignee": {
+      "left": 59.128,
+      "top": 15.583
+    },
+    "consigneeAddr": {
+      "left": 51.065,
+      "top": 17.721
+    },
+    "consigneeGst": {
+      "left": 59.128,
+      "top": 20.572
+    },
+    "articles": {
+      "left": 4.199,
+      "top": 25.786
+    },
+    "particulars": {
+      "left": 11.742,
+      "top": 25.786
+    },
+    "invNo": {
+      "left": 45.018,
+      "top": 25.786
+    },
+    "rate": {
+      "left": 58.59,
+      "top": 25.774
+    },
+    "actWt": {
+      "left": 55.936,
+      "top": 31.488
+    },
+    "chgWt": {
+      "left": 56.104,
+      "top": 36.476
+    },
+    "freight": {
+      "left": 85.332,
+      "top": 25.656
+    },
+    "doorColl": {
+      "left": 85.332,
+      "top": 27.437
+    },
+    "doorDel": {
+      "left": 85.332,
+      "top": 29.219
+    },
+    "hamali": {
+      "left": 85.332,
+      "top": 31.001
+    },
+    "stChgs": {
+      "left": 85.332,
+      "top": 32.545
+    },
+    "totalAmt": {
+      "left": 85.332,
+      "top": 34.326
+    },
+    "gstAmt": {
+      "left": 85.332,
+      "top": 35.989
+    },
+    "advance": {
+      "left": 85.332,
+      "top": 37.64
+    },
+    "balance": {
+      "left": 85.332,
+      "top": 39.446
+    },
+    "eway": {
+      "left": 14.446,
+      "top": 41.346
+    },
+    "validDate": {
+      "left": 46.698,
+      "top": 41.346
+    },
+    "payTopay": {
+      "left": 4.703,
+      "top": 44.434
+    },
+    "payPaid": {
+      "left": 12.766,
+      "top": 44.434
+    },
+    "payTbb": {
+      "left": 19.653,
+      "top": 44.434
+    },
+    "gstConsigner": {
+      "left": 72.23,
+      "top": 9.265
+    },
+    "gstConsignee": {
+      "left": 82.309,
+      "top": 9.265
+    },
+    "gstTransporter": {
+      "left": 91.547,
+      "top": 9.265
+    }
+  }
+}

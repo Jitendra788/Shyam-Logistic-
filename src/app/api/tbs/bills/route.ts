@@ -7,6 +7,7 @@ import {
   saveBills,
   uid,
 } from "@/lib/tbs/store";
+import { displayBillNo } from "@/lib/tbs/billPrint";
 import type { Bill } from "@/lib/tbs/types";
 import { needsPartyBill } from "@/lib/tbs/lrType";
 
@@ -50,10 +51,12 @@ export async function POST(req: Request) {
         `Paid / Cancel LRs cannot be billed (LR ${blocked.map((b) => b.lrNo).join(", ")}). Use TBB or ToPay.`,
       );
     }
+    const serial = body.billNo || nextCode(bills, "billNo", 1);
+    const billDate = body.billDate || new Date().toISOString().slice(0, 10);
     const bill: Bill = {
       id: uid("bill"),
-      billNo: body.billNo || nextCode(bills, "billNo", 1),
-      billDate: body.billDate || new Date().toISOString().slice(0, 10),
+      billNo: displayBillNo(String(serial), billDate),
+      billDate,
       partyName: (body.partyName || "").trim(),
       totalAmount: Number(body.totalAmount) || 0,
       lrCharges: Number(body.lrCharges) || 0,
@@ -90,7 +93,11 @@ export async function PUT(req: Request) {
     }
     const idx = bills.findIndex((b) => b.id === body.id);
     if (idx < 0) return bad("Not found", 404);
-    bills[idx] = { ...bills[idx], ...body };
+    bills[idx] = {
+      ...bills[idx],
+      ...body,
+      billNo: displayBillNo(String(body.billNo || bills[idx].billNo), body.billDate || bills[idx].billDate),
+    };
     await saveBills(bills);
     return ok(bills[idx]);
   } catch (e) {

@@ -226,7 +226,7 @@ function OverlayFields({
       <Field name="particulars" copyIndex={copyIndex}>
         {booking.particulars || ""}
       </Field>
-      <Field name="invNo" copyIndex={copyIndex}>
+      <Field name="invNo" copyIndex={copyIndex} className="lr-f-inv">
         {booking.invNoDate || ""}
       </Field>
       <Field name="rate" copyIndex={copyIndex} className="lr-f-rate">

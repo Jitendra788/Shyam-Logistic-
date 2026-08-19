@@ -1,21 +1,24 @@
 /** Next sequential document number from existing rows (max + 1). */
+function toDocNum(v: unknown): number {
+  const s = String(v ?? "").trim();
+  const m = s.match(/(\d+)\s*$/);
+  const n = m ? Number(m[1]) : Number(s);
+  return Number.isFinite(n) && n > 0 ? n : NaN;
+}
+
 export function nextCode(
   items: Record<string, unknown>[],
   key: string,
   start = 1,
 ) {
-  const nums = items
-    .map((i) => Number(i[key]))
-    .filter((n) => Number.isFinite(n) && n > 0);
+  const nums = items.map((i) => toDocNum(i[key])).filter((n) => Number.isFinite(n) && n > 0);
   const max = nums.length ? Math.max(...nums) : start - 1;
   return String(max + 1);
 }
 
 function usedNumbers(items: Record<string, unknown>[], key: string) {
   return new Set(
-    items
-      .map((i) => Number(i[key]))
-      .filter((n) => Number.isFinite(n) && n > 0),
+    items.map((i) => toDocNum(i[key])).filter((n) => Number.isFinite(n) && n > 0),
   );
 }
 

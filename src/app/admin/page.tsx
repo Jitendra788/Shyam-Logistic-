@@ -166,6 +166,36 @@ function greeting() {
   return "Good evening";
 }
 
+function vsYesterday(now: number, prev: number | undefined) {
+  if (prev == null || !Number.isFinite(prev)) return null;
+  const d = now - prev;
+  if (d === 0) return null;
+  return {
+    cls: d > 0 ? "up" : "down",
+    label: `${d > 0 ? "+" : ""}${d} vs yesterday`,
+  };
+}
+
+function WeekSpark({
+  values,
+}: {
+  values: number[];
+}) {
+  const w = 88;
+  const h = 28;
+  const max = Math.max(1, ...values);
+  const pts = values.map((v, i) => {
+    const x = values.length <= 1 ? w / 2 : (i * w) / (values.length - 1);
+    const y = h - 3 - (v / max) * (h - 6);
+    return `${x},${y}`;
+  });
+  return (
+    <svg className="tbs-spark" viewBox={`0 0 ${w} ${h}`} aria-hidden>
+      <polyline points={pts.join(" ")} fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
 function statusLabel(b: BookingRow) {
   if (b.delivered && b.billed) return "Completed";
   if (b.delivered && !b.billed) return "Bill due";
@@ -528,6 +558,14 @@ export default function AdminMasterPage() {
   const pipeDel = p?.billedNotDelivered || 0;
   const pipeDone = c?.lrs || 0;
   const pipeDonePct = pipeTotal ? Math.round((pipeDone / pipeTotal) * 100) : 0;
+  const todayIdx = week.findIndex((d) => d.date === tw?.date);
+  const yest = todayIdx > 0 ? week[todayIdx - 1] : undefined;
+  const dTodayLr = vsYesterday(tw?.bookings ?? 0, yest?.bookings);
+  const dTodayColl = vsYesterday(tw?.collected ?? 0, yest?.collected);
+  const fleetPct = vehicles.total
+    ? Math.round((vehicles.onRoad / vehicles.total) * 100)
+    : 0;
+  const collPct = data?.collectionPct ?? 0;
   const weekLr = week.reduce((s, d) => s + d.bookings, 0);
   const weekColl = week.reduce((s, d) => s + d.collected, 0);
   const weekBarMax = Math.max(1, ...week.map((d) => d.bookings));
@@ -581,35 +619,48 @@ export default function AdminMasterPage() {
   }
 
   return (
-    <div className="tbs-dash">
+    <div className="tbs-dash tbs-dash-pro">
       <section className="tbs-dash-hero">
         <div className="tbs-dash-hero-top">
-          <div>
-            <span className="tbs-dash-eyebrow">
-              Live operations · {today.date}
-            </span>
-            <h1>
-              {greeting()}
-              <span className="tbs-dash-brand"> · SHYAM LOGISTICS</span>
-            </h1>
-            <p>
-              {today.shift}. Track bookings, collections, hire, and pending LRs
-              from one desk.
-            </p>
+          <div className="tbs-dash-hero-id">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/shyam-peacock-mark-print.png"
+              alt=""
+              className="tbs-dash-mark"
+            />
+            <div>
+              <span className="tbs-dash-eyebrow">
+                <i className="tbs-live-dot" aria-hidden />
+                Operations desk · {today.date}
+              </span>
+              <h1>
+                {greeting()}
+                <span className="tbs-dash-brand"> · SHYAM LOGISTICS</span>
+              </h1>
+              <p>
+                Live bookings, collections, hire and pending LRs — one control
+                board.
+              </p>
+            </div>
           </div>
           <div className="tbs-dash-today" aria-label={`Today is ${today.weekday}`}>
-            <span className="tbs-dash-today-kicker">
-              Today · Live IST
-            </span>
+            <span className="tbs-dash-today-kicker">Today · IST</span>
             <strong>{today.weekday}</strong>
             <span className="tbs-dash-today-clock">{clock || "—"}</span>
             <span>
               {today.date} · Week {today.week}
             </span>
+            {week.length > 0 ? (
+              <WeekSpark values={week.map((d) => d.bookings)} />
+            ) : null}
           </div>
           <div className="tbs-dash-hero-actions">
             <Link href="/admin/transport/booking" className="tbs-dash-cta">
               + New Booking
+            </Link>
+            <Link href="/admin/transport/bill" className="tbs-dash-ghost">
+              Prepare bill
             </Link>
             <button
               type="button"
@@ -619,44 +670,42 @@ export default function AdminMasterPage() {
             >
               {loading ? "Refreshing…" : "Refresh"}
             </button>
-            <button
-              type="button"
-              className="tbs-dash-wipe"
-              onClick={() => void wipeAllData()}
-              disabled={loading || wiping}
-            >
-              {wiping ? "Deleting…" : "Clear all data"}
-            </button>
           </div>
         </div>
         {data && (
           <>
-            <div className="tbs-dash-hero-stats tbs-dash-hero-stats-6">
-              <div>
-                <strong>{p!.lrTotal}</strong>
+            <div className="tbs-kpi-strip">
+              <div className="tbs-kpi-tile">
                 <span>Pending LR</span>
+                <strong>{p!.lrTotal}</strong>
               </div>
-              <div>
-                <strong>{c!.lrs}</strong>
+              <div className="tbs-kpi-tile">
                 <span>Completed LR</span>
+                <strong>{c!.lrs}</strong>
               </div>
-              <div>
-                <strong>{inr(p!.outstandingAmt)}</strong>
+              <div className="tbs-kpi-tile hot">
                 <span>Outstanding</span>
+                <strong>{inr(p!.outstandingAmt)}</strong>
               </div>
-              <div>
+              <div className={`tbs-kpi-tile ${profitPositive ? "ok" : "hot"}`}>
+                <span>Gross profit</span>
                 <strong className={profitPositive ? "" : "neg"}>
                   {inr(pr!.profit)}
                 </strong>
-                <span>Gross profit</span>
               </div>
-              <div>
-                <strong>{tw?.bookings ?? 0}</strong>
+              <div className="tbs-kpi-tile">
                 <span>Today LR</span>
+                <strong>{tw?.bookings ?? 0}</strong>
+                {dTodayLr ? (
+                  <em className={`tbs-delta ${dTodayLr.cls}`}>{dTodayLr.label}</em>
+                ) : null}
               </div>
-              <div>
-                <strong>{inr(tw?.collected ?? 0)}</strong>
+              <div className="tbs-kpi-tile">
                 <span>Today collection</span>
+                <strong>{inr(tw?.collected ?? 0)}</strong>
+                {dTodayColl ? (
+                  <em className={`tbs-delta ${dTodayColl.cls}`}>{dTodayColl.label}</em>
+                ) : null}
               </div>
             </div>
             <div className="tbs-hero-pulse">
@@ -672,12 +721,18 @@ export default function AdminMasterPage() {
                 </strong>
               </div>
               <div>
-                <span>Vehicles on road</span>
-                <strong>{tw?.vehicles ?? 0}</strong>
+                <span>Fleet on road</span>
+                <strong>
+                  {tw?.vehicles ?? 0}
+                  <small> {fleetPct}% utilised</small>
+                </strong>
               </div>
               <div>
                 <span>Collection rate</span>
-                <strong>{data.collectionPct ?? 0}%</strong>
+                <strong>{collPct}%</strong>
+                <div className="tbs-mini-meter" aria-hidden>
+                  <i style={{ width: `${Math.min(100, collPct)}%` }} />
+                </div>
               </div>
             </div>
             <div className="tbs-dash-progress" aria-hidden>
@@ -792,6 +847,12 @@ export default function AdminMasterPage() {
                       <span>Idle</span>
                       <strong>{vehicles.idle}</strong>
                     </div>
+                  </div>
+                  <div className="tbs-veh-util" aria-label={`Fleet ${fleetPct}% on road`}>
+                    <div className="tbs-veh-util-track">
+                      <i style={{ width: `${fleetPct}%` }} />
+                    </div>
+                    <span>{fleetPct}% utilisation · {vehicles.total} vehicles</span>
                   </div>
                   {vehicles.list.length > 0 ? (
                     <div className="tbs-veh-list">
@@ -1497,6 +1558,18 @@ export default function AdminMasterPage() {
           </div>
         </>
       )}
+
+      <div className="tbs-dash-foot">
+        <span>Auto-refresh every 60 seconds · SHYAM LOGISTICS operations</span>
+        <button
+          type="button"
+          className="tbs-dash-wipe-quiet"
+          onClick={() => void wipeAllData()}
+          disabled={loading || wiping}
+        >
+          {wiping ? "Deleting…" : "Clear all data"}
+        </button>
+      </div>
     </div>
   );
 }

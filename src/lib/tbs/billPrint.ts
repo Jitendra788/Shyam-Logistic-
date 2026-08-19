@@ -103,8 +103,24 @@ export function lrOtherCharges(b: Booking) {
   );
 }
 
-export function buildBillLines(lrs: Booking[], bill?: Partial<Bill>): BillPrintLine[] {
-  const lines: BillPrintLine[] = lrs.map((b, i) => {
+/** Crystal Rptbilling parameters from billmaster. */
+export function billCrystalCharges(bill?: Partial<Bill>) {
+  return [
+    ["LR Charges", Number(bill?.lrCharges) || 0],
+    ["Detention", Number(bill?.detention) || 0],
+    ["Hamali", Number(bill?.hamali) || 0],
+    ["Door Delivery", Number(bill?.doorDelivery) || 0],
+    ["Door Collection", Number(bill?.doorCollection) || 0],
+    ["Other", Number(bill?.other) || 0],
+  ] as const;
+}
+
+export function billLrSum(lrs: Booking[]) {
+  return lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
+}
+
+export function buildBillLines(lrs: Booking[]): BillPrintLine[] {
+  return lrs.map((b, i) => {
     const freight = Number(b.freight || 0);
     const hamali = Number(b.hamali || 0);
     const halting = Number(b.barrier || 0);
@@ -126,35 +142,6 @@ export function buildBillLines(lrs: Booking[], bill?: Partial<Bill>): BillPrintL
       total: blankNum(rowTotal),
     };
   });
-
-  const extras: Array<[string, number]> = [
-    ["LR Charges", Number(bill?.lrCharges) || 0],
-    ["Detention", Number(bill?.detention) || 0],
-    ["Hamali", Number(bill?.hamali) || 0],
-    ["Door Delivery", Number(bill?.doorDelivery) || 0],
-    ["Door Collection", Number(bill?.doorCollection) || 0],
-    ["Other", Number(bill?.other) || 0],
-  ];
-  for (const [label, amount] of extras) {
-    if (!amount) continue;
-    lines.push({
-      sr: "",
-      lrNo: "",
-      lrDate: "",
-      invNo: label,
-      weight: "",
-      vehicle: "",
-      from: "",
-      to: "",
-      freight: "",
-      halting: "",
-      hamali: "",
-      other: "",
-      total: blankNum(amount),
-      chargeLabel: true,
-    });
-  }
-  return lines;
 }
 
 export function billedPartyInfo(
@@ -170,6 +157,6 @@ export function billedPartyInfo(
 }
 
 export function billPrintTotal(bill: Bill, lrs: Booking[]) {
-  const lrSum = lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
+  const lrSum = billLrSum(lrs);
   return Number(bill.totalAmount) || lrSum + billExtraCharges(bill);
 }

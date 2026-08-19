@@ -1,14 +1,16 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BrandLogo } from "@/components/BrandLogo";
+import { DEFAULT_MARK_URL } from "@/components/BrandLogo";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,59 +36,94 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 50% at 10% 0%, rgba(198,40,40,0.08), transparent 55%), radial-gradient(ellipse 60% 45% at 90% 10%, rgba(10,31,61,0.1), transparent 50%), #f8fafc",
-        }}
-      />
-      <div className="relative w-full max-w-md rounded-xl border border-line bg-white p-6 shadow-[0_12px_40px_rgba(10,31,61,0.08)] sm:p-8">
-        <div className="mb-6">
-          <BrandLogo companyName="SHYAM LOGISTIC" size="sm" variant="light" />
-        </div>
-        <p className="section-label">Admin</p>
-        <h1 className="mt-2 font-display text-3xl font-semibold text-navy">
-          Sign in
-        </h1>
-        <p className="mt-2 text-sm text-muted">
-          Transport billing, reports, and website content.
-        </p>
-
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Username</label>
-            <input
-              className="input-field"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              required
+    <div className="login-screen">
+      <div className="login-shell">
+        <aside className="login-hero">
+          <div className="login-hero-photo">
+            <Image
+              src="/brand/login-truck.png"
+              alt="Shyam Logistics truck"
+              fill
+              priority
+              sizes="(max-width: 900px) 100vw, 52vw"
+              className="login-hero-img"
             />
           </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Password</label>
-            <input
-              className="input-field"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
+          <div className="login-hero-wash" />
+          <Image
+            src={DEFAULT_MARK_URL}
+            alt=""
+            width={420}
+            height={420}
+            className="login-hero-watermark"
+            aria-hidden
+          />
+          <div className="login-hero-copy">
+            <h1>Digitally Connected Logistics Platform</h1>
+            <p>
+              Increase efficiency, reduce costs, and keep every booking, bill,
+              and challan in one place.
+            </p>
+          </div>
+        </aside>
+
+        <section className="login-panel">
+          <div className="login-logo">
+            <Image
+              src={DEFAULT_MARK_URL}
+              alt="Shyam Logistics"
+              width={72}
+              height={72}
+              priority
             />
           </div>
-          {error && <p className="text-sm text-danger">{error}</p>}
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
+          <h2>Sign in to Shyam Logistics</h2>
+          <p className="login-lead">
+            Access your company dashboard to manage trips, bills, and operations.
+          </p>
 
-        <p className="mt-6 text-center text-sm text-muted">
-          <Link href="/" className="font-semibold text-navy hover:underline">
+          <form onSubmit={onSubmit} className="login-form">
+            <label>
+              Username
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                placeholder="Enter your username"
+                required
+              />
+            </label>
+            <label>
+              Password
+              <span className="login-pass-row">
+                <input
+                  type={showPass ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="login-eye"
+                  onClick={() => setShowPass((v) => !v)}
+                  aria-label={showPass ? "Hide password" : "Show password"}
+                >
+                  {showPass ? "Hide" : "Show"}
+                </button>
+              </span>
+            </label>
+            {error ? <p className="login-error">{error}</p> : null}
+            <button type="submit" disabled={loading} className="login-submit">
+              {loading ? "Signing in…" : "Continue"}
+            </button>
+          </form>
+
+          <Link href="/" className="login-back">
             ← Back to website
           </Link>
-        </p>
+        </section>
       </div>
     </div>
   );

@@ -1,8 +1,15 @@
-import { LineCapStyle, PDFDocument, StandardFonts, rgb, type PDFPage, type PDFImage } from "pdf-lib";
+import {
+  LineCapStyle,
+  PDFDocument,
+  StandardFonts,
+  rgb,
+  type PDFFont,
+  type PDFImage,
+  type PDFPage,
+} from "pdf-lib";
 import { readFile } from "fs/promises";
 import path from "path";
 import type { Booking, Party } from "@/lib/tbs/types";
-import { getSettings } from "@/lib/store";
 
 const PAGE_H = 841.92;
 /** Offset between matching fields on copy 1 vs copy 2 (not the gap above copy 2). */
@@ -39,7 +46,74 @@ function partyOf(parties: Party[], name: string) {
   );
 }
 
-type Pt = { x: number; y: number; size?: number; right?: number; mid?: boolean };
+type Pt = {
+  x: number;
+  y: number;
+  size?: number;
+  right?: number;
+  mid?: boolean;
+  /** Max width in points — text must never cross this far. */
+  maxW?: number;
+};
+
+function shrinkToWidth(
+  font: PDFFont,
+  value: string,
+  size: number,
+  maxW: number,
+): { text: string; size: number } {
+  let s = size;
+  while (s > 6 && font.widthOfTextAtSize(value, s) > maxW) s -= 0.4;
+  if (font.widthOfTextAtSize(value, s) <= maxW) return { text: value, size: s };
+  let t = value;
+  while (t.length > 1 && font.widthOfTextAtSize(`${t}…`, s) > maxW) {
+    t = t.slice(0, -1);
+  }
+  return { text: `${t}…`, size: s };
+}
+
+function wrapToWidth(
+  font: PDFFont,
+  value: string,
+  size: number,
+  maxW: number,
+  maxLines: number,
+): { lines: string[]; size: number } {
+  const limit = Math.max(8, maxW - 1);
+  let s = size;
+  const pack = (sz: number) => {
+    const lines: string[] = [];
+    let rest = value.trim();
+    while (rest && lines.length < maxLines) {
+      if (font.widthOfTextAtSize(rest, sz) <= limit) {
+        lines.push(rest);
+        rest = "";
+        break;
+      }
+      let cut = rest.length;
+      while (cut > 1 && font.widthOfTextAtSize(rest.slice(0, cut), sz) > limit) {
+        cut -= 1;
+      }
+      lines.push(rest.slice(0, cut).trimEnd());
+      rest = rest.slice(cut).trimStart();
+    }
+    if (rest && lines.length) {
+      lines[lines.length - 1] = shrinkToWidth(
+        font,
+        lines[lines.length - 1],
+        sz,
+        limit,
+      ).text;
+    }
+    return lines.filter(Boolean);
+  };
+  let lines = pack(s);
+  while (s > 6.2 && lines.some((ln) => ln.endsWith("…"))) {
+    s -= 0.35;
+    lines = pack(s);
+  }
+  return { lines, size: s };
+}
 
 /**
  * Freight row mid-Y from blank form grid (value column).
@@ -58,37 +132,38 @@ const FREIGHT_MID: Record<string, number> = {
 };
 
 const FIELDS: Record<string, Pt> = {
-  lorryNo: { x: 70.8, y: 66.7 },
-  bookingFrom: { x: 100.2, y: 91.3 },
-  deliveryAt: { x: 316.2, y: 91.3 },
-  lrNo: { x: 484.2, y: 91.3, size: 11 },
-  from: { x: 100.8, y: 109.7 },
-  to: { x: 285.9, y: 109.7, size: 10 },
-  date: { x: 483.6, y: 109.7 },
-  consignor: { x: 76.0, y: 131.2, size: 9 },
-  consignorAddr: { x: 26.4, y: 146.5, size: 8 },
-  consignorGst: { x: 76.0, y: 173.2, size: 8 },
-  consignee: { x: 352.0, y: 131.2, size: 9 },
-  consigneeAddr: { x: 304.0, y: 149.2, size: 8 },
-  consigneeGst: { x: 352.0, y: 173.2, size: 8 },
-  articles: { x: 25.0, y: 217.1 },
-  particulars: { x: 69.9, y: 217.1 },
-  invNo: { x: 268.0, y: 217.1 },
-  rate: { x: 348.8, y: 217.0 },
-  actWt: { x: 340.0, y: 265.1 },
-  chgWt: { x: 340.0, y: 307.1 },
-  freight: { x: 502.0, y: FREIGHT_MID.freight, size: 8, right: 504, mid: true },
-  doorColl: { x: 502.0, y: FREIGHT_MID.doorColl, size: 8, right: 504, mid: true },
-  doorDel: { x: 502.0, y: FREIGHT_MID.doorDel, size: 8, right: 504, mid: true },
-  hamali: { x: 502.0, y: FREIGHT_MID.hamali, size: 8, right: 504, mid: true },
-  stChgs: { x: 502.0, y: FREIGHT_MID.stChgs, size: 8, right: 504, mid: true },
-  totalAmt: { x: 502.0, y: FREIGHT_MID.totalAmt, size: 8, right: 504, mid: true },
-  gstAmt: { x: 502.0, y: FREIGHT_MID.gstAmt, size: 8, right: 504, mid: true },
-  advance: { x: 502.0, y: FREIGHT_MID.advance, size: 8, right: 504, mid: true },
-  balance: { x: 502.0, y: FREIGHT_MID.balance, size: 8, right: 504, mid: true },
-  remark: { x: 520.0, y: 217.1, size: 8 },
-  eway: { x: 86.0, y: 352.5 },
-  validDate: { x: 278.0, y: 352.5 },
+  lorryNo: { x: 70.8, y: 66.7, maxW: 170 },
+  bookingFrom: { x: 100.2, y: 91.3, maxW: 140 },
+  deliveryAt: { x: 316.2, y: 91.3, maxW: 90 },
+  lrNo: { x: 484.2, y: 91.3, size: 11, maxW: 80 },
+  from: { x: 100.8, y: 109.7, maxW: 140 },
+  to: { x: 285.9, y: 109.7, size: 10, maxW: 115 },
+  date: { x: 483.6, y: 109.7, maxW: 80 },
+  consignor: { x: 76.0, y: 131.2, size: 9, maxW: 210 },
+  consignorAddr: { x: 26.4, y: 146.5, size: 8, maxW: 260 },
+  consignorGst: { x: 76.0, y: 173.2, size: 8, maxW: 210 },
+  consignee: { x: 352.0, y: 131.2, size: 9, maxW: 210 },
+  consigneeAddr: { x: 304.0, y: 149.2, size: 8, maxW: 255 },
+  consigneeGst: { x: 352.0, y: 173.2, size: 8, maxW: 210 },
+  articles: { x: 25.0, y: 217.1, maxW: 40 },
+  particulars: { x: 69.9, y: 217.1, maxW: 188 },
+  /** Inv.No column ends ~324 (Rate rule ~338). 268+72 overflowed into Rate. */
+  invNo: { x: 266.0, y: 214.0, size: 7, maxW: 54 },
+  rate: { x: 348.8, y: 217.0, size: 8, maxW: 30 },
+  actWt: { x: 340.0, y: 265.1, size: 8, maxW: 42 },
+  chgWt: { x: 340.0, y: 307.1, size: 8, maxW: 42 },
+  freight: { x: 502.0, y: FREIGHT_MID.freight, size: 8, right: 504, mid: true, maxW: 48 },
+  doorColl: { x: 502.0, y: FREIGHT_MID.doorColl, size: 8, right: 504, mid: true, maxW: 48 },
+  doorDel: { x: 502.0, y: FREIGHT_MID.doorDel, size: 8, right: 504, mid: true, maxW: 48 },
+  hamali: { x: 502.0, y: FREIGHT_MID.hamali, size: 8, right: 504, mid: true, maxW: 48 },
+  stChgs: { x: 502.0, y: FREIGHT_MID.stChgs, size: 8, right: 504, mid: true, maxW: 48 },
+  totalAmt: { x: 502.0, y: FREIGHT_MID.totalAmt, size: 8, right: 504, mid: true, maxW: 48 },
+  gstAmt: { x: 502.0, y: FREIGHT_MID.gstAmt, size: 8, right: 504, mid: true, maxW: 48 },
+  advance: { x: 502.0, y: FREIGHT_MID.advance, size: 8, right: 504, mid: true, maxW: 48 },
+  balance: { x: 502.0, y: FREIGHT_MID.balance, size: 8, right: 504, mid: true, maxW: 48 },
+  remark: { x: 520.0, y: 217.1, size: 8, maxW: 48 },
+  eway: { x: 86.0, y: 352.5, maxW: 125 },
+  validDate: { x: 278.0, y: 352.5, maxW: 90 },
 };
 
 const CHECKS = {
@@ -175,32 +250,16 @@ function publicFile(url: string) {
   return path.join(process.cwd(), "public", rel);
 }
 
-function isDefaultSiteLogo(url: string) {
-  return /shyam-logo|shyam-brand|shyam-mark|shyam-peacock|\/brand\/logo/i.test(
-    url,
-  );
-}
-
-/** Website logo as PNG/JPG bytes (pdf-lib cannot embed WebP). */
-async function readSiteLogoBytes(): Promise<Uint8Array | null> {
-  const settings = await getSettings();
-  const custom = settings.logoUrl?.trim() || "";
-  const paths: string[] = [];
-  if (custom && !isDefaultSiteLogo(custom)) {
-    paths.push(publicFile(custom));
-    paths.push(publicFile(custom.replace(/\.webp$/i, ".png")));
-    paths.push(publicFile(custom.replace(/\.webp$/i, ".jpg")));
-  }
-  paths.push(publicFile("/brand/shyam-peacock-mark.png"));
-  paths.push(publicFile("/brand/shyam-brand-logo.png"));
-  const seen = new Set<string>();
+/** Print peacock (white/transparent). Screen mark has a black square — do not use on LR. */
+async function readPrintLogoBytes(): Promise<Uint8Array | null> {
+  const paths = [
+    publicFile("/brand/shyam-peacock-mark-print.png"),
+    publicFile("/brand/shyam-peacock-mark.png"),
+  ];
   for (const file of paths) {
-    if (seen.has(file)) continue;
-    seen.add(file);
     try {
       const buf = await readFile(file);
-      if (buf[0] === 0x89 && buf[1] === 0x50) return buf; // PNG
-      if (buf[0] === 0xff && buf[1] === 0xd8) return buf; // JPEG
+      if (buf[0] === 0x89 && buf[1] === 0x50) return buf;
     } catch {
       /* try next */
     }
@@ -208,35 +267,64 @@ async function readSiteLogoBytes(): Promise<Uint8Array | null> {
   return null;
 }
 
-async function embedSiteLogo(pdf: PDFDocument): Promise<PDFImage | null> {
-  const bytes = await readSiteLogoBytes();
+async function embedPrintLogo(pdf: PDFDocument): Promise<PDFImage | null> {
+  const bytes = await readPrintLogoBytes();
   if (!bytes) return null;
-  if (bytes[0] === 0x89) return pdf.embedPng(bytes);
-  return pdf.embedJpg(bytes);
+  return pdf.embedPng(bytes);
 }
 
-/** Cover printed peacock + place website logo (copy 1 / copy 2). */
+const RED = rgb(0.75, 0, 0);
+const PAGE_W = 595.32;
+
+/** Original JPEG peacock boxes on lr-form-blank.pdf (top-left origin). */
 const LOGO_BOXES = [
-  { x: 18.2, y: 7.6, w: 57, h: 41 },
-  { x: 18.2, y: 428.6, w: 58, h: 44 },
+  { x: 20.4, y: 9.8, w: 53.4, h: 37.1 },
+  { x: 20.0, y: 431.0, w: 52.0, h: 36.0 },
 ];
 
-function drawSiteLogo(page: PDFPage, image: PDFImage, copyIndex: 0 | 1) {
+/** Stay between GST row (~22) and address line (~39). Never cross those rules. */
+const NAME_BASELINE_TOP = [37.6, 458.6] as const;
+const NAME_SIZE = 16;
+
+function drawPrintLogo(page: PDFPage, image: PDFImage, copyIndex: 0 | 1) {
   const box = LOGO_BOXES[copyIndex];
   const pdfY = PAGE_H - box.y - box.h;
   page.drawRectangle({
-    x: box.x - 1,
-    y: pdfY - 1,
-    width: box.w + 2,
-    height: box.h + 2,
+    x: box.x,
+    y: pdfY,
+    width: box.w,
+    height: box.h,
     color: rgb(1, 1, 1),
   });
-  const dims = image.scaleToFit(box.w, box.h);
+  const dims = image.scaleToFit(box.w - 1, box.h - 1);
   page.drawImage(image, {
     x: box.x + (box.w - dims.width) / 2,
     y: pdfY + (box.h - dims.height) / 2,
     width: dims.width,
     height: dims.height,
+  });
+}
+
+function drawCompanyName(page: PDFPage, font: PDFFont, copyIndex: 0 | 1) {
+  const label = "SHYAM LOGISTICS";
+  const size = NAME_SIZE;
+  const tw = font.widthOfTextAtSize(label, size);
+  const x = (PAGE_W - tw) / 2;
+  const baselineTop = NAME_BASELINE_TOP[copyIndex];
+  const y = PAGE_H - baselineTop;
+  page.drawRectangle({
+    x: x - 2,
+    y: y - 1,
+    width: tw + 4,
+    height: size * 0.72,
+    color: rgb(1, 1, 1),
+  });
+  page.drawText(label, {
+    x,
+    y,
+    size,
+    font,
+    color: RED,
   });
 }
 
@@ -259,7 +347,8 @@ export async function buildLrPdf(
   const page2 = pdf.getPages()[1];
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const siteLogo = await embedSiteLogo(pdf);
+  const nameFont = await pdf.embedFont(StandardFonts.TimesRomanBold);
+  const printLogo = await embedPrintLogo(pdf);
 
   const consignor = partyOf(parties, booking.consignor);
   const consignee = partyOf(parties, booking.consignee);
@@ -331,18 +420,41 @@ export async function buildLrPdf(
       if (!text) continue;
       const f = FIELDS[key];
       if (!f) continue;
-      const size = f.size ?? 9;
+      const size0 = f.size ?? 9;
       const useBold = boldKeys.has(key);
       const fnt = useBold ? fontBold : font;
+      const wrapKeys = new Set(["invNo", "particulars", "consignorAddr", "consigneeAddr"]);
+      if (f.maxW && wrapKeys.has(key)) {
+        const wrapped = wrapToWidth(
+          fnt,
+          text,
+          size0,
+          f.maxW,
+          key === "invNo" ? 4 : 2,
+        );
+        wrapped.lines.forEach((line, i) => {
+          page.drawText(line, {
+            x: f.x,
+            y: baseY(f.y + dy + i * (wrapped.size + 1.5), wrapped.size),
+            size: wrapped.size,
+            font: fnt,
+            color: rgb(0, 0, 0),
+          });
+        });
+        continue;
+      }
+      const fitted = f.maxW
+        ? shrinkToWidth(fnt, text, size0, f.maxW)
+        : { text, size: size0 };
       let x = f.x;
       if (f.right != null) {
-        const tw = fnt.widthOfTextAtSize(text, size);
+        const tw = fnt.widthOfTextAtSize(fitted.text, fitted.size);
         x = f.right - tw;
       }
       if (f.mid && f.right != null) {
-        const tw = fnt.widthOfTextAtSize(text, size);
+        const tw = fnt.widthOfTextAtSize(fitted.text, fitted.size);
         const padX = f.right - tw - 1;
-        const padH = size + 2;
+        const padH = fitted.size + 2;
         const padTop = f.y + dy - padH / 2;
         page.drawRectangle({
           x: padX,
@@ -352,10 +464,10 @@ export async function buildLrPdf(
           color: rgb(1, 1, 1),
         });
       }
-      page.drawText(text, {
+      page.drawText(fitted.text, {
         x,
-        y: f.mid ? baseYMid(f.y + dy, size) : baseY(f.y + dy, size),
-        size,
+        y: f.mid ? baseYMid(f.y + dy, fitted.size) : baseY(f.y + dy, fitted.size),
+        size: fitted.size,
         font: fnt,
         color: rgb(0, 0, 0),
       });
@@ -378,13 +490,16 @@ export async function buildLrPdf(
   // Page 1: Consigner copy (top) + Consignee copy (bottom)
   drawCopy(page1, 0, "consigner");
   drawCopy(page1, COPY2_DY, "consignee");
-  if (siteLogo) {
-    drawSiteLogo(page1, siteLogo, 0);
-    drawSiteLogo(page1, siteLogo, 1);
+  if (printLogo) {
+    drawPrintLogo(page1, printLogo, 0);
+    drawPrintLogo(page1, printLogo, 1);
   }
+  drawCompanyName(page1, nameFont, 0);
+  drawCompanyName(page1, nameFont, 1);
   // Page 2: Transporter copy (top only)
   drawCopy(page2, 0, "transporter");
-  if (siteLogo) drawSiteLogo(page2, siteLogo, 0);
+  if (printLogo) drawPrintLogo(page2, printLogo, 0);
+  drawCompanyName(page2, nameFont, 0);
   page2.drawRectangle({
     x: 0,
     y: 0,

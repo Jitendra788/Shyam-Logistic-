@@ -125,6 +125,16 @@
   overflow: hidden;
 }
 
+.lr-f-inv {
+  white-space: normal;
+  overflow: hidden;
+  max-width: 18mm;
+  width: 18mm;
+  line-height: 1.15 !important;
+  font-size: 8px;
+  word-break: break-all;
+}
+
 .lr-f-rate {
   font-size: 10px;
   font-weight: 700;

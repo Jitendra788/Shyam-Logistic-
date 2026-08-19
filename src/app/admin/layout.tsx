@@ -10,7 +10,7 @@ export default async function AdminLayout({
   const authed = await isAuthenticated();
 
   if (!authed) {
-    return <div className="min-h-full bg-sand">{children}</div>;
+    return <div className="min-h-full">{children}</div>;
   }
 
   return <MasterShell>{children}</MasterShell>;

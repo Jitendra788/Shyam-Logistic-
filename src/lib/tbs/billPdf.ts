@@ -4,6 +4,8 @@ import {
   BILL_ADDRESS,
   BILL_BANK,
   billedPartyInfo,
+  billCrystalCharges,
+  billLrSum,
   billPrintTotal,
   buildBillLines,
   displayBillNo,
@@ -98,6 +100,20 @@ async function embedPng(pdf: PDFDocument, url: string) {
   }
 }
 
+function fitCell(
+  font: PDFFont,
+  value: string,
+  size: number,
+  maxW: number,
+): { text: string; size: number } {
+  let s = size;
+  while (s > 6 && font.widthOfTextAtSize(value, s) > maxW) s -= 0.3;
+  if (font.widthOfTextAtSize(value, s) <= maxW) return { text: value, size: s };
+  let t = value;
+  while (t.length > 1 && font.widthOfTextAtSize(`${t}…`, s) > maxW) t = t.slice(0, -1);
+  return { text: `${t}…`, size: s };
+}
+
 function drawRow(
   page: PDFPage,
   font: PDFFont,
@@ -127,9 +143,10 @@ function drawRow(
   ];
   values.forEach((v, i) => {
     const col = COLS[i];
-    const tw = font.widthOfTextAtSize(v, 8);
+    const fitted = fitCell(font, v, 8, col.w - 4);
+    const tw = font.widthOfTextAtSize(fitted.text, fitted.size);
     const x = col.x + Math.max(2, (col.w - tw) / 2);
-    text(page, font, v, x, baseline, 8);
+    text(page, font, fitted.text, x, baseline, fitted.size);
   });
 }
 
@@ -140,8 +157,10 @@ export async function buildBillPdfBlob(opts: {
 }): Promise<Blob> {
   const { bill, bookings, parties = [] } = opts;
   const lrs = bookings.filter((b) => (bill.lrIds || []).includes(b.id));
-  const lines = buildBillLines(lrs, bill);
+  const lines = buildBillLines(lrs);
+  const lrSum = billLrSum(lrs);
   const total = billPrintTotal(bill, lrs);
+  const extras = billCrystalCharges(bill).filter(([, n]) => n > 0);
   const { address, gstNo } = billedPartyInfo(bill.partyName, lrs, parties);
   const shownNo = displayBillNo(bill.billNo, bill.billDate);
 
@@ -151,7 +170,7 @@ export async function buildBillPdfBlob(opts: {
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
 
-  const logo = await embedPng(pdf, "/brand/shyam-peacock-mark.png");
+  const logo = await embedPng(pdf, "/brand/shyam-peacock-mark-print.png");
   const stamp = await embedPng(pdf, "/brand/shyam-stamp.png");
 
   const outer = 18;
@@ -183,11 +202,20 @@ export async function buildBillPdfBlob(opts: {
   const splitX = 568;
   line(page, splitX, boxBot, splitX, 470, 1.1);
   text(page, bold, "Party Name", 32, 454, 9);
-  text(page, bold, bill.partyName || "", 118, 454, 10);
+  {
+    const party = fitCell(bold, bill.partyName || "", 10, splitX - 128);
+    text(page, bold, party.text, 118, 454, party.size);
+  }
   text(page, bold, "Address", 32, 438, 9);
-  text(page, font, address || "", 118, 438, 9);
+  {
+    const addr = fitCell(font, address || "", 9, splitX - 128);
+    text(page, font, addr.text, 118, 438, addr.size);
+  }
   text(page, bold, "GST No", 32, 424, 9);
-  text(page, bold, gstNo || "", 118, 424, 9);
+  {
+    const g = fitCell(bold, gstNo || "", 9, splitX - 128);
+    text(page, bold, g.text, 118, 424, g.size);
+  }
   text(page, bold, "Bill No", 578, 450, 9);
   text(page, bold, shownNo, 628, 450, 10);
   text(page, bold, "Date", 578, 428, 9);
@@ -222,15 +250,28 @@ export async function buildBillPdfBlob(opts: {
   const totBot = totTop - 22;
   rect(page, tableLeft, totBot, tableRight - tableLeft, totTop - totBot, 1.3);
   text(page, bold, "Total Freight : -", 32, totBot + 7, 11);
-  text(page, bold, String(total), 128, totBot + 7, 12);
+  text(page, bold, String(lrSum), 128, totBot + 7, 12);
   const totalCol = COLS[12];
   text(page, bold, "Freight", 656, totBot + 7, 11);
-  const totW = bold.widthOfTextAtSize(String(total), 11);
-  text(page, bold, String(total), totalCol.x + totalCol.w - totW - 6, totBot + 7, 11);
+  const totW = bold.widthOfTextAtSize(String(lrSum), 11);
+  text(page, bold, String(lrSum), totalCol.x + totalCol.w - totW - 6, totBot + 7, 11);
   line(page, 650, totBot, 650, totTop, 0.7);
   line(page, totalCol.x, totBot, totalCol.x, totTop, 0.7);
 
-  const wordsTop = totBot;
+  let wordsTop = totBot;
+  if (extras.length) {
+    const extraH = 14 + extras.length * 12;
+    const extraBot = totBot - extraH;
+    rect(page, tableLeft, extraBot, tableRight - tableLeft, totBot - extraBot, 1.1);
+    extras.forEach(([lab, amt], i) => {
+      const y = totBot - 12 - i * 12;
+      text(page, font, lab, 32, y, 8);
+      text(page, bold, String(amt), 130, y, 9);
+    });
+    text(page, bold, "Grand Total", 520, extraBot + 5, 10);
+    text(page, bold, String(total), 620, extraBot + 5, 11);
+    wordsTop = extraBot;
+  }
   const wordsBot = wordsTop - 20;
   rect(page, tableLeft, wordsBot, tableRight - tableLeft, wordsTop - wordsBot, 1.3);
   text(page, bold, "Amount in words:", 32, wordsBot + 6, 10);

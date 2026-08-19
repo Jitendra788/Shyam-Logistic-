@@ -10,6 +10,8 @@ import {
   BILL_ADDRESS,
   BILL_BANK,
   billedPartyInfo,
+  billCrystalCharges,
+  billLrSum,
   billPrintTotal,
   buildBillLines,
   displayBillNo,
@@ -340,9 +342,11 @@ export function TaxInvoicePrint({
   bill?: Bill;
 }) {
   const { address, gstNo } = billedPartyInfo(partyName, lrs, parties);
-  const total = bill ? billPrintTotal(bill, lrs) : lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
-  const lines = buildBillLines(lrs, bill);
+  const lrSum = billLrSum(lrs);
+  const total = bill ? billPrintTotal(bill, lrs) : lrSum;
+  const lines = buildBillLines(lrs);
   const shownNo = displayBillNo(billNo, billDate);
+  const extras = billCrystalCharges(bill).filter(([, n]) => n > 0);
   const padRows = Math.max(5, 8 - lines.length);
 
   useEffect(() => {
@@ -472,13 +476,28 @@ export function TaxInvoicePrint({
       <div className="tax-inv-total-bar">
         <div className="tax-inv-total-l">
           <span>Total Freight : -</span>
-          <span className="tax-inv-amt">{total}</span>
+          <span className="tax-inv-amt">{lrSum}</span>
         </div>
         <div className="tax-inv-total-r">
           <span className="tax-inv-freight-lab">Freight</span>
-          <span className="tax-inv-freight-val">{total}</span>
+          <span className="tax-inv-freight-val">{lrSum}</span>
         </div>
       </div>
+
+      {extras.length ? (
+        <div className="tax-inv-charges">
+          {extras.map(([lab, amt]) => (
+            <div key={lab}>
+              <span>{lab}</span>
+              <b>{amt}</b>
+            </div>
+          ))}
+          <div className="tax-inv-charges-grand">
+            <span>Grand Total</span>
+            <b>{total}</b>
+          </div>
+        </div>
+      ) : null}
 
       <div className="tax-inv-words">
         <b>Amount in words:</b> {amountInWordsINR(total)}
