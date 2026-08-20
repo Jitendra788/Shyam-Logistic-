@@ -21,7 +21,7 @@ type Bucket = { count: number; amount: number };
 
 type Dash = {
   persistent?: boolean;
-  storage?: "sqlite" | "redis" | "local";
+  storage?: "sqlite" | "redis" | "blob" | "local";
   collectionPct?: number;
   todayWork?: {
     date: string;
@@ -1140,38 +1140,39 @@ export default function AdminMasterPage() {
 
       {data && data.storage === "local" && data.persistent === false && (
         <div className="tbs-msg err">
-          Shared SQLite is not connected. Vercel cannot store bookings in the
-          browser. Add <code>TURSO_DATABASE_URL</code> and{" "}
-          <code>TURSO_AUTH_TOKEN</code> in Vercel → Environment Variables, then
-          Redeploy. Dashboard chip must show <strong>DB · SQLITE</strong>.
+          Shared database is not connected, so each phone/laptop sees different
+          data. In Vercel open the project → <strong>Storage</strong> → create{" "}
+          <strong>Blob</strong> (or add Turso / Upstash Redis), then{" "}
+          <strong>Redeploy</strong>. Chip must show DB · BLOB / SQLITE / REDIS
+          — not LOCAL.
         </div>
       )}
 
       {data && data.storage === "local" && data.persistent === false && (
         <details className="tbs-setup-compact">
           <summary>
-            How to connect Turso SQLite (all logins see the same data)
+            How to share data on every phone (Vercel Storage)
           </summary>
           <ol className="tbs-setup-steps">
             <li>
-              Vercel cannot keep a SQLite file on disk. That is why bookings stay
-              in one browser today.
+              Fastest: Vercel project → Storage → Create Database →{" "}
+              <strong>Blob</strong>. Vercel adds the token. Redeploy. Chip:{" "}
+              <strong>DB · BLOB</strong>.
             </li>
             <li>
-              Create a free SQLite database at{" "}
+              Or Turso SQLite:{" "}
               <a href="https://turso.tech" target="_blank" rel="noreferrer">
                 turso.tech
-              </a>
-              , then copy the URL and token.
+              </a>{" "}
+              then <code>TURSO_DATABASE_URL</code> + <code>TURSO_AUTH_TOKEN</code>.
             </li>
             <li>
-              Vercel → Settings → Environment Variables (Production):{" "}
-              <code>TURSO_DATABASE_URL</code> + <code>TURSO_AUTH_TOKEN</code> →
-              Redeploy
+              Or Upstash Redis: <code>UPSTASH_REDIS_REST_URL</code> +{" "}
+              <code>UPSTASH_REDIS_REST_TOKEN</code>.
             </li>
             <li>
-              After redeploy, dashboard chip should show <strong>DB · SQLITE</strong>.
-              Then every login sees the same parties, LRs, and bills.
+              After redeploy, every phone sees the same parties, LRs, and bills.
+              The first login with old phone data uploads it into the shared store.
             </li>
           </ol>
         </details>

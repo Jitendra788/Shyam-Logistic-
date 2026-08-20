@@ -100,7 +100,7 @@ async function tbsHandle(
     return res;
   }
 
-  if (persistent || storage === "sqlite" || storage === "redis") {
+  if (persistent || storage === "sqlite" || storage === "redis" || storage === "blob") {
     if (method === "GET") {
       try {
         const imported = await migrateBrowserToSqlite(orig);

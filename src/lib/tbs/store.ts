@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { Redis } from "@upstash/redis";
 import { isLibsqlRemote, sqliteGet, sqliteKind, sqliteSet } from "@/lib/db/sqlite";
+import { blobGet, blobSet, hasBlobStore } from "@/lib/db/blobKv";
 import type {
   Bill,
   Booking,
@@ -42,14 +43,15 @@ function redisClient(): Redis | null {
 
 /** True when every visitor sees the same saved records. */
 export function isTbsPersistent(): boolean {
-  if (isLibsqlRemote() || redisClient()) return true;
+  if (isLibsqlRemote() || redisClient() || hasBlobStore()) return true;
   // Vercel disk is not shared. Local next-dev can use a SQLite file / JSON.
   return !process.env.VERCEL;
 }
 
-export function tbsStorageKind(): "sqlite" | "redis" | "local" {
+export function tbsStorageKind(): "sqlite" | "redis" | "blob" | "local" {
   if (sqliteKind() === "sqlite") return "sqlite";
   if (redisClient()) return "redis";
+  if (hasBlobStore()) return "blob";
   return "local";
 }
 
@@ -93,7 +95,8 @@ function isEmptyStoreValue(value: unknown) {
 }
 
 async function readJson<T>(file: string, fallback: T): Promise<T> {
-  if (mem.has(file)) {
+  const shared = isTbsPersistent();
+  if (mem.has(file) && (!process.env.VERCEL || shared)) {
     return mem.get(file) as T;
   }
 
@@ -107,6 +110,18 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
     }
     mem.set(file, fromSql);
     return fromSql;
+  }
+
+  const fromBlob =
+    process.env.VERCEL || hasBlobStore() ? await blobGet<T>(file) : undefined;
+  if (fromBlob !== undefined) {
+    if (isEmptyStoreValue(fromBlob) && fromDisk && !isEmptyStoreValue(fromDisk)) {
+      mem.set(file, fromDisk);
+      await blobSet(file, fromDisk);
+      return fromDisk;
+    }
+    mem.set(file, fromBlob);
+    return fromBlob;
   }
 
   const redis = redisClient();
@@ -126,6 +141,7 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
   if (fromDisk !== null) {
     mem.set(file, fromDisk);
     await sqliteSet(file, fromDisk);
+    if (process.env.VERCEL || hasBlobStore()) await blobSet(file, fromDisk);
     if (redis) {
       try {
         await redis.set(redisKey(file), fromDisk);
@@ -154,6 +170,8 @@ async function writeJson<T>(file: string, data: T): Promise<void> {
   mem.set(file, data);
 
   const sqlOk = await sqliteSet(file, data);
+  const blobOk =
+    process.env.VERCEL || hasBlobStore() ? await blobSet(file, data) : false;
   const redis = redisClient();
   let redisOk = false;
   if (redis) {
@@ -165,12 +183,19 @@ async function writeJson<T>(file: string, data: T): Promise<void> {
     }
   }
 
-  if (sqlOk || redisOk) return;
+  if (sqlOk || redisOk || blobOk) return;
+
+  // On Vercel the function disk is not shared between visitors.
+  if (process.env.VERCEL) {
+    throw new Error(
+      "Shared database is not connected. In Vercel open Storage → Blob (or add TURSO_DATABASE_URL + TURSO_AUTH_TOKEN), then Redeploy.",
+    );
+  }
 
   const ok = await writeToFs(file, data);
   if (!ok) {
     throw new Error(
-      "Server cannot save shared data. On Vercel set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN (SQLite), then Redeploy.",
+      "Server cannot save shared data. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN, then Redeploy.",
     );
   }
 }
