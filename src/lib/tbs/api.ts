@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { isTbsPersistent } from "@/lib/tbs/store";
+import { isTbsPersistent, tbsStorageKind } from "@/lib/tbs/store";
 
 export async function requireAuth() {
   if (!(await isAuthenticated())) {
@@ -9,10 +9,17 @@ export async function requireAuth() {
   return null;
 }
 
+function tbsHeaders() {
+  return {
+    "x-tbs-persistent": isTbsPersistent() ? "1" : "0",
+    "x-tbs-storage": tbsStorageKind(),
+  };
+}
+
 export function ok<T>(data: T, status = 200) {
   return NextResponse.json(data, {
     status,
-    headers: { "x-tbs-persistent": isTbsPersistent() ? "1" : "0" },
+    headers: tbsHeaders(),
   });
 }
 
@@ -30,7 +37,7 @@ export function failSave(err: unknown) {
     { error: msg },
     {
       status: 503,
-      headers: { "x-tbs-persistent": isTbsPersistent() ? "1" : "0" },
+      headers: tbsHeaders(),
     },
   );
 }

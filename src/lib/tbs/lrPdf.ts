@@ -274,7 +274,6 @@ async function embedPrintLogo(pdf: PDFDocument): Promise<PDFImage | null> {
 }
 
 const RED = rgb(0.75, 0, 0);
-const PAGE_W = 595.32;
 
 /** Original JPEG peacock boxes on lr-form-blank.pdf (top-left origin). */
 const LOGO_BOXES = [
@@ -282,9 +281,12 @@ const LOGO_BOXES = [
   { x: 20.0, y: 431.0, w: 52.0, h: 36.0 },
 ];
 
-/** Stay between GST row (~22) and address line (~39). Never cross those rules. */
-const NAME_BASELINE_TOP = [37.6, 458.6] as const;
-const NAME_SIZE = 16;
+/** Cover the printed name on the blank form, then draw one red title. */
+const NAME_PLATES = [
+  { x: 196, y: 18.2, w: 222, h: 23.6, baseline: 41.6 },
+  { x: 184, y: 439.4, w: 226, h: 24.0, baseline: 462.6 },
+] as const;
+const NAME_SIZE = 18;
 
 function drawPrintLogo(page: PDFPage, image: PDFImage, copyIndex: 0 | 1) {
   const box = LOGO_BOXES[copyIndex];
@@ -306,22 +308,20 @@ function drawPrintLogo(page: PDFPage, image: PDFImage, copyIndex: 0 | 1) {
 }
 
 function drawCompanyName(page: PDFPage, font: PDFFont, copyIndex: 0 | 1) {
+  const plate = NAME_PLATES[copyIndex];
+  page.drawRectangle({
+    x: plate.x,
+    y: PAGE_H - plate.y - plate.h,
+    width: plate.w,
+    height: plate.h,
+    color: rgb(1, 1, 1),
+  });
   const label = "SHYAM LOGISTICS";
   const size = NAME_SIZE;
   const tw = font.widthOfTextAtSize(label, size);
-  const x = (PAGE_W - tw) / 2;
-  const baselineTop = NAME_BASELINE_TOP[copyIndex];
-  const y = PAGE_H - baselineTop;
-  page.drawRectangle({
-    x: x - 2,
-    y: y - 1,
-    width: tw + 4,
-    height: size * 0.72,
-    color: rgb(1, 1, 1),
-  });
   page.drawText(label, {
-    x,
-    y,
+    x: plate.x + (plate.w - tw) / 2,
+    y: PAGE_H - plate.baseline,
     size,
     font,
     color: RED,

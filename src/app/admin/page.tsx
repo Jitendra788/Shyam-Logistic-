@@ -1139,9 +1139,18 @@ export default function AdminMasterPage() {
       ) : null}
 
       {data && data.storage === "local" && data.persistent === false && (
-        <details className="tbs-setup-compact" open>
+        <div className="tbs-msg err">
+          Shared SQLite is not connected. Vercel cannot store bookings in the
+          browser. Add <code>TURSO_DATABASE_URL</code> and{" "}
+          <code>TURSO_AUTH_TOKEN</code> in Vercel → Environment Variables, then
+          Redeploy. Dashboard chip must show <strong>DB · SQLITE</strong>.
+        </div>
+      )}
+
+      {data && data.storage === "local" && data.persistent === false && (
+        <details className="tbs-setup-compact">
           <summary>
-            Data is only in this browser until cloud SQLite is connected
+            How to connect Turso SQLite (all logins see the same data)
           </summary>
           <ol className="tbs-setup-steps">
             <li>
