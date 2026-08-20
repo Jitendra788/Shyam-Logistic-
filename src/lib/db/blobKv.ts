@@ -7,7 +7,9 @@ function env(name: string) {
 }
 
 export function hasBlobStore() {
-  return Boolean(env("BLOB_READ_WRITE_TOKEN") || env("BLOB_STORE_ID"));
+  return Boolean(
+    env("BLOB_READ_WRITE_TOKEN") || env("VERCEL_BLOB_READ_WRITE_TOKEN"),
+  );
 }
 
 function blobPath(key: string) {
@@ -30,7 +32,7 @@ export async function blobGet<T>(key: string): Promise<BlobRead<T>> {
         access: "private",
         useCache: false,
       });
-      if (result.statusCode === 304 || !result.stream) {
+      if (!result || result.statusCode === 304 || !result.stream) {
         return { ok: true, value: undefined };
       }
       const text = await new Response(result.stream).text();

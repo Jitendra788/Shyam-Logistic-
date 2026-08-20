@@ -22,6 +22,7 @@ type Bucket = { count: number; amount: number };
 type Dash = {
   persistent?: boolean;
   storage?: "sqlite" | "redis" | "blob" | "local";
+  backends?: { vercel?: boolean; turso?: boolean; blob?: boolean; redis?: boolean };
   collectionPct?: number;
   todayWork?: {
     date: string;
@@ -784,7 +785,13 @@ export default function AdminMasterPage() {
             />
           </label>
           <div className="tbs-cmd-chips">
-            <span className="tbs-chip tbs-chip-ok">
+            <span
+              className={
+                data.storage === "local"
+                  ? "tbs-chip tbs-chip-warn"
+                  : "tbs-chip tbs-chip-ok"
+              }
+            >
               DB · {(data.storage || "local").toUpperCase()}
             </span>
             <span className="tbs-chip">
@@ -796,6 +803,16 @@ export default function AdminMasterPage() {
             <span className="tbs-chip">Auto-refresh 60s</span>
           </div>
         </section>
+      ) : null}
+
+      {data && data.storage === "local" && data.persistent === false ? (
+        <div className="tbs-msg err">
+          Shared database is not connected, so phones will not share the same
+          saved data. Create <strong>Vercel Blob</strong>, then Redeploy. This
+          deploy: Turso {data.backends?.turso ? "on" : "off"}, Blob{" "}
+          {data.backends?.blob ? "on" : "off"}, Redis{" "}
+          {data.backends?.redis ? "on" : "off"}.
+        </div>
       ) : null}
 
       {data ? (
@@ -1145,6 +1162,14 @@ export default function AdminMasterPage() {
           <strong>Blob</strong> (or add Turso / Upstash Redis), then{" "}
           <strong>Redeploy</strong>. Chip must show DB · BLOB / SQLITE / REDIS
           — not LOCAL.
+          {data.backends ? (
+            <span>
+              {" "}
+              (this deploy: Turso {data.backends.turso ? "on" : "off"}, Blob{" "}
+              {data.backends.blob ? "on" : "off"}, Redis{" "}
+              {data.backends.redis ? "on" : "off"})
+            </span>
+          ) : null}
         </div>
       )}
 

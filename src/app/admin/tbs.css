@@ -1308,6 +1308,12 @@ html.tbs-theme-dark .tbs-window-title {
   color: #047857;
 }
 
+.tbs-chip-warn {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
 .tbs-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

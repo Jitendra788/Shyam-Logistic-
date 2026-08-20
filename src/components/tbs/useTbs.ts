@@ -44,7 +44,7 @@ export function useTbsApi<T>(url: string | null) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: "no-store", credentials: "same-origin" });
       if (!res.ok) throw new Error("Failed to load");
       setData(await res.json());
     } catch (e) {

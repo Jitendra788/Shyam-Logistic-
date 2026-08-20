@@ -9,6 +9,7 @@ import {
   getNotes,
   getParties,
   isTbsPersistent,
+  tbsBackendFlags,
   tbsStorageKind,
 } from "@/lib/tbs/store";
 import { partyLabel } from "@/lib/tbs/partyLabel";
@@ -430,6 +431,7 @@ export async function GET() {
     topParties,
     collectionPct,
     storage: tbsStorageKind(),
+    backends: tbsBackendFlags(),
     months,
     vehicles: {
       total: allVehicles.size,
@@ -506,6 +508,7 @@ export async function GET() {
       topParties: [],
       collectionPct: 0,
       storage: tbsStorageKind(),
+      backends: tbsBackendFlags(),
       months: [],
       vehicles: { total: 0, onRoad: 0, idle: 0, list: [] as string[] },
       recentBookings: [],
