@@ -13,6 +13,7 @@ function tbsHeaders() {
   return {
     "x-tbs-persistent": isTbsPersistent() ? "1" : "0",
     "x-tbs-storage": tbsStorageKind(),
+    "Cache-Control": "no-store, no-cache, must-revalidate",
   };
 }
 

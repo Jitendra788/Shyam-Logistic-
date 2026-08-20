@@ -34,7 +34,7 @@ function mergeRows<T extends { id: string }>(current: T[], incoming: T[]) {
   const map = new Map(current.map((row) => [row.id, row]));
   for (const row of incoming) {
     if (!row?.id) continue;
-    map.set(row.id, row);
+    if (!map.has(row.id)) map.set(row.id, row);
   }
   return [...map.values()];
 }

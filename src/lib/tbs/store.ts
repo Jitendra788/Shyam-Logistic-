@@ -90,38 +90,33 @@ async function writeToFs<T>(file: string, data: T): Promise<boolean> {
   }
 }
 
-function isEmptyStoreValue(value: unknown) {
-  return Array.isArray(value) && value.length === 0;
-}
-
 async function readJson<T>(file: string, fallback: T): Promise<T> {
-  const shared = isTbsPersistent();
-  if (mem.has(file) && (!process.env.VERCEL || shared)) {
+  const onVercel = Boolean(process.env.VERCEL);
+  const remote = isLibsqlRemote() || Boolean(redisClient()) || hasBlobStore();
+
+  // Instance RAM is not shared on Vercel — never serve one visitor's cache to another.
+  if (mem.has(file) && !onVercel) {
     return mem.get(file) as T;
   }
 
-  const fromDisk = await readFromFs<T>(file);
   const fromSql = await sqliteGet<T>(file);
   if (fromSql !== undefined) {
-    if (isEmptyStoreValue(fromSql) && fromDisk && !isEmptyStoreValue(fromDisk)) {
-      mem.set(file, fromDisk);
-      await sqliteSet(file, fromDisk);
-      return fromDisk;
-    }
-    mem.set(file, fromSql);
+    if (!onVercel) mem.set(file, fromSql);
     return fromSql;
   }
 
-  const fromBlob =
-    process.env.VERCEL || hasBlobStore() ? await blobGet<T>(file) : undefined;
-  if (fromBlob !== undefined) {
-    if (isEmptyStoreValue(fromBlob) && fromDisk && !isEmptyStoreValue(fromDisk)) {
-      mem.set(file, fromDisk);
-      await blobSet(file, fromDisk);
-      return fromDisk;
+  if (onVercel || hasBlobStore()) {
+    const blob = await blobGet<T>(file);
+    if (blob.ok && blob.value !== undefined) {
+      if (!onVercel) mem.set(file, blob.value);
+      return blob.value;
     }
-    mem.set(file, fromBlob);
-    return fromBlob;
+    if (blob.ok && blob.value === undefined && remote) {
+      return fallback;
+    }
+    if (!blob.ok && remote) {
+      throw new Error("Shared storage read failed. Retry in a moment.");
+    }
   }
 
   const redis = redisClient();
@@ -129,40 +124,31 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
     try {
       const val = await redis.get<T>(redisKey(file));
       if (val !== null && val !== undefined) {
-        mem.set(file, val);
-        await sqliteSet(file, val);
+        if (!onVercel) mem.set(file, val);
         return val;
       }
+      return fallback;
     } catch (err) {
       console.error("Upstash read failed", file, err);
+      throw new Error("Shared storage read failed. Retry in a moment.");
     }
   }
 
+  if (onVercel) {
+    const fromDisk = await readFromFs<T>(file);
+    return fromDisk ?? fallback;
+  }
+
+  const fromDisk = await readFromFs<T>(file);
   if (fromDisk !== null) {
     mem.set(file, fromDisk);
     await sqliteSet(file, fromDisk);
-    if (process.env.VERCEL || hasBlobStore()) await blobSet(file, fromDisk);
-    if (redis) {
-      try {
-        await redis.set(redisKey(file), fromDisk);
-      } catch {
-        /* ignore */
-      }
-    }
     return fromDisk;
   }
 
   mem.set(file, fallback);
   await sqliteSet(file, fallback);
-  if (redis) {
-    try {
-      await redis.set(redisKey(file), fallback);
-    } catch {
-      /* ignore */
-    }
-  } else if (!process.env.VERCEL) {
-    await writeToFs(file, fallback);
-  }
+  await writeToFs(file, fallback);
   return fallback;
 }
 

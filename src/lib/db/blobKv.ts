@@ -1,4 +1,4 @@
-import { get, put } from "@vercel/blob";
+import { BlobNotFoundError, get, put } from "@vercel/blob";
 
 function env(name: string) {
   const v = process.env[name]?.trim();
@@ -14,19 +14,38 @@ function blobPath(key: string) {
   return `tbs/${key.replace(/\\/g, "/")}`;
 }
 
-export async function blobGet<T>(key: string): Promise<T | undefined> {
-  try {
-    const result = await get(blobPath(key), {
-      access: "private",
-      useCache: false,
-    });
-    if (result.statusCode !== 200 || !result.stream) return undefined;
-    const text = await new Response(result.stream).text();
-    if (!text) return undefined;
-    return JSON.parse(text) as T;
-  } catch {
-    return undefined;
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+export type BlobRead<T> =
+  | { ok: true; value: T | undefined }
+  | { ok: false };
+
+export async function blobGet<T>(key: string): Promise<BlobRead<T>> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const result = await get(blobPath(key), {
+        access: "private",
+        useCache: false,
+      });
+      if (result.statusCode === 304 || !result.stream) {
+        return { ok: true, value: undefined };
+      }
+      const text = await new Response(result.stream).text();
+      if (!text) return { ok: true, value: undefined };
+      return { ok: true, value: JSON.parse(text) as T };
+    } catch (err) {
+      if (err instanceof BlobNotFoundError) {
+        return { ok: true, value: undefined };
+      }
+      lastErr = err;
+      await sleep(80 * (attempt + 1));
+    }
   }
+  console.error("Blob get failed", key, lastErr);
+  return { ok: false };
 }
 
 export async function blobSet(key: string, value: unknown): Promise<boolean> {
