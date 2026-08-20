@@ -5,20 +5,32 @@ const STORE = "kv";
 
 const OLD_DBS = ["shyam-tbs", "shyam-tbs-v2", "shyam-tbs-v3"];
 
-function wipeOldDbs() {
-  if (typeof indexedDB === "undefined") return;
-  for (const name of OLD_DBS) {
-    try {
-      indexedDB.deleteDatabase(name);
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
-wipeOldDbs();
-
 type Rec = { data: unknown; at: number };
+
+function openNamed(name: string): Promise<IDBDatabase | null> {
+  if (typeof indexedDB === "undefined") return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const req = indexedDB.open(name);
+    let created = false;
+    req.onupgradeneeded = () => {
+      created = true;
+    };
+    req.onerror = () => resolve(null);
+    req.onsuccess = () => {
+      if (created) {
+        req.result.close();
+        try {
+          indexedDB.deleteDatabase(name);
+        } catch {
+          /* ignore */
+        }
+        resolve(null);
+        return;
+      }
+      resolve(req.result);
+    };
+  });
+}
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -85,5 +97,58 @@ export async function idbKeys(): Promise<string[]> {
     });
   } catch {
     return [];
+  }
+}
+
+let migrated = false;
+
+/** Copy leftover rows from older IndexedDB names — do not delete them. */
+export async function migrateLegacyIdb(): Promise<void> {
+  if (migrated || typeof indexedDB === "undefined") return;
+  migrated = true;
+  for (const name of OLD_DBS) {
+    const old = await openNamed(name);
+    if (!old) continue;
+    try {
+      const storeName = old.objectStoreNames.item(0);
+      if (!storeName) {
+        old.close();
+        continue;
+      }
+      const rows = await new Promise<{ key: IDBValidKey; value: Rec }[]>((resolve) => {
+        const tx = old.transaction(storeName, "readonly");
+        const store = tx.objectStore(storeName);
+        const req = store.openCursor();
+        const out: { key: IDBValidKey; value: Rec }[] = [];
+        req.onsuccess = () => {
+          const cursor = req.result;
+          if (!cursor) {
+            resolve(out);
+            return;
+          }
+          out.push({ key: cursor.key, value: cursor.value as Rec });
+          cursor.continue();
+        };
+        req.onerror = () => resolve(out);
+      });
+      old.close();
+      for (const row of rows) {
+        const key = String(row.key);
+        const existing = await idbGet(key);
+        if (existing?.data != null) continue;
+        const value = row.value;
+        if (value && typeof value === "object" && "data" in value) {
+          await idbSet(key, value);
+        } else {
+          await idbSet(key, { data: value, at: Date.now() });
+        }
+      }
+    } catch {
+      try {
+        old.close();
+      } catch {
+        /* ignore */
+      }
+    }
   }
 }
