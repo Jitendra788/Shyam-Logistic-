@@ -8,6 +8,22 @@ const nextConfig: NextConfig = {
     imageSizes: [32, 48, 64, 96, 128, 192, 256],
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
+  async headers() {
+    return [
+      {
+        source: "/admin/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
+        ],
+      },
+      {
+        source: "/api/tbs/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

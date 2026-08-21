@@ -376,6 +376,7 @@ export default function AdminMasterPage() {
     if (!opts?.silent) setLoading(true);
     setErr("");
     try {
+      await purgeAllBrowserTbsCopies();
       const res = await fetch("/api/tbs/dashboard", {
         cache: "no-store",
         credentials: "same-origin",
@@ -1190,8 +1191,8 @@ export default function AdminMasterPage() {
           <ol className="tbs-setup-steps">
             <li>
               Postgres: Vercel → Integrations → Neon (free). Chip:{" "}
-              <strong>DB · POSTGRES</strong>. Browser data imports on first
-              Booking page open.
+              <strong>DB · POSTGRES</strong>. Lists show only rows saved in
+              the database — browser copies are not imported.
             </li>
             <li>
               Backup store: Storage → <strong>Blob</strong>. Chip:{" "}

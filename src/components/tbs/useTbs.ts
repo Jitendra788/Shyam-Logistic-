@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { installTbsPersist } from "@/lib/tbs/tbsPersist";
+import { purgeAllBrowserTbsCopies } from "@/lib/tbs/idb";
 
 if (typeof window !== "undefined") installTbsPersist();
 
@@ -13,7 +14,8 @@ export function useAdminAuth() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch("/api/auth/me");
+      await purgeAllBrowserTbsCopies();
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       const data = await res.json();
       if (cancelled) return;
       if (!data.authenticated) {

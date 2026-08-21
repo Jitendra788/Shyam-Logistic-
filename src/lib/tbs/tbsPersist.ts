@@ -1,6 +1,6 @@
 "use client";
 
-import { idbClearAll, idbDropLegacyCopies } from "@/lib/tbs/idb";
+import { purgeAllBrowserTbsCopies } from "@/lib/tbs/idb";
 
 function pathnameOf(url: string) {
   try {
@@ -24,6 +24,7 @@ async function tbsHandle(
   const method = (init?.method || "GET").toUpperCase();
   const path = pathnameOf(url);
 
+  await purgeAllBrowserTbsCopies();
   const res = await orig(input, init);
 
   if (
@@ -31,8 +32,7 @@ async function tbsHandle(
     (method === "POST" || method === "DELETE") &&
     path.includes("/api/tbs/wipe")
   ) {
-    await idbClearAll();
-    await idbDropLegacyCopies();
+    await purgeAllBrowserTbsCopies();
   }
 
   return res;
@@ -43,8 +43,7 @@ export function installTbsPersist() {
   const w = window as Window & { __tbsPersist?: boolean };
   if (w.__tbsPersist) return;
   w.__tbsPersist = true;
-  void idbClearAll();
-  void idbDropLegacyCopies();
+  void purgeAllBrowserTbsCopies();
   const orig = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const url =

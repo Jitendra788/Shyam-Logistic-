@@ -321,7 +321,11 @@ async function fetchSharedState(): Promise<TbsState> {
   const parts: TbsState[] = [];
 
   const fromPg = await pgGet<TbsState>(STATE_KEY);
-  if (fromPg && typeof fromPg === "object") parts.push(normalizeState(fromPg));
+  if (fromPg && typeof fromPg === "object") {
+    const n = normalizeState(fromPg);
+    if (stateSize(n) === 0) return n;
+    parts.push(n);
+  }
 
   const fromSql = await sqliteGet<TbsState>(STATE_KEY);
   if (fromSql && typeof fromSql === "object") parts.push(normalizeState(fromSql));

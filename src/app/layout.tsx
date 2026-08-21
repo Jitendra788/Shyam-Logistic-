@@ -159,6 +159,9 @@ export default async function RootLayout({
         <Script id="strip-extension-attrs" strategy="beforeInteractive">
           {`(function(){try{if(localStorage.getItem("tbs-theme")==="dark")document.documentElement.classList.add("tbs-theme-dark")}catch(e){}function s(){document.querySelectorAll("[bis_skin_checked]").forEach(function(e){e.removeAttribute("bis_skin_checked")})}s();try{new MutationObserver(s).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:["bis_skin_checked"]})}catch(e){}})();`}
         </Script>
+        <Script id="purge-tbs-browser-copy" strategy="beforeInteractive">
+          {`(function(){try{var w=window;if(w.__TBS_PURGE)return;w.__TBS_PURGE=(async function(){try{var rs=await navigator.serviceWorker.getRegistrations();for(var i=0;i<rs.length;i++)await rs[i].unregister()}catch(e){}try{var ks=await caches.keys();for(var j=0;j<ks.length;j++)await caches.delete(ks[j])}catch(e){}var names=["shyam-tbs","shyam-tbs-v2","shyam-tbs-v3","shyam-tbs-v4"];try{var dbs=await indexedDB.databases();for(var k=0;k<dbs.length;k++){var n=dbs[k]&&dbs[k].name;if(n&&/shyam|tbs|skdb/i.test(n))names.push(n)}}catch(e){}names=Array.from(new Set(names));await Promise.all(names.map(function(name){return new Promise(function(ok){var req=indexedDB.deleteDatabase(name);req.onsuccess=req.onerror=req.onblocked=function(){ok()}})}))})()}catch(e){}})();`}
+        </Script>
         <JsonLd
           data={[
             buildOrganizationJsonLd(settings),
