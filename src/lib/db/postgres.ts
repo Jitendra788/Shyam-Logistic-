@@ -13,9 +13,10 @@ function env(name: string) {
 
 export function postgresUrl() {
   return (
+    env("DATABASE_URL") ||
     env("POSTGRES_URL") ||
     env("POSTGRES_PRISMA_URL") ||
-    env("DATABASE_URL") ||
+    env("DATABASE_URL_UNPOOLED") ||
     env("POSTGRES_URL_NON_POOLING") ||
     env("POSTGRES_URL_NO_SSL")
   );
