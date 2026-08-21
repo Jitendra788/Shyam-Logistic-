@@ -21,7 +21,7 @@ type Bucket = { count: number; amount: number };
 
 type Dash = {
   persistent?: boolean;
-  storage?: "postgres" | "sqlite" | "redis" | "blob" | "local";
+  storage?: "postgres" | "postgres+blob" | "sqlite" | "redis" | "blob" | "local";
   backends?: {
     vercel?: boolean;
     postgres?: boolean;
@@ -798,7 +798,10 @@ export default function AdminMasterPage() {
                   : "tbs-chip tbs-chip-ok"
               }
             >
-              DB · {(data.storage || "local").toUpperCase()}
+              DB ·{" "}
+              {data.storage === "postgres+blob"
+                ? "POSTGRES + BLOB"
+                : (data.storage || "local").toUpperCase()}
             </span>
             <span className="tbs-chip">
               Collection {data.collectionPct ?? 0}%

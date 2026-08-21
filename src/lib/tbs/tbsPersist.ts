@@ -439,6 +439,7 @@ async function tbsHandle(
   const storage = res.headers.get("x-tbs-storage") || "";
   const shared =
     persistent ||
+    storage === "postgres+blob" ||
     storage === "postgres" ||
     storage === "sqlite" ||
     storage === "redis" ||

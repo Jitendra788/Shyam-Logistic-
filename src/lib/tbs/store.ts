@@ -48,15 +48,24 @@ export function isTbsPersistent(): boolean {
   return !process.env.VERCEL;
 }
 
-export function tbsStorageKind(): "postgres" | "sqlite" | "redis" | "blob" | "local" {
-  if (hasPostgres()) return "postgres";
+export function tbsStorageKind():
+  | "postgres"
+  | "postgres+blob"
+  | "sqlite"
+  | "redis"
+  | "blob"
+  | "local" {
+  const pg = hasPostgres();
+  const blob = hasBlobStore();
+  if (pg && blob) return "postgres+blob";
+  if (pg) return "postgres";
+  if (blob) return "blob";
   if (!process.env.VERCEL) {
     if (sqliteKind() === "sqlite") return "sqlite";
     return "local";
   }
   if (sqliteKind() === "sqlite") return "sqlite";
   if (redisClient()) return "redis";
-  if (hasBlobStore()) return "blob";
   return "local";
 }
 
@@ -214,9 +223,12 @@ function emptyState(): TbsState {
 }
 
 function useSharedState() {
-  if (hasPostgres()) return true;
-  if (!process.env.VERCEL) return false;
-  return isLibsqlRemote() || Boolean(redisClient()) || hasBlobStore();
+  return (
+    hasPostgres() ||
+    hasBlobStore() ||
+    Boolean(redisClient()) ||
+    isLibsqlRemote()
+  );
 }
 
 function normalizeState(raw: Partial<TbsState> | null | undefined): TbsState {
