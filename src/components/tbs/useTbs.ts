@@ -46,7 +46,21 @@ export function useTbsApi<T>(url: string | null) {
     try {
       const res = await fetch(url, { cache: "no-store", credentials: "same-origin" });
       if (!res.ok) throw new Error("Failed to load");
-      setData(await res.json());
+      const next = (await res.json()) as T;
+      setData((prev) => {
+        if (!prev || typeof prev !== "object" || typeof next !== "object") return next;
+        const prevObj = prev as { bookings?: unknown[] };
+        const nextObj = next as { bookings?: unknown[] };
+        if (
+          Array.isArray(prevObj.bookings) &&
+          prevObj.bookings.length > 0 &&
+          Array.isArray(nextObj.bookings) &&
+          nextObj.bookings.length === 0
+        ) {
+          return prev;
+        }
+        return next;
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {

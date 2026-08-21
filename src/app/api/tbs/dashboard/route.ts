@@ -1,4 +1,4 @@
-import { requireAuth, ok } from "@/lib/tbs/api";
+import { requireAuth, ok, failSave } from "@/lib/tbs/api";
 import { getEnquiries } from "@/lib/store";
 import {
   getBills,
@@ -445,76 +445,6 @@ export async function GET() {
   });
   } catch (err) {
     console.error("dashboard failed", err);
-    return ok({
-      persistent: isTbsPersistent(),
-      counts: {
-        parties: 0,
-        bookings: 0,
-        bills: 0,
-        challans: 0,
-        receipts: 0,
-      },
-      pending: {
-        delivery: 0,
-        bill: 0,
-        notDeliveredNotBilled: 0,
-        billedNotDelivered: 0,
-        deliveredNotBilled: 0,
-        deliveredBilled: 0,
-        outstandingAmt: 0,
-        outstandingBills: 0,
-        hireAmt: 0,
-        hireCount: 0,
-        enquiries: 0,
-        lrTotal: 0,
-      },
-      completed: {
-        lrs: 0,
-        billsPaid: 0,
-        billsPaidAmt: 0,
-        collected: 0,
-        hireDone: 0,
-        enquiries: 0,
-      },
-      profit: {
-        income: 0,
-        freight: 0,
-        billAmt: 0,
-        hirePaid: 0,
-        challanHire: 0,
-        expenseNotes: 0,
-        expense: 0,
-        profit: 0,
-        collected: 0,
-        outstanding: 0,
-      },
-      outstandingTop: [],
-      todayWork: {
-        date: "",
-        bookings: 0,
-        freight: 0,
-        bills: 0,
-        billAmt: 0,
-        collected: 0,
-        vehicles: 0,
-      },
-      week: [],
-      aging: {
-        d0_15: { count: 0, amount: 0 },
-        d16_30: { count: 0, amount: 0 },
-        d30plus: { count: 0, amount: 0 },
-      },
-      topRoutes: [],
-      topParties: [],
-      collectionPct: 0,
-      storage: tbsStorageKind(),
-      backends: tbsBackendFlags(),
-      months: [],
-      vehicles: { total: 0, onRoad: 0, idle: 0, list: [] as string[] },
-      recentBookings: [],
-      pendingList: [],
-      completedList: [],
-      warning: "Dashboard data could not be fully loaded",
-    });
+    return failSave(err);
   }
 }

@@ -372,8 +372,8 @@ export default function AdminMasterPage() {
   const [q, setQ] = useState("");
   const [clock, setClock] = useState("");
 
-  async function loadDash() {
-    setLoading(true);
+  async function loadDash(opts?: { silent?: boolean }) {
+    if (!opts?.silent) setLoading(true);
     setErr("");
     try {
       const res = await fetch("/api/tbs/dashboard", {
@@ -387,7 +387,11 @@ export default function AdminMasterPage() {
         throw new Error(`Dashboard API error (${res.status})`);
       }
       const json = (await res.json()) as Dash;
-      setData({
+      setData((prev) => {
+        const nextBookings = json.counts?.bookings || 0;
+        const prevBookings = prev?.counts?.bookings || 0;
+        if (prev && prevBookings > 0 && nextBookings === 0) return prev;
+        return {
         ...json,
         pendingList: json.pendingList || [],
         completedList: json.completedList || [],
@@ -436,6 +440,7 @@ export default function AdminMasterPage() {
         months: json.months || [],
         vehicles: json.vehicles || { total: 0, onRoad: 0, idle: 0, list: [] },
         recentBookings: json.recentBookings || [],
+        };
       });
     } catch (e) {
       setErr(
@@ -479,7 +484,7 @@ export default function AdminMasterPage() {
   useEffect(() => {
     if (!ready) return;
     void loadDash();
-    const refresh = window.setInterval(() => void loadDash(), 60000);
+    const refresh = window.setInterval(() => void loadDash({ silent: true }), 60000);
     return () => window.clearInterval(refresh);
   }, [ready]);
 

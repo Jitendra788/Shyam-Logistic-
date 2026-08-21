@@ -222,6 +222,46 @@ function emptyState(): TbsState {
   };
 }
 
+function mergeRowLists<T extends { id?: string }>(...lists: Array<T[] | undefined>): T[] {
+  const map = new Map<string, T>();
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const row of list) {
+      if (row && typeof row === "object" && row.id) map.set(String(row.id), row);
+    }
+  }
+  return [...map.values()];
+}
+
+function stateSize(s: TbsState) {
+  return (
+    s.parties.length +
+    s.bookings.length +
+    s.challans.length +
+    s.payments.length +
+    s.bills.length +
+    s.receipts.length +
+    s.notes.length
+  );
+}
+
+function mergeStates(...parts: TbsState[]): TbsState {
+  const out = emptyState();
+  out.parties = mergeRowLists(...parts.map((p) => p.parties));
+  out.bookings = mergeRowLists(...parts.map((p) => p.bookings));
+  out.challans = mergeRowLists(...parts.map((p) => p.challans));
+  out.payments = mergeRowLists(...parts.map((p) => p.payments));
+  out.bills = mergeRowLists(...parts.map((p) => p.bills));
+  out.receipts = mergeRowLists(...parts.map((p) => p.receipts));
+  out.notes = mergeRowLists(...parts.map((p) => p.notes));
+  out.masters = Object.assign(
+    {},
+    defaultMasters,
+    ...parts.map((p) => p.masters || {}),
+  );
+  return out;
+}
+
 function useSharedState() {
   return (
     hasPostgres() ||
@@ -255,10 +295,7 @@ async function readCollection<T>(file: string): Promise<T | undefined> {
   if (fromSql !== undefined) return fromSql;
   if (hasBlobStore()) {
     const blob = await blobGet<T>(file);
-    if (!blob.ok) {
-      throw new Error("Shared storage read failed. Retry in a moment.");
-    }
-    return blob.value;
+    if (blob.ok) return blob.value;
   }
   const redis = redisClient();
   if (redis) {
@@ -267,35 +304,32 @@ async function readCollection<T>(file: string): Promise<T | undefined> {
       if (val !== null && val !== undefined) return val;
     } catch (err) {
       console.error("Upstash read failed", file, err);
-      throw new Error("Shared storage read failed. Retry in a moment.");
     }
   }
   return undefined;
 }
 
 async function fetchSharedState(): Promise<TbsState> {
+  const parts: TbsState[] = [];
+
   const fromPg = await pgGet<TbsState>(STATE_KEY);
-  if (fromPg && typeof fromPg === "object") return normalizeState(fromPg);
+  if (fromPg && typeof fromPg === "object") parts.push(normalizeState(fromPg));
 
   const fromSql = await sqliteGet<TbsState>(STATE_KEY);
-  if (fromSql && typeof fromSql === "object") return normalizeState(fromSql);
+  if (fromSql && typeof fromSql === "object") parts.push(normalizeState(fromSql));
 
   if (hasBlobStore()) {
     const blob = await blobGet<TbsState>(STATE_KEY);
-    if (!blob.ok) {
-      throw new Error("Shared storage read failed. Retry in a moment.");
-    }
-    if (blob.value) return normalizeState(blob.value);
+    if (blob.ok && blob.value) parts.push(normalizeState(blob.value));
   }
 
   const redis = redisClient();
   if (redis) {
     try {
       const val = await redis.get<TbsState>(redisKey(STATE_KEY));
-      if (val) return normalizeState(val);
+      if (val) parts.push(normalizeState(val));
     } catch (err) {
       console.error("Upstash state read failed", err);
-      throw new Error("Shared storage read failed. Retry in a moment.");
     }
   }
 
@@ -310,15 +344,14 @@ async function fetchSharedState(): Promise<TbsState> {
     masters:
       (await readCollection<Masters>("masters.json")) || defaultMasters,
   });
-  if (
-    legacy.parties.length ||
-    legacy.bookings.length ||
-    legacy.bills.length ||
-    legacy.challans.length
-  ) {
-    await persistState(legacy);
+  if (stateSize(legacy) > 0) parts.push(legacy);
+
+  const merged = parts.length ? mergeStates(...parts) : emptyState();
+  const pgSize = fromPg ? stateSize(normalizeState(fromPg)) : 0;
+  if (stateSize(merged) > pgSize && (hasPostgres() || hasBlobStore())) {
+    await persistState(merged);
   }
-  return legacy;
+  return merged;
 }
 
 async function loadState(): Promise<TbsState> {
