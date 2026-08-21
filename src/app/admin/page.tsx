@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/components/tbs/useTbs";
+import { purgeAllBrowserTbsCopies } from "@/lib/tbs/idb";
 import { partyLabel } from "@/lib/tbs/partyLabel";
 
 type BookingRow = {
