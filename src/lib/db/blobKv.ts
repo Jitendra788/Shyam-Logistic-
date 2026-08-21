@@ -12,6 +12,12 @@ export function hasBlobStore() {
   );
 }
 
+function blobToken() {
+  return (
+    env("BLOB_READ_WRITE_TOKEN") || env("VERCEL_BLOB_READ_WRITE_TOKEN") || undefined
+  );
+}
+
 function blobPath(key: string) {
   return `tbs/${key.replace(/\\/g, "/")}`;
 }
@@ -31,6 +37,7 @@ export async function blobGet<T>(key: string): Promise<BlobRead<T>> {
       const result = await get(blobPath(key), {
         access: "private",
         useCache: false,
+        token: blobToken(),
       });
       if (!result || result.statusCode === 304 || !result.stream) {
         return { ok: true, value: undefined };
@@ -58,6 +65,7 @@ export async function blobSet(key: string, value: unknown): Promise<boolean> {
       allowOverwrite: true,
       cacheControlMaxAge: 0,
       contentType: "application/json",
+      token: blobToken(),
     });
     return true;
   } catch (err) {

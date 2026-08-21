@@ -3,6 +3,7 @@
 import { idbClearAll, idbGet, idbSet, migrateLegacyIdb } from "@/lib/tbs/idb";
 import { applyVehicleToLrs } from "@/lib/tbs/legacySkdb";
 import { nextAvailableCode, nextCode, unusedOrNext } from "@/lib/tbs/nextCode";
+import { lrCountsAsBilled } from "@/lib/tbs/lrType";
 import { buildTbsReport } from "@/lib/tbs/reportBuild";
 import type {
   Bill,
@@ -95,21 +96,19 @@ async function saveCollections(found: Partial<Record<Col, unknown>>, overwrite: 
   for (const name of COLLECTIONS) {
     if (found[name] == null) continue;
     const existing = await getCol(name);
-    if (!overwrite && existing != null) continue;
     const incoming = found[name];
     if (
       Array.isArray(incoming) &&
-      incoming.length === 0 &&
-      Array.isArray(existing) &&
-      existing.length > 0
+      incoming.length === 0
     ) {
       continue;
     }
-    if (overwrite && Array.isArray(incoming) && Array.isArray(existing)) {
+    if (Array.isArray(incoming) && Array.isArray(existing)) {
       await setCol(name, mergeById(incoming, existing));
       continue;
     }
-    await setCol(name, found[name]);
+    if (!overwrite && existing != null) continue;
+    await setCol(name, incoming);
   }
 }
 
@@ -169,23 +168,53 @@ async function overlayPayload(payload: Record<string, unknown>) {
 }
 
 async function overlayDashboard(data: Record<string, unknown>) {
-  const bookings = ((await getCol("bookings")) as unknown[]) || [];
+  const bookings = ((await getCol("bookings")) as Booking[] | null) || [];
   const parties = ((await getCol("parties")) as unknown[]) || [];
-  const bills = ((await getCol("bills")) as unknown[]) || [];
+  const bills = ((await getCol("bills")) as Bill[] | null) || [];
   const challans = ((await getCol("challans")) as unknown[]) || [];
   const receipts = ((await getCol("receipts")) as unknown[]) || [];
   const counts = (data.counts as Record<string, number>) || {};
-  if ((counts.bookings || 0) > 0 || (!bookings.length && !parties.length)) return data;
+  const serverRows = Array.isArray(data.recentBookings)
+    ? (data.recentBookings as unknown[])
+    : [];
+  if (
+    (counts.bookings || 0) > 0 &&
+    serverRows.length > 0 &&
+    (counts.bookings || 0) >= bookings.length
+  ) {
+    return data;
+  }
+  if (!bookings.length && !parties.length) return data;
+  const billedLrIds = new Set<string>();
+  for (const bill of bills) {
+    for (const id of bill.lrIds || []) billedLrIds.add(id);
+  }
+  const recentBookings = [...bookings]
+    .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
+    .slice(0, 8)
+    .map((b) => ({
+      id: b.id,
+      lrNo: b.lrNo,
+      lrDate: b.lrDate,
+      party: b.billingParty,
+      from: b.from,
+      to: b.to,
+      amount: Number(b.grandTotal || b.total || b.freight || 0),
+      delivered: Boolean(b.delivered),
+      billed: lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)),
+    }));
   return {
     ...data,
     counts: {
       ...counts,
-      parties: parties.length,
-      bookings: bookings.length,
-      bills: bills.length,
-      challans: challans.length,
-      receipts: receipts.length,
+      parties: Math.max(counts.parties || 0, parties.length),
+      bookings: Math.max(counts.bookings || 0, bookings.length),
+      bills: Math.max(counts.bills || 0, bills.length),
+      challans: Math.max(counts.challans || 0, challans.length),
+      receipts: Math.max(counts.receipts || 0, receipts.length),
     },
+    recentBookings:
+      recentBookings.length > serverRows.length ? recentBookings : data.recentBookings,
   };
 }
 
@@ -421,9 +450,10 @@ async function tbsHandle(
   }
 
   if (method === "GET") {
+    let imported = false;
     if (shared) {
       try {
-        await migrateBrowserToServer(orig);
+        imported = await migrateBrowserToServer(orig);
       } catch {
         /* keep local copy */
       }
@@ -432,6 +462,13 @@ async function tbsHandle(
         await migrateLegacyIdb();
       } catch {
         /* ignore */
+      }
+    }
+    if (imported) {
+      try {
+        res = await orig(input, init);
+      } catch {
+        /* keep first response */
       }
     }
 
@@ -478,8 +515,7 @@ async function tbsHandle(
 
   if (res.status === 503) {
     if (path.includes("/api/tbs/wipe")) {
-      await idbClearAll();
-      return jsonResponse({ ok: true, local: true, message: "All local data cleared" });
+      return res;
     }
     const applied = await applyMutation(url, method, init);
     if (applied && "row" in applied && applied.row) {

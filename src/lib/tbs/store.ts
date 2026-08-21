@@ -49,6 +49,10 @@ export function isTbsPersistent(): boolean {
 }
 
 export function tbsStorageKind(): "sqlite" | "redis" | "blob" | "local" {
+  if (!process.env.VERCEL) {
+    if (sqliteKind() === "sqlite") return "sqlite";
+    return "local";
+  }
   if (sqliteKind() === "sqlite") return "sqlite";
   if (redisClient()) return "redis";
   if (hasBlobStore()) return "blob";
@@ -201,6 +205,8 @@ function emptyState(): TbsState {
 }
 
 function useSharedState() {
+  // Local next-dev must keep this PC's SQLite/JSON. Blob is only for Vercel.
+  if (!process.env.VERCEL) return false;
   return isLibsqlRemote() || Boolean(redisClient()) || hasBlobStore();
 }
 
