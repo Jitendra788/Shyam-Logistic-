@@ -277,20 +277,11 @@ async function embedPrintLogo(pdf: PDFDocument): Promise<PDFImage | null> {
   return pdf.embedPng(bytes);
 }
 
-const RED = rgb(0.75, 0, 0);
-
 /** Original JPEG peacock boxes on lr-form-blank.pdf (top-left origin). */
 const LOGO_BOXES = [
   { x: 20.4, y: 9.8, w: 53.4, h: 37.1 },
   { x: 20.0, y: 431.0, w: 52.0, h: 36.0 },
 ];
-
-/** Cover the printed name on the blank form, then draw one red title. */
-const NAME_PLATES = [
-  { x: 196, y: 18.2, w: 222, h: 23.6, baseline: 41.6 },
-  { x: 184, y: 439.4, w: 226, h: 24.0, baseline: 462.6 },
-] as const;
-const NAME_SIZE = 18;
 
 function drawPrintLogo(page: PDFPage, image: PDFImage, copyIndex: 0 | 1) {
   const box = LOGO_BOXES[copyIndex];
@@ -308,27 +299,6 @@ function drawPrintLogo(page: PDFPage, image: PDFImage, copyIndex: 0 | 1) {
     y: pdfY + (box.h - dims.height) / 2,
     width: dims.width,
     height: dims.height,
-  });
-}
-
-function drawCompanyName(page: PDFPage, font: PDFFont, copyIndex: 0 | 1) {
-  const plate = NAME_PLATES[copyIndex];
-  page.drawRectangle({
-    x: plate.x,
-    y: PAGE_H - plate.y - plate.h,
-    width: plate.w,
-    height: plate.h,
-    color: rgb(1, 1, 1),
-  });
-  const label = "SHYAM LOGISTICS";
-  const size = NAME_SIZE;
-  const tw = font.widthOfTextAtSize(label, size);
-  page.drawText(label, {
-    x: plate.x + (plate.w - tw) / 2,
-    y: PAGE_H - plate.baseline,
-    size,
-    font,
-    color: RED,
   });
 }
 
@@ -351,7 +321,6 @@ export async function buildLrPdf(
   const page2 = pdf.getPages()[1];
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const nameFont = await pdf.embedFont(StandardFonts.TimesRomanBold);
   const printLogo = await embedPrintLogo(pdf);
 
   const consignor = partyOf(parties, booking.consignor);
@@ -498,12 +467,9 @@ export async function buildLrPdf(
     drawPrintLogo(page1, printLogo, 0);
     drawPrintLogo(page1, printLogo, 1);
   }
-  drawCompanyName(page1, nameFont, 0);
-  drawCompanyName(page1, nameFont, 1);
   // Page 2: Transporter copy (top only)
   drawCopy(page2, 0, "transporter");
   if (printLogo) drawPrintLogo(page2, printLogo, 0);
-  drawCompanyName(page2, nameFont, 0);
   page2.drawRectangle({
     x: 0,
     y: 0,
