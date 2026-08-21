@@ -82,6 +82,25 @@ export async function pgGet<T>(key: string): Promise<T | undefined> {
   );
 }
 
+export async function pgClearAll(): Promise<boolean> {
+  const sql = sqlClient();
+  if (!sql) return false;
+  return withTimeout(
+    (async () => {
+      try {
+        await ensureTable();
+        await sql`DELETE FROM tbs_kv`;
+        return true;
+      } catch (err) {
+        console.error("Postgres clear failed", err);
+        return false;
+      }
+    })(),
+    8000,
+    false,
+  );
+}
+
 export async function pgSet(key: string, value: unknown): Promise<boolean> {
   const sql = sqlClient();
   if (!sql) return false;

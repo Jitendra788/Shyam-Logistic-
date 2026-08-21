@@ -1,9 +1,15 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { Redis } from "@upstash/redis";
-import { isLibsqlRemote, sqliteGet, sqliteKind, sqliteSet } from "@/lib/db/sqlite";
-import { blobGet, blobSet, hasBlobStore } from "@/lib/db/blobKv";
-import { hasPostgres, pgGet, pgSet } from "@/lib/db/postgres";
+import {
+  isLibsqlRemote,
+  sqliteClearAll,
+  sqliteGet,
+  sqliteKind,
+  sqliteSet,
+} from "@/lib/db/sqlite";
+import { blobClearAll, blobGet, blobSet, hasBlobStore } from "@/lib/db/blobKv";
+import { hasPostgres, pgClearAll, pgGet, pgSet } from "@/lib/db/postgres";
 import type {
   Bill,
   Booking,
@@ -535,11 +541,30 @@ export function uid(prefix: string) {
 export async function wipeAllTbsData() {
   mem.clear();
   inflightState = null;
-  if (useSharedState()) {
-    await persistState(emptyState());
-    return { ok: true as const };
-  }
+  const redis = redisClient();
   await Promise.all([
+    hasPostgres() ? pgClearAll() : Promise.resolve(false),
+    sqliteClearAll(),
+    hasBlobStore() ? blobClearAll() : Promise.resolve(false),
+    redis
+      ? Promise.all(
+          [
+            STATE_KEY,
+            "parties.json",
+            "bookings.json",
+            "challans.json",
+            "lhp-payments.json",
+            "bills.json",
+            "money-receipts.json",
+            "notes.json",
+            "masters.json",
+          ].map((file) =>
+            redis.del(redisKey(file)).catch((err) => {
+              console.error("Upstash clear failed", file, err);
+            }),
+          ),
+        )
+      : Promise.resolve(),
     writeJson("parties.json", [] as Party[]),
     writeJson("bookings.json", [] as Booking[]),
     writeJson("challans.json", [] as Challan[]),
@@ -549,5 +574,8 @@ export async function wipeAllTbsData() {
     writeJson("notes.json", [] as NoteVoucher[]),
     writeJson("masters.json", { ...defaultMasters }),
   ]);
+  if (useSharedState()) {
+    await persistState(emptyState());
+  }
   return { ok: true as const };
 }

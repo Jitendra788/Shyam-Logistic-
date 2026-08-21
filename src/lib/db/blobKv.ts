@@ -1,4 +1,4 @@
-import { BlobNotFoundError, get, put } from "@vercel/blob";
+import { BlobNotFoundError, del, get, list, put } from "@vercel/blob";
 
 function env(name: string) {
   const v = process.env[name]?.trim();
@@ -55,6 +55,24 @@ export async function blobGet<T>(key: string): Promise<BlobRead<T>> {
   }
   console.error("Blob get failed", key, lastErr);
   return { ok: false };
+}
+
+export async function blobClearAll(): Promise<boolean> {
+  if (!hasBlobStore()) return false;
+  const token = blobToken();
+  try {
+    let cursor: string | undefined;
+    do {
+      const page = await list({ prefix: "tbs/", token, cursor });
+      const urls = page.blobs.map((b) => b.url);
+      if (urls.length) await del(urls, { token });
+      cursor = page.hasMore ? page.cursor : undefined;
+    } while (cursor);
+    return true;
+  } catch (err) {
+    console.error("Blob clear failed", err);
+    return false;
+  }
 }
 
 export async function blobSet(key: string, value: unknown): Promise<boolean> {

@@ -97,6 +97,19 @@ export async function sqliteGet<T>(key: string): Promise<T | undefined> {
   }
 }
 
+export async function sqliteClearAll(): Promise<boolean> {
+  const db = getLibsql();
+  if (!db) return false;
+  try {
+    await ensureTable(db);
+    await db.execute("DELETE FROM kv");
+    return true;
+  } catch (err) {
+    console.error("SQLite clear failed", err);
+    return false;
+  }
+}
+
 export async function sqliteSet(key: string, value: unknown): Promise<boolean> {
   const db = getLibsql();
   if (!db) return false;
