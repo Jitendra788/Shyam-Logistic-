@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { installTbsPersist } from "@/lib/tbs/tbsPersist";
 
-/** Installs browser fallback so save/delete work when Vercel disk is read-only. */
+/** Drops leftover IndexedDB copies; admin lists come from the server database. */
 export function TbsPersist() {
   useEffect(() => {
     installTbsPersist();
