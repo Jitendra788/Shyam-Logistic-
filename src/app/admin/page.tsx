@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/components/tbs/useTbs";
-import { purgeAllBrowserTbsCopies } from "@/lib/tbs/idb";
 import { partyLabel } from "@/lib/tbs/partyLabel";
 
 type BookingRow = {
@@ -377,7 +376,6 @@ export default function AdminMasterPage() {
     if (!opts?.silent) setLoading(true);
     setErr("");
     try {
-      await purgeAllBrowserTbsCopies();
       const res = await fetch("/api/tbs/dashboard", {
         cache: "no-store",
         credentials: "same-origin",
@@ -481,7 +479,7 @@ export default function AdminMasterPage() {
   useEffect(() => {
     if (!ready) return;
     void loadDash();
-    const refresh = window.setInterval(() => void loadDash({ silent: true }), 60000);
+    const refresh = window.setInterval(() => void loadDash({ silent: true }), 10000);
     return () => window.clearInterval(refresh);
   }, [ready]);
 

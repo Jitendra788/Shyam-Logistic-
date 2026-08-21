@@ -318,24 +318,20 @@ async function readCollection<T>(file: string): Promise<T | undefined> {
 }
 
 async function fetchSharedState(): Promise<TbsState> {
-  const parts: TbsState[] = [];
-
-  const fromPg = await pgGet<TbsState>(STATE_KEY);
-  if (fromPg && typeof fromPg === "object") {
-    const n = normalizeState(fromPg);
-    if (stateSize(n) === 0) return n;
-    parts.push(n);
+  if (hasPostgres()) {
+    const fromPg = await pgGet<TbsState>(STATE_KEY);
+    if (fromPg && typeof fromPg === "object") return normalizeState(fromPg);
   }
+
+  const parts: TbsState[] = [];
 
   const fromSql = await sqliteGet<TbsState>(STATE_KEY);
   if (fromSql && typeof fromSql === "object") parts.push(normalizeState(fromSql));
 
-  let blobSize = 0;
   if (hasBlobStore()) {
     const blob = await blobGet<TbsState>(STATE_KEY);
     if (blob.ok && blob.value) {
       const n = normalizeState(blob.value);
-      blobSize = stateSize(n);
       parts.push(n);
     }
   }
@@ -364,12 +360,7 @@ async function fetchSharedState(): Promise<TbsState> {
   if (stateSize(legacy) > 0) parts.push(legacy);
 
   const merged = parts.length ? mergeStates(...parts) : emptyState();
-  const pgSize = fromPg ? stateSize(normalizeState(fromPg)) : 0;
-  const mergedSize = stateSize(merged);
-  const behind =
-    (hasPostgres() && mergedSize > pgSize) ||
-    (hasBlobStore() && mergedSize > blobSize);
-  if (behind && mergedSize > 0) {
+  if (stateSize(merged) > 0 && (hasPostgres() || hasBlobStore())) {
     await persistState(merged);
   }
   return merged;
@@ -386,8 +377,21 @@ async function loadState(): Promise<TbsState> {
 async function persistState(state: TbsState): Promise<void> {
   inflightState = Promise.resolve(state);
   try {
-    const [pgOk, sqlOk, blobOk] = await Promise.all([
-      hasPostgres() ? pgSet(STATE_KEY, state) : Promise.resolve(false),
+    if (hasPostgres()) {
+      const pgOk = await pgSet(STATE_KEY, state);
+      if (pgOk) {
+        void sqliteSet(STATE_KEY, state);
+        if (hasBlobStore()) void blobSet(STATE_KEY, state);
+        const redis = redisClient();
+        if (redis) {
+          void redis.set(redisKey(STATE_KEY), state).catch((err) => {
+            console.error("Upstash state write failed", err);
+          });
+        }
+        return;
+      }
+    }
+    const [sqlOk, blobOk] = await Promise.all([
       sqliteSet(STATE_KEY, state),
       hasBlobStore() ? blobSet(STATE_KEY, state) : Promise.resolve(false),
     ]);
@@ -401,7 +405,7 @@ async function persistState(state: TbsState): Promise<void> {
         console.error("Upstash state write failed", err);
       }
     }
-    if (pgOk || sqlOk || blobOk || redisOk) return;
+    if (sqlOk || blobOk || redisOk) return;
     if (process.env.VERCEL) {
       throw new Error(
         "Shared database is not connected. Connect Neon Postgres or Blob on Vercel, then Redeploy.",
