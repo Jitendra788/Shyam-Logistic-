@@ -387,11 +387,7 @@ export default function AdminMasterPage() {
         throw new Error(`Dashboard API error (${res.status})`);
       }
       const json = (await res.json()) as Dash;
-      setData((prev) => {
-        const nextBookings = json.counts?.bookings || 0;
-        const prevBookings = prev?.counts?.bookings || 0;
-        if (prev && prevBookings > 0 && nextBookings === 0) return prev;
-        return {
+      setData({
         ...json,
         pendingList: json.pendingList || [],
         completedList: json.completedList || [],
@@ -440,7 +436,6 @@ export default function AdminMasterPage() {
         months: json.months || [],
         vehicles: json.vehicles || { total: 0, onRoad: 0, idle: 0, list: [] },
         recentBookings: json.recentBookings || [],
-        };
       });
     } catch (e) {
       setErr(

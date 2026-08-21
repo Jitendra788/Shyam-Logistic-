@@ -92,23 +92,17 @@ function pullCollections(payload: Record<string, unknown>) {
   return out;
 }
 
-async function saveCollections(found: Partial<Record<Col, unknown>>, overwrite: boolean) {
+async function saveCollections(found: Partial<Record<Col, unknown>>, fromServer: boolean) {
   for (const name of COLLECTIONS) {
     if (found[name] == null) continue;
-    const existing = await getCol(name);
     const incoming = found[name];
-    if (
-      Array.isArray(incoming) &&
-      incoming.length === 0
-    ) {
+    if (fromServer) {
+      await setCol(name, incoming);
       continue;
     }
-    if (Array.isArray(incoming) && Array.isArray(existing)) {
-      await setCol(name, mergeById(incoming, existing));
-      continue;
-    }
-    if (!overwrite && existing != null) continue;
-    await setCol(name, incoming);
+    const existing = await getCol(name);
+    if (Array.isArray(incoming) && incoming.length === 0) continue;
+    if (!existing) await setCol(name, incoming);
   }
 }
 
@@ -273,42 +267,8 @@ async function syncLorryLocal(row: { lrIds?: string[]; vehicleNo?: string }) {
   if (next.changed) await setCol("bookings", next.bookings);
 }
 
-async function leftoverLocal(): Promise<Record<string, unknown>> {
-  const payload: Record<string, unknown> = {};
-  for (const name of COLLECTIONS) {
-    const local = await getCol(name);
-    if (name === "masters") {
-      if (local && typeof local === "object" && !Array.isArray(local)) {
-        payload.masters = local;
-      }
-      continue;
-    }
-    if (Array.isArray(local) && local.length > 0) payload[name] = local;
-  }
-  return payload;
-}
-
-let migrateOnce: Promise<boolean> | null = null;
-
-async function migrateBrowserToServer(orig: typeof fetch) {
-  if (migrateOnce) return migrateOnce;
-  migrateOnce = (async () => {
-    await migrateLegacyIdb();
-    const leftover = await leftoverLocal();
-    if (!Object.keys(leftover).length) return false;
-    const res = await orig("/api/tbs/import", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify(leftover),
-    });
-    if (!res.ok) {
-      migrateOnce = null;
-      return false;
-    }
-    return true;
-  })();
-  return migrateOnce;
+async function dropLeftoverBrowserCopy() {
+  await idbClearAll();
 }
 
 async function applyMutation(url: string, method: string, init?: RequestInit) {
@@ -455,33 +415,28 @@ async function tbsHandle(
   }
 
   if (method === "GET") {
-    let imported = false;
-    if (shared) {
-      try {
-        imported = await migrateBrowserToServer(orig);
-      } catch {
-        /* keep local copy */
-      }
-    } else {
+    if (!shared) {
       try {
         await migrateLegacyIdb();
       } catch {
         /* ignore */
       }
     }
-    if (imported) {
-      try {
-        res = await orig(input, init);
-      } catch {
-        /* keep first response */
-      }
-    }
 
     const isCollectionGet = Boolean(PATH_COL[path]);
     if (res.ok) {
       const data = (await res.clone().json()) as Record<string, unknown>;
+      if (shared) {
+        if (isCollectionGet) {
+          await saveCollections(pullCollections(data), true);
+        }
+        if (path.includes("/api/tbs/dashboard")) {
+          await dropLeftoverBrowserCopy();
+        }
+        return res;
+      }
       if (isCollectionGet) {
-        await saveCollections(pullCollections(data), shared);
+        await saveCollections(pullCollections(data), false);
         return jsonResponse(await overlayPayload(data));
       }
       if (path.includes("/api/tbs/dashboard")) {
@@ -493,16 +448,18 @@ async function tbsHandle(
       }
       return res;
     }
-    if (path.includes("/api/tbs/reports")) {
-      const rebuilt = await overlayAnyReport(url);
-      if (rebuilt) return jsonResponse(rebuilt);
-    }
-    if (isCollectionGet) {
-      try {
-        const over = await overlayPayload({});
-        if (Object.keys(over).length) return jsonResponse(over);
-      } catch {
-        /* ignore */
+    if (!shared) {
+      if (path.includes("/api/tbs/reports")) {
+        const rebuilt = await overlayAnyReport(url);
+        if (rebuilt) return jsonResponse(rebuilt);
+      }
+      if (isCollectionGet) {
+        try {
+          const over = await overlayPayload({});
+          if (Object.keys(over).length) return jsonResponse(over);
+        } catch {
+          /* ignore */
+        }
       }
     }
     return res;
@@ -544,7 +501,6 @@ export function installTbsPersist() {
   const w = window as Window & { __tbsPersist?: boolean };
   if (w.__tbsPersist) return;
   w.__tbsPersist = true;
-  void migrateLegacyIdb();
   const orig = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const url =
