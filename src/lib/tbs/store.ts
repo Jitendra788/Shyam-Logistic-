@@ -168,9 +168,11 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 async function writeJson<T>(file: string, data: T): Promise<void> {
   if (!process.env.VERCEL) mem.set(file, data);
 
-  const pgOk = await pgSet(file, data);
-  const sqlOk = await sqliteSet(file, data);
-  const blobOk = hasBlobStore() ? await blobSet(file, data) : false;
+  const [pgOk, sqlOk, blobOk] = await Promise.all([
+    hasPostgres() ? pgSet(file, data) : Promise.resolve(false),
+    sqliteSet(file, data),
+    hasBlobStore() ? blobSet(file, data) : Promise.resolve(false),
+  ]);
   const redis = redisClient();
   let redisOk = false;
   if (redis) {
@@ -318,9 +320,14 @@ async function fetchSharedState(): Promise<TbsState> {
   const fromSql = await sqliteGet<TbsState>(STATE_KEY);
   if (fromSql && typeof fromSql === "object") parts.push(normalizeState(fromSql));
 
+  let blobSize = 0;
   if (hasBlobStore()) {
     const blob = await blobGet<TbsState>(STATE_KEY);
-    if (blob.ok && blob.value) parts.push(normalizeState(blob.value));
+    if (blob.ok && blob.value) {
+      const n = normalizeState(blob.value);
+      blobSize = stateSize(n);
+      parts.push(n);
+    }
   }
 
   const redis = redisClient();
@@ -348,7 +355,11 @@ async function fetchSharedState(): Promise<TbsState> {
 
   const merged = parts.length ? mergeStates(...parts) : emptyState();
   const pgSize = fromPg ? stateSize(normalizeState(fromPg)) : 0;
-  if (stateSize(merged) > pgSize && (hasPostgres() || hasBlobStore())) {
+  const mergedSize = stateSize(merged);
+  const behind =
+    (hasPostgres() && mergedSize > pgSize) ||
+    (hasBlobStore() && mergedSize > blobSize);
+  if (behind && mergedSize > 0) {
     await persistState(merged);
   }
   return merged;
@@ -365,9 +376,11 @@ async function loadState(): Promise<TbsState> {
 async function persistState(state: TbsState): Promise<void> {
   inflightState = Promise.resolve(state);
   try {
-    const pgOk = await pgSet(STATE_KEY, state);
-    const sqlOk = await sqliteSet(STATE_KEY, state);
-    const blobOk = hasBlobStore() ? await blobSet(STATE_KEY, state) : false;
+    const [pgOk, sqlOk, blobOk] = await Promise.all([
+      hasPostgres() ? pgSet(STATE_KEY, state) : Promise.resolve(false),
+      sqliteSet(STATE_KEY, state),
+      hasBlobStore() ? blobSet(STATE_KEY, state) : Promise.resolve(false),
+    ]);
     const redis = redisClient();
     let redisOk = false;
     if (redis) {
