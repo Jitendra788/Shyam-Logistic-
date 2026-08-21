@@ -33,7 +33,7 @@ export function failSave(err: unknown) {
   const msg =
     err instanceof Error
       ? err.message
-      : "Save failed — set TURSO_DATABASE_URL on Vercel";
+      : "Save failed — connect Neon Postgres on Vercel";
   return NextResponse.json(
     { error: msg },
     {

@@ -21,8 +21,14 @@ type Bucket = { count: number; amount: number };
 
 type Dash = {
   persistent?: boolean;
-  storage?: "sqlite" | "redis" | "blob" | "local";
-  backends?: { vercel?: boolean; turso?: boolean; blob?: boolean; redis?: boolean };
+  storage?: "postgres" | "sqlite" | "redis" | "blob" | "local";
+  backends?: {
+    vercel?: boolean;
+    postgres?: boolean;
+    turso?: boolean;
+    blob?: boolean;
+    redis?: boolean;
+  };
   collectionPct?: number;
   todayWork?: {
     date: string;
@@ -809,7 +815,7 @@ export default function AdminMasterPage() {
         <div className="tbs-msg err">
           Shared database is not connected, so phones will not share the same
           saved data. Create <strong>Vercel Blob</strong>, then Redeploy. This
-          deploy: Turso {data.backends?.turso ? "on" : "off"}, Blob{" "}
+          deploy: Postgres {data.backends?.postgres ? "on" : "off"}, Blob{" "}
           {data.backends?.blob ? "on" : "off"}, Redis{" "}
           {data.backends?.redis ? "on" : "off"}.
         </div>
@@ -1160,12 +1166,12 @@ export default function AdminMasterPage() {
           Shared database is not connected, so each phone/laptop sees different
           data. In Vercel open the project → <strong>Storage</strong> → create{" "}
           <strong>Blob</strong> (or add Turso / Upstash Redis), then{" "}
-          <strong>Redeploy</strong>. Chip must show DB · BLOB / SQLITE / REDIS
+          <strong>Redeploy</strong>. Chip must show DB · POSTGRES / BLOB
           — not LOCAL.
           {data.backends ? (
             <span>
               {" "}
-              (this deploy: Turso {data.backends.turso ? "on" : "off"}, Blob{" "}
+              (this deploy: Postgres {data.backends.postgres ? "on" : "off"}, Blob{" "}
               {data.backends.blob ? "on" : "off"}, Redis{" "}
               {data.backends.redis ? "on" : "off"})
             </span>
@@ -1180,8 +1186,12 @@ export default function AdminMasterPage() {
           </summary>
           <ol className="tbs-setup-steps">
             <li>
-              Fastest: Vercel project → Storage → Create Database →{" "}
-              <strong>Blob</strong>. Vercel adds the token. Redeploy. Chip:{" "}
+              Postgres: Vercel → Integrations → Neon (free). Chip:{" "}
+              <strong>DB · POSTGRES</strong>. Browser data imports on first
+              Booking page open.
+            </li>
+            <li>
+              Backup store: Storage → <strong>Blob</strong>. Chip:{" "}
               <strong>DB · BLOB</strong>.
             </li>
             <li>

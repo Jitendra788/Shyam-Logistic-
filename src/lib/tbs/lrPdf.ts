@@ -252,12 +252,16 @@ function publicFile(url: string) {
 
 /** Print peacock (white/transparent). Screen mark has a black square — do not use on LR. */
 async function readPrintLogoBytes(): Promise<Uint8Array | null> {
-  const paths = [
-    publicFile("/brand/shyam-peacock-mark-print.png"),
-    publicFile("/brand/shyam-peacock-mark.png"),
+  const files = [
+    path.join(process.cwd(), "public", "brand", "shyam-peacock-mark-print.png"),
+    path.join(process.cwd(), "public", "brand", "shyam-peacock-mark.png"),
   ];
-  for (const file of paths) {
+  for (let i = 0; i < files.length; i++) {
     try {
+      const file =
+        i === 0
+          ? path.join(process.cwd(), "public", "brand", "shyam-peacock-mark-print.png")
+          : path.join(process.cwd(), "public", "brand", "shyam-peacock-mark.png");
       const buf = await readFile(file);
       if (buf[0] === 0x89 && buf[1] === 0x50) return buf;
     } catch {

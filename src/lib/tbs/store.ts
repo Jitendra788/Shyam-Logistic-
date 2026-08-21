@@ -3,6 +3,7 @@ import path from "path";
 import { Redis } from "@upstash/redis";
 import { isLibsqlRemote, sqliteGet, sqliteKind, sqliteSet } from "@/lib/db/sqlite";
 import { blobGet, blobSet, hasBlobStore } from "@/lib/db/blobKv";
+import { hasPostgres, pgGet, pgSet } from "@/lib/db/postgres";
 import type {
   Bill,
   Booking,
@@ -43,12 +44,12 @@ function redisClient(): Redis | null {
 
 /** True when every visitor sees the same saved records. */
 export function isTbsPersistent(): boolean {
-  if (isLibsqlRemote() || redisClient() || hasBlobStore()) return true;
-  // Vercel disk is not shared. Local next-dev can use a SQLite file / JSON.
+  if (hasPostgres() || isLibsqlRemote() || redisClient() || hasBlobStore()) return true;
   return !process.env.VERCEL;
 }
 
-export function tbsStorageKind(): "sqlite" | "redis" | "blob" | "local" {
+export function tbsStorageKind(): "postgres" | "sqlite" | "redis" | "blob" | "local" {
+  if (hasPostgres()) return "postgres";
   if (!process.env.VERCEL) {
     if (sqliteKind() === "sqlite") return "sqlite";
     return "local";
@@ -62,6 +63,7 @@ export function tbsStorageKind(): "sqlite" | "redis" | "blob" | "local" {
 export function tbsBackendFlags() {
   return {
     vercel: Boolean(process.env.VERCEL),
+    postgres: hasPostgres(),
     turso: isLibsqlRemote(),
     blob: hasBlobStore(),
     redis: Boolean(redisClient()),
@@ -110,6 +112,12 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
     return mem.get(file) as T;
   }
 
+  const fromPg = await pgGet<T>(file);
+  if (fromPg !== undefined) {
+    if (!onVercel) mem.set(file, fromPg);
+    return fromPg;
+  }
+
   const fromSql = await sqliteGet<T>(file);
   if (fromSql !== undefined) {
     if (!onVercel) mem.set(file, fromSql);
@@ -151,6 +159,7 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 async function writeJson<T>(file: string, data: T): Promise<void> {
   if (!process.env.VERCEL) mem.set(file, data);
 
+  const pgOk = await pgSet(file, data);
   const sqlOk = await sqliteSet(file, data);
   const blobOk = hasBlobStore() ? await blobSet(file, data) : false;
   const redis = redisClient();
@@ -164,11 +173,11 @@ async function writeJson<T>(file: string, data: T): Promise<void> {
     }
   }
 
-  if (sqlOk || redisOk || blobOk) return;
+  if (sqlOk || redisOk || blobOk || pgOk) return;
 
   if (process.env.VERCEL) {
     throw new Error(
-      "Shared database is not connected. In Vercel open Storage → Blob, then Redeploy.",
+      "Shared database is not connected. Connect Neon Postgres or Blob on Vercel, then Redeploy.",
     );
   }
 
@@ -205,7 +214,7 @@ function emptyState(): TbsState {
 }
 
 function useSharedState() {
-  // Local next-dev must keep this PC's SQLite/JSON. Blob is only for Vercel.
+  if (hasPostgres()) return true;
   if (!process.env.VERCEL) return false;
   return isLibsqlRemote() || Boolean(redisClient()) || hasBlobStore();
 }
@@ -228,6 +237,8 @@ function normalizeState(raw: Partial<TbsState> | null | undefined): TbsState {
 let inflightState: Promise<TbsState> | null = null;
 
 async function readCollection<T>(file: string): Promise<T | undefined> {
+  const fromPg = await pgGet<T>(file);
+  if (fromPg !== undefined) return fromPg;
   const fromSql = await sqliteGet<T>(file);
   if (fromSql !== undefined) return fromSql;
   if (hasBlobStore()) {
@@ -251,6 +262,9 @@ async function readCollection<T>(file: string): Promise<T | undefined> {
 }
 
 async function fetchSharedState(): Promise<TbsState> {
+  const fromPg = await pgGet<TbsState>(STATE_KEY);
+  if (fromPg && typeof fromPg === "object") return normalizeState(fromPg);
+
   const fromSql = await sqliteGet<TbsState>(STATE_KEY);
   if (fromSql && typeof fromSql === "object") return normalizeState(fromSql);
 
@@ -306,6 +320,7 @@ async function loadState(): Promise<TbsState> {
 async function persistState(state: TbsState): Promise<void> {
   inflightState = Promise.resolve(state);
   try {
+    const pgOk = await pgSet(STATE_KEY, state);
     const sqlOk = await sqliteSet(STATE_KEY, state);
     const blobOk = hasBlobStore() ? await blobSet(STATE_KEY, state) : false;
     const redis = redisClient();
@@ -318,10 +333,10 @@ async function persistState(state: TbsState): Promise<void> {
         console.error("Upstash state write failed", err);
       }
     }
-    if (sqlOk || blobOk || redisOk) return;
+    if (pgOk || sqlOk || blobOk || redisOk) return;
     if (process.env.VERCEL) {
       throw new Error(
-        "Shared database is not connected. In Vercel open Storage → Blob, then Redeploy.",
+        "Shared database is not connected. Connect Neon Postgres or Blob on Vercel, then Redeploy.",
       );
     }
   } finally {
