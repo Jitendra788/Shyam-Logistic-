@@ -15,12 +15,27 @@ function pdfResponse(pdfBytes: Uint8Array, lrNo: string) {
   });
 }
 
-/** Resolve booking from server store, or from client body (IndexedDB / local persist). */
+function failPdf(err: unknown) {
+  console.error("LR PDF failed", err);
+  const msg = err instanceof Error ? err.message : "PDF failed";
+  return NextResponse.json({ error: msg }, { status: 500 });
+}
+
+async function safeParties(): Promise<Party[]> {
+  try {
+    return await getParties();
+  } catch (err) {
+    console.error("LR PDF parties failed", err);
+    return [];
+  }
+}
+
+/** Resolve booking from server store, or from client body. */
 async function resolveBooking(
   id: string | undefined,
   bodyBooking: Booking | undefined,
 ): Promise<{ booking: Booking; parties: Party[] } | { error: string; status: number }> {
-  const parties = await getParties();
+  const parties = await safeParties();
 
   if (bodyBooking && typeof bodyBooking === "object" && (bodyBooking.lrNo || bodyBooking.id)) {
     return { booking: bodyBooking, parties };
@@ -30,53 +45,61 @@ async function resolveBooking(
     return { error: "Missing booking", status: 400 };
   }
 
-  const bookings = await getBookings();
-  const booking = bookings.find((b) => b.id === id || b.lrNo === id);
-  if (!booking) {
-    return {
-      error:
-        "Booking not found on server. Re-open Print from the booking list (local data will be sent).",
-      status: 404,
-    };
+  try {
+    const bookings = await getBookings();
+    const booking = bookings.find((b) => b.id === id || b.lrNo === id);
+    if (!booking) {
+      return { error: "Booking not found. Save first, then print.", status: 404 };
+    }
+    return { booking, parties };
+  } catch (err) {
+    console.error("LR PDF bookings failed", err);
+    return { error: "Could not load booking for PDF", status: 503 };
   }
-  return { booking, parties };
 }
 
 export async function GET(req: NextRequest) {
   const unauth = await requireAuth();
   if (unauth) return unauth;
 
-  const id = req.nextUrl.searchParams.get("id") || "";
-  const resolved = await resolveBooking(id, undefined);
-  if ("error" in resolved) {
-    return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+  try {
+    const id = req.nextUrl.searchParams.get("id") || "";
+    const resolved = await resolveBooking(id, undefined);
+    if ("error" in resolved) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+    }
+    const pdfBytes = await buildLrPdf(resolved.booking, resolved.parties);
+    return pdfResponse(pdfBytes, resolved.booking.lrNo || id);
+  } catch (err) {
+    return failPdf(err);
   }
-
-  const pdfBytes = await buildLrPdf(resolved.booking, resolved.parties);
-  return pdfResponse(pdfBytes, resolved.booking.lrNo || id);
 }
 
 export async function POST(req: NextRequest) {
   const unauth = await requireAuth();
   if (unauth) return unauth;
 
-  let body: { id?: string; booking?: Booking; parties?: Party[] } = {};
   try {
-    body = (await req.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    let body: { id?: string; booking?: Booking; parties?: Party[] } = {};
+    try {
+      body = (await req.json()) as typeof body;
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    const resolved = await resolveBooking(body.id, body.booking);
+    if ("error" in resolved) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+    }
+
+    const parties =
+      Array.isArray(body.parties) && body.parties.length
+        ? body.parties
+        : resolved.parties;
+
+    const pdfBytes = await buildLrPdf(resolved.booking, parties);
+    return pdfResponse(pdfBytes, resolved.booking.lrNo || resolved.booking.id);
+  } catch (err) {
+    return failPdf(err);
   }
-
-  const resolved = await resolveBooking(body.id, body.booking);
-  if ("error" in resolved) {
-    return NextResponse.json({ error: resolved.error }, { status: resolved.status });
-  }
-
-  const parties =
-    Array.isArray(body.parties) && body.parties.length
-      ? body.parties
-      : resolved.parties;
-
-  const pdfBytes = await buildLrPdf(resolved.booking, parties);
-  return pdfResponse(pdfBytes, resolved.booking.lrNo || resolved.booking.id);
 }

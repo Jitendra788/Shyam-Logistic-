@@ -9,7 +9,9 @@ import {
 } from "pdf-lib";
 import { readFile } from "fs/promises";
 import path from "path";
-import type { Booking, Party } from "@/lib/tbs/types";
+import { partyLabel } from "@/lib/tbs/partyLabel";
+import { pdfWinAnsi } from "@/lib/tbs/pdfWinAnsi";
+import { getSiteUrl } from "@/lib/seo";
 
 const PAGE_H = 841.92;
 /** Offset between matching fields on copy 1 vs copy 2 (not the gap above copy 2). */
@@ -40,9 +42,11 @@ function amt(n: number | string | undefined) {
   return v ? v.toFixed(2) : "";
 }
 
-function partyOf(parties: Party[], name: string) {
+function partyOf(parties: Party[], name: unknown) {
+  const n = partyLabel(name).trim().toLowerCase();
+  if (!n) return undefined;
   return parties.find(
-    (p) => p.partyName.trim().toLowerCase() === name.trim().toLowerCase(),
+    (p) => partyLabel(p.partyName).trim().toLowerCase() === n,
   );
 }
 
@@ -66,10 +70,10 @@ function shrinkToWidth(
   while (s > 6 && font.widthOfTextAtSize(value, s) > maxW) s -= 0.4;
   if (font.widthOfTextAtSize(value, s) <= maxW) return { text: value, size: s };
   let t = value;
-  while (t.length > 1 && font.widthOfTextAtSize(`${t}…`, s) > maxW) {
+  while (t.length > 1 && font.widthOfTextAtSize(`${t}...`, s) > maxW) {
     t = t.slice(0, -1);
   }
-  return { text: `${t}…`, size: s };
+  return { text: `${t}...`, size: s };
 }
 
 function wrapToWidth(
@@ -108,7 +112,7 @@ function wrapToWidth(
     return lines.filter(Boolean);
   };
   let lines = pack(s);
-  while (s > 6.2 && lines.some((ln) => ln.endsWith("…"))) {
+  while (s > 6.2 && lines.some((ln) => ln.endsWith("..."))) {
     s -= 0.35;
     lines = pack(s);
   }
@@ -245,24 +249,27 @@ function drawEmptyBox(
   });
 }
 
-function publicFile(url: string) {
-  const rel = url.replace(/^\//, "").replace(/^public[\\/]/, "");
-  return path.join(process.cwd(), "public", rel);
+async function readBrandBytes(rel: string): Promise<Uint8Array> {
+  const filePath = path.join(process.cwd(), "public", "brand", rel);
+  try {
+    return await readFile(filePath);
+  } catch {
+    const res = await fetch(`${getSiteUrl()}/brand/${rel}`);
+    if (!res.ok) {
+      throw new Error(`Could not load brand file: ${rel}`);
+    }
+    return new Uint8Array(await res.arrayBuffer());
+  }
 }
 
 /** Print peacock (white/transparent). Screen mark has a black square — do not use on LR. */
 async function readPrintLogoBytes(): Promise<Uint8Array | null> {
-  const files = [
-    path.join(process.cwd(), "public", "brand", "shyam-peacock-mark-print.png"),
-    path.join(process.cwd(), "public", "brand", "shyam-peacock-mark.png"),
-  ];
-  for (let i = 0; i < files.length; i++) {
+  for (const name of [
+    "shyam-peacock-mark-print.png",
+    "shyam-peacock-mark.png",
+  ]) {
     try {
-      const file =
-        i === 0
-          ? path.join(process.cwd(), "public", "brand", "shyam-peacock-mark-print.png")
-          : path.join(process.cwd(), "public", "brand", "shyam-peacock-mark.png");
-      const buf = await readFile(file);
+      const buf = await readBrandBytes(name);
       if (buf[0] === 0x89 && buf[1] === 0x50) return buf;
     } catch {
       /* try next */
@@ -306,13 +313,7 @@ export async function buildLrPdf(
   booking: Booking,
   parties: Party[],
 ): Promise<Uint8Array> {
-  const blankPath = path.join(
-    process.cwd(),
-    "public",
-    "brand",
-    "lr-form-blank.pdf",
-  );
-  const bytes = await readFile(blankPath);
+  const bytes = await readBrandBytes("lr-form-blank.pdf");
   const pdf = await PDFDocument.load(bytes);
   const donor = await PDFDocument.load(bytes);
   const [copied] = await pdf.copyPages(donor, [0]);
@@ -332,25 +333,25 @@ export async function buildLrPdf(
   const chgWt = booking.chargedWt ? String(booking.chargedWt) : actWt;
 
   const values: Record<string, string> = {
-    lorryNo: booking.vehicleNo || "",
-    bookingFrom: booking.bookingFrom || "",
-    deliveryAt: booking.deliveryAt || "",
-    lrNo: booking.lrNo || "",
-    from: fromStation,
-    to: booking.to || "",
+    lorryNo: pdfWinAnsi(booking.vehicleNo),
+    bookingFrom: pdfWinAnsi(booking.bookingFrom),
+    deliveryAt: pdfWinAnsi(booking.deliveryAt),
+    lrNo: pdfWinAnsi(booking.lrNo),
+    from: pdfWinAnsi(fromStation),
+    to: pdfWinAnsi(booking.to),
     date: dmy(booking.lrDate),
-    consignor: booking.consignor || "",
-    consignorAddr: consignor?.address || "",
-    consignorGst: consignor?.gstTin || "",
-    consignee: booking.consignee || "",
-    consigneeAddr: consignee?.address || booking.address || "",
-    consigneeGst: consignee?.gstTin || booking.gstNo || "",
-    articles: booking.noOfArticles || "",
-    particulars: booking.particulars || "",
-    invNo: booking.invNoDate || "",
-    rate: rateLabel,
-    actWt,
-    chgWt,
+    consignor: pdfWinAnsi(booking.consignor),
+    consignorAddr: pdfWinAnsi(consignor?.address),
+    consignorGst: pdfWinAnsi(consignor?.gstTin),
+    consignee: pdfWinAnsi(booking.consignee),
+    consigneeAddr: pdfWinAnsi(consignee?.address || booking.address),
+    consigneeGst: pdfWinAnsi(consignee?.gstTin || booking.gstNo),
+    articles: pdfWinAnsi(booking.noOfArticles),
+    particulars: pdfWinAnsi(booking.particulars),
+    invNo: pdfWinAnsi(booking.invNoDate),
+    rate: pdfWinAnsi(rateLabel),
+    actWt: pdfWinAnsi(actWt),
+    chgWt: pdfWinAnsi(chgWt),
     freight: amt(booking.freight),
     doorColl: amt(booking.doorColle),
     doorDel: amt(booking.doorDelivery),
@@ -361,7 +362,7 @@ export async function buildLrPdf(
     advance: "",
     balance: amt(booking.grandTotal || booking.total),
     remark: "",
-    eway: booking.ewayBillNo || "",
+    eway: pdfWinAnsi(booking.ewayBillNo),
     validDate: booking.validDate ? dmy(booking.validDate) : "",
   };
 

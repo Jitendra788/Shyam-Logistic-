@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
     imageSizes: [32, 48, 64, 96, 128, 192, 256],
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
+  outputFileTracingIncludes: {
+    "/api/tbs/bookings/lr-pdf": [
+      "./public/brand/lr-form-blank.pdf",
+      "./public/brand/shyam-peacock-mark-print.png",
+      "./public/brand/shyam-peacock-mark.png",
+    ],
+  },
   async headers() {
     return [
       {

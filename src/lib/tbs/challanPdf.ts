@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { BILL_ADDRESS, fmtBillDate } from "@/lib/tbs/billPrint";
 import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
+import { pdfWinAnsi } from "@/lib/tbs/pdfWinAnsi";
 import type { Booking, Challan } from "@/lib/tbs/types";
 
 /** Old RptChallan / 1151.pdf — US Letter portrait. */
@@ -47,8 +48,9 @@ function text(
   size: number,
   color = BLACK,
 ) {
-  if (!value) return;
-  page.drawText(value.slice(0, 80), { x, y, size, font, color });
+  const safe = pdfWinAnsi(value);
+  if (!safe) return;
+  page.drawText(safe.slice(0, 80), { x, y, size, font, color });
 }
 
 function center(
@@ -59,8 +61,10 @@ function center(
   size: number,
   color = BLACK,
 ) {
-  const w = font.widthOfTextAtSize(value, size);
-  text(page, font, value, (PAGE_W - w) / 2, y, size, color);
+  const safe = pdfWinAnsi(value);
+  if (!safe) return;
+  const w = font.widthOfTextAtSize(safe, size);
+  text(page, font, safe, (PAGE_W - w) / 2, y, size, color);
 }
 
 async function embedPng(pdf: PDFDocument, url: string) {

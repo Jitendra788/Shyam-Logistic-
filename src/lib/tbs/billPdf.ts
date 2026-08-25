@@ -13,6 +13,7 @@ import {
   type BillPrintLine,
 } from "@/lib/tbs/billPrint";
 import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
+import { pdfWinAnsi } from "@/lib/tbs/pdfWinAnsi";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
 
 /** Old Frm_billprinting page: US Letter landscape. */
@@ -74,8 +75,9 @@ function text(
   size: number,
   color = BLACK,
 ) {
-  if (!value) return;
-  page.drawText(value.slice(0, 140), { x, y, size, font, color });
+  const safe = pdfWinAnsi(value);
+  if (!safe) return;
+  page.drawText(safe.slice(0, 140), { x, y, size, font, color });
 }
 
 function center(
@@ -86,8 +88,10 @@ function center(
   size: number,
   color = BLACK,
 ) {
-  const w = font.widthOfTextAtSize(value, size);
-  text(page, font, value, (PAGE_W - w) / 2, y, size, color);
+  const safe = pdfWinAnsi(value);
+  if (!safe) return;
+  const w = font.widthOfTextAtSize(safe, size);
+  text(page, font, safe, (PAGE_W - w) / 2, y, size, color);
 }
 
 async function embedPng(pdf: PDFDocument, url: string) {
@@ -106,12 +110,13 @@ function fitCell(
   size: number,
   maxW: number,
 ): { text: string; size: number } {
+  const raw = pdfWinAnsi(value);
   let s = size;
-  while (s > 6 && font.widthOfTextAtSize(value, s) > maxW) s -= 0.3;
-  if (font.widthOfTextAtSize(value, s) <= maxW) return { text: value, size: s };
-  let t = value;
-  while (t.length > 1 && font.widthOfTextAtSize(`${t}…`, s) > maxW) t = t.slice(0, -1);
-  return { text: `${t}…`, size: s };
+  while (s > 6 && font.widthOfTextAtSize(raw, s) > maxW) s -= 0.3;
+  if (font.widthOfTextAtSize(raw, s) <= maxW) return { text: raw, size: s };
+  let t = raw;
+  while (t.length > 1 && font.widthOfTextAtSize(`${t}...`, s) > maxW) t = t.slice(0, -1);
+  return { text: `${t}...`, size: s };
 }
 
 function drawRow(
