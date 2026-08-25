@@ -151,7 +151,7 @@ function PrintInner() {
     if (type === "booking" && id) {
       const b = data.bookings?.find((x) => x.id === id || x.lrNo === id);
       if (!b) return null;
-      return <BookingBillPrint booking={b} parties={data.parties || []} />;
+      return <BookingBillPrint booking={b} parties={data.parties || []} autoPrint={auto} />;
     }
     if (type === "bookings") {
       return (
@@ -317,11 +317,8 @@ function PrintInner() {
       : undefined;
 
   useEffect(() => {
-    if (auto && content && !loading) {
-      const t = setTimeout(() => {
-        if (type === "booking") printLrPdfFrame();
-        else window.print();
-      }, 800);
+    if (auto && content && !loading && type !== "booking") {
+      const t = setTimeout(() => window.print(), 800);
       return () => clearTimeout(t);
     }
   }, [auto, content, loading, type]);
@@ -363,7 +360,9 @@ function PrintInner() {
                 bill,
                 bookings: data.bookings || [],
                 parties: data.parties || [],
-              })
+              }).catch((e) =>
+                alert(e instanceof Error ? e.message : "WhatsApp PDF failed"),
+              )
             }
           >
             WhatsApp
@@ -376,7 +375,9 @@ function PrintInner() {
               void shareChallanPdfOnWhatsApp({
                 challan,
                 bookings: data.bookings || [],
-              })
+              }).catch((e) =>
+                alert(e instanceof Error ? e.message : "WhatsApp PDF failed"),
+              )
             }
           >
             WhatsApp

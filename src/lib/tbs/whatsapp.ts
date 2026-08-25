@@ -1,3 +1,5 @@
+import { partyLabel } from "@/lib/tbs/partyLabel";
+
 /** Open WhatsApp with a pre-filled message (works on phone + desktop WhatsApp Web). */
 export function shareOnWhatsApp(message: string) {
   const text = message.trim();
@@ -6,7 +8,6 @@ export function shareOnWhatsApp(message: string) {
     return;
   }
 
-  // Prefer native share sheet on mobile (user can pick WhatsApp)
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     void navigator
       .share({ title: "SHYAM LOGISTICS", text })
@@ -22,26 +23,7 @@ function openWaMe(text: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-/** Share a PDF file on WhatsApp (native share sheet). Text-only wa.me is not used. */
-export async function sharePdfOnWhatsApp(blob: Blob, fileName: string) {
-  const name = fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`;
-  const file = new File([blob], name, { type: "application/pdf" });
-  const payload: ShareData = { files: [file], title: name };
-  const nav = navigator as Navigator & {
-    canShare?: (data: ShareData) => boolean;
-  };
-
-  if (typeof nav.share === "function" && nav.canShare?.(payload)) {
-    try {
-      await nav.share(payload);
-      return;
-    } catch (err) {
-      if ((err as Error).name === "AbortError") return;
-    }
-  }
-
-  // Desktop browsers often cannot attach files to WhatsApp Web via URL.
-  // Save the PDF so it can be attached in WhatsApp.
+function downloadBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -50,6 +32,34 @@ export async function sharePdfOnWhatsApp(blob: Blob, fileName: string) {
   a.click();
   a.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/** Share a PDF on WhatsApp when the phone allows it; otherwise download the file. */
+export async function sharePdfOnWhatsApp(blob: Blob, fileName: string) {
+  const name = fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`;
+  if (!blob || blob.size < 20) {
+    throw new Error("PDF ready nahi hai. Print page dubara kholo.");
+  }
+
+  const file = new File([blob], name, { type: "application/pdf" });
+  const payload: ShareData = { files: [file], title: name };
+  const nav = navigator as Navigator & {
+    canShare?: (data: ShareData) => boolean;
+  };
+
+  if (typeof nav.share === "function") {
+    try {
+      if (!nav.canShare || nav.canShare(payload)) {
+        await nav.share(payload);
+        return;
+      }
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+    }
+  }
+
+  downloadBlob(blob, name);
+  alert("PDF download ho gaya. WhatsApp me attach karke bhejein.");
 }
 
 export function bookingWhatsAppText(b: {
@@ -66,16 +76,18 @@ export function bookingWhatsAppText(b: {
   total?: number;
 }): string {
   const amt = Number(b.grandTotal || b.total || b.freight || 0);
+  const party =
+    partyLabel(b.billingParty) || partyLabel(b.consignee) || partyLabel(b.consignor);
   return [
     "*SHYAM LOGISTICS*",
     "Consignment Note / LR",
     "",
     `LR No: *${b.lrNo}*`,
     `Date: ${fmt(b.lrDate)}`,
-    `Party: ${b.billingParty || b.consignee || b.consignor}`,
-    `From: ${b.from || "—"} → To: ${b.to || "—"}`,
+    `Party: ${party}`,
+    `From: ${b.from || "-"} -> To: ${b.to || "-"}`,
     b.vehicleNo ? `Vehicle: ${b.vehicleNo}` : "",
-    amt ? `Amount: ₹ ${amt.toFixed(2)}` : "",
+    amt ? `Amount: Rs. ${amt.toFixed(2)}` : "",
     "",
     "Thank you.",
   ]
@@ -99,11 +111,11 @@ export function challanWhatsAppText(c: {
     "",
     `Challan No: *${c.challanNo}*`,
     `Date: ${fmt(c.challanDate)}`,
-    `Broker: ${c.brokerOwner || "—"}`,
-    `Vehicle: ${c.vehicleNo || "—"}`,
-    `From: ${c.fromStation || "—"} → To: ${c.toStation || "—"}`,
-    `Freight: ₹ ${Number(c.freight || 0).toFixed(2)}`,
-    `Balance: ₹ ${Number(c.balance || 0).toFixed(2)}`,
+    `Broker: ${partyLabel(c.brokerOwner) || "-"}`,
+    `Vehicle: ${c.vehicleNo || "-"}`,
+    `From: ${c.fromStation || "-"} -> To: ${c.toStation || "-"}`,
+    `Freight: Rs. ${Number(c.freight || 0).toFixed(2)}`,
+    `Balance: Rs. ${Number(c.balance || 0).toFixed(2)}`,
     "",
     "Thank you.",
   ].join("\n");
@@ -121,8 +133,8 @@ export function billWhatsAppText(b: {
     "",
     `Bill No: *${b.billNo}*`,
     `Date: ${fmt(b.billDate)}`,
-    `Party: ${b.partyName}`,
-    `Amount: ₹ ${Number(b.totalAmount || 0).toFixed(2)}`,
+    `Party: ${partyLabel(b.partyName)}`,
+    `Amount: Rs. ${Number(b.totalAmount || 0).toFixed(2)}`,
     "",
     "Thank you.",
   ].join("\n");
@@ -141,8 +153,8 @@ export function mrWhatsAppText(r: {
     "",
     `MR No: *${r.mrNo}*`,
     `Bill No: ${r.billNo}`,
-    `Party: ${r.partyName}`,
-    `Paid: ₹ ${Number(r.paidAmt || 0).toFixed(2)}`,
+    `Party: ${partyLabel(r.partyName)}`,
+    `Paid: Rs. ${Number(r.paidAmt || 0).toFixed(2)}`,
     `Date: ${fmt(r.transactionDate)}`,
     "",
     "Thank you.",
@@ -150,7 +162,7 @@ export function mrWhatsAppText(r: {
 }
 
 function fmt(iso: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const [y, m, d] = iso.split("-");
   if (y && m && d) return `${d}-${m}-${y}`;
   return iso;

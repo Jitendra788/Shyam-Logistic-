@@ -12,6 +12,7 @@ import {
   fmtBillDate,
   type BillPrintLine,
 } from "@/lib/tbs/billPrint";
+import { embedBrandPng } from "@/lib/tbs/embedBrandPng";
 import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
 import { pdfWinAnsi } from "@/lib/tbs/pdfWinAnsi";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
@@ -94,16 +95,6 @@ function center(
   text(page, font, safe, (PAGE_W - w) / 2, y, size, color);
 }
 
-async function embedPng(pdf: PDFDocument, url: string) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return await pdf.embedPng(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
-
 function fitCell(
   font: PDFFont,
   value: string,
@@ -175,8 +166,8 @@ export async function buildBillPdfBlob(opts: {
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
 
-  const logo = await embedPng(pdf, "/brand/shyam-peacock-mark-print.png");
-  const stamp = await embedPng(pdf, "/brand/shyam-stamp.png");
+  const logo = await embedBrandPng(pdf, "shyam-peacock-mark-print.png");
+  const stamp = await embedBrandPng(pdf, "shyam-stamp.png");
 
   const outer = 18;
   rect(page, outer, 16, PAGE_W - outer * 2, PAGE_H - 32, 1.8);
@@ -311,7 +302,22 @@ export async function shareBillPdfOnWhatsApp(opts: {
   bookings: Booking[];
   parties?: Party[];
 }) {
-  const blob = await buildBillPdfBlob(opts);
+  let blob: Blob;
+  try {
+    const res = await fetch("/api/tbs/bills/pdf", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    });
+    if (!res.ok) throw new Error("server");
+    blob = await res.blob();
+    if (blob.type && !blob.type.includes("pdf") && blob.size < 80) {
+      throw new Error("server");
+    }
+  } catch {
+    blob = await buildBillPdfBlob(opts);
+  }
   const name = displayBillNo(opts.bill.billNo, opts.bill.billDate).replaceAll("/", "-");
   await sharePdfOnWhatsApp(blob, `${name || "Bill"}.pdf`);
 }

@@ -116,5 +116,9 @@ export async function shareLrPdfOnWhatsApp() {
     alert("PDF ready nahi hai. Thoda wait karke phir try karein.");
     return;
   }
-  await sharePdfOnWhatsApp(latestLrPdf.blob, latestLrPdf.fileName);
+  try {
+    await sharePdfOnWhatsApp(latestLrPdf.blob, latestLrPdf.fileName);
+  } catch (e) {
+    alert(e instanceof Error ? e.message : "WhatsApp PDF failed");
+  }
 }

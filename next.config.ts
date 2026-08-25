@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
     "/api/:path*": [
       "./public/brand/lr-form-blank.pdf",
       "./public/brand/shyam-peacock-mark-print.png",
+      "./public/brand/shyam-peacock-mark.png",
+      "./public/brand/shyam-stamp.png",
       "./src/lib/tbs/assets/**/*",
     ],
   },

@@ -534,13 +534,14 @@ export function TaxInvoicePrint({
 export function BookingBillPrint({
   booking,
   parties = [],
+  autoPrint = false,
 }: {
   booking: Booking;
   parties?: Party[];
+  autoPrint?: boolean;
   showReferenceOverlay?: boolean;
 }) {
-  // Original form PDF + pdf-lib fill (sends booking body so local IDB rows work).
-  return <LrPdfFrame booking={booking} parties={parties} />;
+  return <LrPdfFrame booking={booking} parties={parties} autoPrint={autoPrint} />;
 }
 
 export function BillPrint({

@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { BILL_ADDRESS, fmtBillDate } from "@/lib/tbs/billPrint";
+import { embedBrandPng } from "@/lib/tbs/embedBrandPng";
 import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
 import { pdfWinAnsi } from "@/lib/tbs/pdfWinAnsi";
 import type { Booking, Challan } from "@/lib/tbs/types";
@@ -67,16 +68,6 @@ function center(
   text(page, font, safe, (PAGE_W - w) / 2, y, size, color);
 }
 
-async function embedPng(pdf: PDFDocument, url: string) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return await pdf.embedPng(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
-
 export function memoAmt(n: number, cash = false) {
   const v = Number(n) || 0;
   if (cash) return v.toFixed(2);
@@ -104,8 +95,8 @@ export async function buildChallanPdfBlob(opts: {
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
-  const logo = await embedPng(pdf, "/brand/shyam-peacock-mark.png");
-  const stamp = await embedPng(pdf, "/brand/shyam-stamp.png");
+  const logo = await embedBrandPng(pdf, "shyam-peacock-mark.png");
+  const stamp = await embedBrandPng(pdf, "shyam-stamp.png");
 
   rect(page, 44, 22, 542, 737, 1.3);
 
@@ -166,9 +157,10 @@ export async function buildChallanPdfBlob(opts: {
   const cell = (vals: string[], rowIndex: number) => {
     const y = pdfY(tableTop + headerH + rowIndex * rowH + 13);
     vals.forEach((v, i) => {
+      const safe = pdfWinAnsi(v);
       const cx = (COL_X[i] + COL_X[i + 1]) / 2;
-      const tw = font.widthOfTextAtSize(v, 8);
-      text(page, font, v, cx - tw / 2, y, 8);
+      const tw = font.widthOfTextAtSize(safe, 8);
+      text(page, font, safe, cx - tw / 2, y, 8);
     });
   };
 
@@ -257,6 +249,24 @@ export async function shareChallanPdfOnWhatsApp(opts: {
   challan: Challan;
   bookings: Booking[];
 }) {
-  const blob = await buildChallanPdfBlob(opts);
-  await sharePdfOnWhatsApp(blob, `Lorry-Memo-${opts.challan.challanNo || opts.challan.id}.pdf`);
+  let blob: Blob;
+  try {
+    const res = await fetch("/api/tbs/challans/pdf", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    });
+    if (!res.ok) throw new Error("server");
+    blob = await res.blob();
+    if (blob.type && !blob.type.includes("pdf") && blob.size < 80) {
+      throw new Error("server");
+    }
+  } catch {
+    blob = await buildChallanPdfBlob(opts);
+  }
+  await sharePdfOnWhatsApp(
+    blob,
+    `Lorry-Memo-${opts.challan.challanNo || opts.challan.id}.pdf`,
+  );
 }
