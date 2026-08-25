@@ -4,8 +4,12 @@ import { buildLrPdf } from "@/lib/tbs/lrPdf";
 import { getBookings, getParties } from "@/lib/tbs/store";
 import type { Booking, Party } from "@/lib/tbs/types";
 
+export const maxDuration = 30;
+export const runtime = "nodejs";
+
 function pdfResponse(pdfBytes: Uint8Array, lrNo: string) {
-  return new NextResponse(Buffer.from(pdfBytes), {
+  const copy = Uint8Array.from(pdfBytes);
+  return new Response(copy, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
@@ -21,55 +25,28 @@ function failPdf(err: unknown) {
   return NextResponse.json({ error: msg }, { status: 500 });
 }
 
-async function safeParties(): Promise<Party[]> {
-  try {
-    return await getParties();
-  } catch (err) {
-    console.error("LR PDF parties failed", err);
-    return [];
-  }
-}
-
-/** Resolve booking from server store, or from client body. */
-async function resolveBooking(
-  id: string | undefined,
-  bodyBooking: Booking | undefined,
-): Promise<{ booking: Booking; parties: Party[] } | { error: string; status: number }> {
-  const parties = await safeParties();
-
-  if (bodyBooking && typeof bodyBooking === "object" && (bodyBooking.lrNo || bodyBooking.id)) {
-    return { booking: bodyBooking, parties };
-  }
-
-  if (!id) {
-    return { error: "Missing booking", status: 400 };
-  }
-
-  try {
-    const bookings = await getBookings();
-    const booking = bookings.find((b) => b.id === id || b.lrNo === id);
-    if (!booking) {
-      return { error: "Booking not found. Save first, then print.", status: 404 };
-    }
-    return { booking, parties };
-  } catch (err) {
-    console.error("LR PDF bookings failed", err);
-    return { error: "Could not load booking for PDF", status: 503 };
-  }
-}
-
 export async function GET(req: NextRequest) {
   const unauth = await requireAuth();
   if (unauth) return unauth;
 
   try {
     const id = req.nextUrl.searchParams.get("id") || "";
-    const resolved = await resolveBooking(id, undefined);
-    if ("error" in resolved) {
-      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+    if (!id) {
+      return NextResponse.json({ error: "Missing booking" }, { status: 400 });
     }
-    const pdfBytes = await buildLrPdf(resolved.booking, resolved.parties);
-    return pdfResponse(pdfBytes, resolved.booking.lrNo || id);
+    const [bookings, parties] = await Promise.all([
+      getBookings(),
+      getParties().catch(() => [] as Party[]),
+    ]);
+    const booking = bookings.find((b) => b.id === id || b.lrNo === id);
+    if (!booking) {
+      return NextResponse.json(
+        { error: "Booking not found. Save first, then print." },
+        { status: 404 },
+      );
+    }
+    const pdfBytes = await buildLrPdf(booking, parties);
+    return pdfResponse(pdfBytes, booking.lrNo || id);
   } catch (err) {
     return failPdf(err);
   }
@@ -80,25 +57,18 @@ export async function POST(req: NextRequest) {
   if (unauth) return unauth;
 
   try {
-    let body: { id?: string; booking?: Booking; parties?: Party[] } = {};
-    try {
-      body = (await req.json()) as typeof body;
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    const body = (await req.json()) as {
+      id?: string;
+      booking?: Booking;
+      parties?: Party[];
+    };
+    const booking = body.booking;
+    if (!booking || typeof booking !== "object" || !(booking.lrNo || booking.id)) {
+      return NextResponse.json({ error: "Missing booking" }, { status: 400 });
     }
-
-    const resolved = await resolveBooking(body.id, body.booking);
-    if ("error" in resolved) {
-      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
-    }
-
-    const parties =
-      Array.isArray(body.parties) && body.parties.length
-        ? body.parties
-        : resolved.parties;
-
-    const pdfBytes = await buildLrPdf(resolved.booking, parties);
-    return pdfResponse(pdfBytes, resolved.booking.lrNo || resolved.booking.id);
+    const parties = Array.isArray(body.parties) ? body.parties : [];
+    const pdfBytes = await buildLrPdf(booking, parties);
+    return pdfResponse(pdfBytes, booking.lrNo || booking.id);
   } catch (err) {
     return failPdf(err);
   }

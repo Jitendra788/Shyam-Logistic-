@@ -11,7 +11,6 @@ import { readFile } from "fs/promises";
 import path from "path";
 import { partyLabel } from "@/lib/tbs/partyLabel";
 import { pdfWinAnsi } from "@/lib/tbs/pdfWinAnsi";
-import { getSiteUrl } from "@/lib/seo";
 
 const PAGE_H = 841.92;
 /** Offset between matching fields on copy 1 vs copy 2 (not the gap above copy 2). */
@@ -250,16 +249,18 @@ function drawEmptyBox(
 }
 
 async function readBrandBytes(rel: string): Promise<Uint8Array> {
-  const filePath = path.join(process.cwd(), "public", "brand", rel);
-  try {
-    return await readFile(filePath);
-  } catch {
-    const res = await fetch(`${getSiteUrl()}/brand/${rel}`);
-    if (!res.ok) {
-      throw new Error(`Could not load brand file: ${rel}`);
+  const candidates = [
+    path.join(process.cwd(), "public", "brand", rel),
+    path.join(process.cwd(), "src", "lib", "tbs", "assets", rel),
+  ];
+  for (const filePath of candidates) {
+    try {
+      return await readFile(filePath);
+    } catch {
+      /* try next */
     }
-    return new Uint8Array(await res.arrayBuffer());
   }
+  throw new Error(`Could not load brand file: ${rel}`);
 }
 
 /** Print peacock (white/transparent). Screen mark has a black square — do not use on LR. */
@@ -314,8 +315,8 @@ export async function buildLrPdf(
   parties: Party[],
 ): Promise<Uint8Array> {
   const bytes = await readBrandBytes("lr-form-blank.pdf");
-  const pdf = await PDFDocument.load(bytes);
-  const donor = await PDFDocument.load(bytes);
+  const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
+  const donor = await PDFDocument.load(bytes, { ignoreEncryption: true });
   const [copied] = await pdf.copyPages(donor, [0]);
   pdf.addPage(copied);
   const page1 = pdf.getPages()[0];

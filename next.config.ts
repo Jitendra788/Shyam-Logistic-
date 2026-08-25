@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
       "./public/brand/shyam-peacock-mark-print.png",
       "./public/brand/shyam-peacock-mark.png",
     ],
+    "/api/:path*": [
+      "./public/brand/lr-form-blank.pdf",
+      "./public/brand/shyam-peacock-mark-print.png",
+      "./src/lib/tbs/assets/**/*",
+    ],
   },
   async headers() {
     return [
