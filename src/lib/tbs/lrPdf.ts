@@ -11,6 +11,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 import { partyLabel } from "@/lib/tbs/partyLabel";
 import { pdfWinAnsi } from "@/lib/tbs/pdfWinAnsi";
+import type { Booking, Party } from "@/lib/tbs/types";
 
 const PAGE_H = 841.92;
 /** Offset between matching fields on copy 1 vs copy 2 (not the gap above copy 2). */
