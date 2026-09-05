@@ -1,7 +1,10 @@
 import { BlobNotFoundError, del, get, list, put } from "@vercel/blob";
 
 function env(name: string) {
-  const v = process.env[name]?.trim();
+  const bag =
+    (globalThis as { process?: { env?: Record<string, string | undefined> } })
+      .process?.env || process.env;
+  const v = bag[name]?.trim();
   if (!v) return "";
   return v.replace(/^["']|["']$/g, "");
 }

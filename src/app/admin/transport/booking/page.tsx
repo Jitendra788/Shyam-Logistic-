@@ -242,13 +242,13 @@ export default function BookingPage() {
     setSaving(true);
     setMsg("");
     try {
-      const blob = await bookingPdfBlob(current, parties);
       const result = await emailPdfTo({
         to,
         subject: `SHYAM LOGISTICS LR ${current.lrNo}`,
         text: bookingSmsText(current),
         fileName: `LR-${current.lrNo || current.id}.pdf`,
-        blob,
+        kind: "booking",
+        id: current.id,
       });
       setMsg(`PDF emailed to ${result.to} from SHYAM LOGISTICS`);
     } catch (e) {

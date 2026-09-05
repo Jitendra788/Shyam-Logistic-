@@ -283,13 +283,13 @@ export default function BillPage() {
     setSaving(true);
     setMsg("");
     try {
-      const blob = await billPdfBlob(row, data?.bookings || [], data?.parties || []);
       const result = await emailPdfTo({
         to,
         subject: `SHYAM LOGISTICS Bill ${displayBillNo(row.billNo, row.billDate)}`,
         text: billSmsText(row),
         fileName: `Bill-${displayBillNo(row.billNo, row.billDate).replaceAll("/", "-")}.pdf`,
-        blob,
+        kind: "bill",
+        id: row.id,
       });
       setMsg(`PDF emailed to ${result.to} from SHYAM LOGISTICS`);
     } catch (e) {

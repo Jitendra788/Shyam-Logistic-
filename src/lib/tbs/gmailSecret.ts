@@ -28,7 +28,7 @@ export async function getGmailSmtp(): Promise<{ user: string; pass: string }> {
   if (!stored?.pass && hasPostgres()) {
     stored = await pgGet<Stored>(KEY);
   }
-  const user = fromEnv.user || stored?.user || COMPANY_GMAIL;
+  const user = COMPANY_GMAIL;
   const pass = fromEnv.pass || stored?.pass || "";
   if (pass) await saveGmailSmtp(user, pass);
   return { user, pass };

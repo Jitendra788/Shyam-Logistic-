@@ -63,16 +63,6 @@ export function billSharePeople(bill: Bill, parties: Party[]): SharePerson[] {
     },
   ].filter((x) => x.name);
 }
-
-async function blobToBase64(blob: Blob) {
-  const buf = await blob.arrayBuffer();
-  const bytes = new Uint8Array(buf);
-  let bin = "";
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
-
-async function fetchPdfBlob(url: string, body: unknown) {
   const res = await fetch(url, {
     method: "POST",
     credentials: "same-origin",
@@ -107,13 +97,13 @@ export async function emailPdfTo(opts: {
   subject: string;
   text: string;
   fileName: string;
-  blob: Blob;
+  kind: "booking" | "bill";
+  id: string;
 }) {
   const to = opts.to.trim();
   if (!to || !to.includes("@")) {
     throw new Error("Enter Receiver Email ID me sahi email likho.");
   }
-  const pdfBase64 = await blobToBase64(opts.blob);
   const res = await fetch("/api/tbs/send-doc", {
     method: "POST",
     credentials: "same-origin",
@@ -123,7 +113,8 @@ export async function emailPdfTo(opts: {
       subject: opts.subject,
       text: opts.text,
       fileName: opts.fileName,
-      pdfBase64,
+      kind: opts.kind,
+      id: opts.id,
     }),
   });
   const data = (await res.json().catch(() => ({}))) as {
