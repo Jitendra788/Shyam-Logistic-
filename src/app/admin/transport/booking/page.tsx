@@ -878,7 +878,6 @@ export default function BookingPage() {
           { key: "lrNo", label: "LR No" },
           { key: "lrDate", label: "LR Date" },
           { key: "billingParty", label: "Billing Party", width: "160px" },
-          { key: "receiverEmail", label: "Receiver Email", width: "180px" },
           { key: "from", label: "From" },
           { key: "to", label: "To" },
           { key: "particulars", label: "Particulars" },
