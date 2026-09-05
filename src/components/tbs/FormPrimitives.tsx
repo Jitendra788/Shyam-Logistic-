@@ -241,7 +241,7 @@ export function ActionButtons({
           className="tbs-btn tbs-btn-email"
           onClick={onEmail}
           disabled={!canEmail || saving}
-          title={canEmail ? "Email PDF to party" : "Select a record first"}
+          title={canEmail ? "Email PDF to Enter Receiver Email ID" : "Select a record first"}
         >
           Email PDF
         </button>
@@ -258,6 +258,39 @@ export function ActionButtons({
         </button>
       )}
       {extra}
+    </div>
+  );
+}
+
+export function ReceiverEmailInput({
+  value,
+  onChange,
+  listId,
+  emails,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  listId: string;
+  emails: string[];
+}) {
+  const unique = emails.filter((e, i, arr) => e && arr.indexOf(e) === i);
+  return (
+    <div className="tbs-search tbs-receiver-email">
+      <span>Enter Receiver Email ID</span>
+      <input
+        className="tbs-input w-md"
+        type="email"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="receiver@email.com"
+        list={listId}
+        autoComplete="off"
+      />
+      <datalist id={listId}>
+        {unique.map((email) => (
+          <option key={email} value={email} />
+        ))}
+      </datalist>
     </div>
   );
 }

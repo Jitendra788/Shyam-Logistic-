@@ -19,20 +19,6 @@ export function typedReceiverEmail(value?: string | null) {
   return String(value || "").trim();
 }
 
-/** Clicked chip wins; else the Receiver Email ID field; else first party email. */
-export function resolveShareEmail(
-  person: SharePerson | undefined,
-  receiverEmail: string | undefined,
-  people: SharePerson[],
-) {
-  return (
-    String(person?.email || "").trim() ||
-    typedReceiverEmail(receiverEmail) ||
-    people.find((p) => p.email)?.email ||
-    ""
-  );
-}
-
 export function partyPhone(p?: Party | null) {
   return String(p?.contactNo || "").replace(/[^\d+]/g, "");
 }

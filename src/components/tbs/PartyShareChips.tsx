@@ -16,7 +16,7 @@ export function PartyShareChips({
   if (!people.length) return null;
   return (
     <div className="tbs-share-chips">
-      <span className="tbs-share-chips-label">Send to (click email / mobile):</span>
+      <span className="tbs-share-chips-label">Click email to fill Receiver Email ID:</span>
       {people.map((p) => (
         <span key={`${p.role}-${p.name}`} className="tbs-share-chip">
           <strong>
@@ -27,7 +27,7 @@ export function PartyShareChips({
               type="button"
               className="tbs-btn tbs-btn-email"
               disabled={busy}
-              title={`PDF email ${p.email}`}
+              title={`Fill Receiver Email ID: ${p.email}`}
               onClick={() => onEmail(p)}
             >
               {p.email}

@@ -7,6 +7,7 @@ import {
   FormWindow,
   ManualAmountInput,
   PrintCellButton,
+  ReceiverEmailInput,
   StatusBanner,
   fmtDate,
   readApiError,
@@ -27,7 +28,7 @@ import {
   emailPdfTo,
   openSms,
   partyEmail,
-  resolveShareEmail,
+  typedReceiverEmail,
   type SharePerson,
 } from "@/lib/tbs/docShare";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
@@ -265,16 +266,12 @@ export default function BillPage() {
     }
   }
 
-  async function emailBill(person?: SharePerson) {
+  async function emailBill() {
     const row = currentBill;
     if (!row) return needSelectAlert("bill");
-    const to = resolveShareEmail(
-      person,
-      receiverEmail || row.receiverEmail,
-      sharePeople,
-    );
+    const to = typedReceiverEmail(receiverEmail || row.receiverEmail);
     if (!to) {
-      setMsg("Enter Receiver Email ID, ya Party Creation me email save karke us par click karein.");
+      setMsg("Enter Receiver Email ID me email likho — PDF wahi jayegi.");
       return;
     }
     setSaving(true);
@@ -342,13 +339,8 @@ export default function BillPage() {
             className="tbs-input w-full"
             value={party}
             onChange={(e) => {
-              const name = e.target.value;
-              setParty(name);
+              setParty(e.target.value);
               setSelected([]);
-              const p = (data?.parties || []).find(
-                (x) => x.partyName === name,
-              );
-              if (p && !receiverEmail.trim()) setReceiverEmail(partyEmail(p));
             }}
             placeholder="Type or select…"
             list="bill-party-suggestions"
@@ -435,7 +427,7 @@ export default function BillPage() {
       <PartyShareChips
         people={sharePeople}
         busy={saving}
-        onEmail={(p) => void emailBill(p)}
+        onEmail={(p) => setReceiverEmail(p.email)}
         onSms={(p) => smsBill(p)}
       />
       <div className="tbs-actions">
@@ -475,14 +467,22 @@ export default function BillPage() {
           saving={saving}
           printLabel="Print Bill"
           extra={
-            <div className="tbs-search">
-              <span>🔍</span>
-              <span>Enter Bill No For Search</span>
-              <input
-                className="tbs-input w-md"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+            <div className="tbs-toolbar-end">
+              <ReceiverEmailInput
+                value={receiverEmail}
+                onChange={setReceiverEmail}
+                listId="bill-receiver-emails-bar"
+                emails={(data?.parties || []).map((p) => partyEmail(p))}
               />
+              <div className="tbs-search">
+                <span>🔍</span>
+                <span>Enter Bill No For Search</span>
+                <input
+                  className="tbs-input w-md"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
             </div>
           }
         />

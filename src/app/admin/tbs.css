@@ -3147,6 +3147,24 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
   margin-left: auto;
 }
 
+.tbs-toolbar-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.tbs-toolbar-end .tbs-search {
+  margin-left: 0;
+}
+
+.tbs-receiver-email span {
+  font-weight: 700;
+  color: var(--tbs-navy);
+  white-space: nowrap;
+}
+
 .tbs-msg {
   display: flex;
   align-items: flex-start;

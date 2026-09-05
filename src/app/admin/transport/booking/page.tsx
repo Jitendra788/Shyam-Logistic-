@@ -7,6 +7,7 @@ import {
   FormWindow,
   ManualAmountInput,
   PrintCellButton,
+  ReceiverEmailInput,
   StatusBanner,
   fmtDate,
   readApiError,
@@ -25,7 +26,7 @@ import {
   emailPdfTo,
   openSms,
   partyEmail,
-  resolveShareEmail,
+  typedReceiverEmail,
   type SharePerson,
 } from "@/lib/tbs/docShare";
 import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
@@ -188,10 +189,7 @@ export default function BookingPage() {
         consignee: base.consignee,
         address: base.address,
         gstNo: base.gstNo,
-        receiverEmail:
-          base.receiverEmail ||
-          partyEmail(partyByName(name)) ||
-          "",
+        receiverEmail: base.receiverEmail || "",
       });
     });
   }
@@ -203,7 +201,6 @@ export default function BookingPage() {
       consignor: name,
       address: matched ? filled.address || current.address : current.address,
       gstNo: matched ? filled.gstNo || current.gstNo : current.gstNo,
-      receiverEmail: current.receiverEmail || partyEmail(matched),
     });
   }
 
@@ -214,7 +211,6 @@ export default function BookingPage() {
       consignee: name,
       address: matched ? filled.address : current.address,
       gstNo: matched ? filled.gstNo || current.gstNo : current.gstNo,
-      receiverEmail: current.receiverEmail || partyEmail(matched),
     });
   }
 
@@ -238,11 +234,11 @@ export default function BookingPage() {
     );
   }
 
-  async function emailBooking(person?: SharePerson) {
+  async function emailBooking() {
     if (!current.id) return needSelectAlert("booking / LR");
-    const to = resolveShareEmail(person, current.receiverEmail, sharePeople);
+    const to = typedReceiverEmail(current.receiverEmail);
     if (!to) {
-      setMsg("Enter Receiver Email ID, ya Party Creation me email save karke us par click karein.");
+      setMsg("Enter Receiver Email ID me email likho — PDF wahi jayegi.");
       return;
     }
     setSaving(true);
@@ -826,7 +822,7 @@ export default function BookingPage() {
       <PartyShareChips
         people={sharePeople}
         busy={saving}
-        onEmail={(p) => void emailBooking(p)}
+        onEmail={(p) => patch({ receiverEmail: p.email })}
         onSms={(p) => smsBooking(p)}
       />
       <div className="tbs-actions" style={{ borderTop: "1px solid #ccc", paddingTop: 10 }}>
@@ -855,14 +851,22 @@ export default function BookingPage() {
           saving={saving}
           printLabel="Print Bill"
           extra={
-            <div className="tbs-search">
-              <span>🔍</span>
-              <span>Enter LR No For Search</span>
-              <input
-                className="tbs-input w-md"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+            <div className="tbs-toolbar-end">
+              <ReceiverEmailInput
+                value={current.receiverEmail || ""}
+                onChange={(v) => patch({ receiverEmail: v })}
+                listId="booking-receiver-emails-bar"
+                emails={parties.map((p) => partyEmail(p))}
               />
+              <div className="tbs-search">
+                <span>🔍</span>
+                <span>Enter LR No For Search</span>
+                <input
+                  className="tbs-input w-md"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
             </div>
           }
         />
