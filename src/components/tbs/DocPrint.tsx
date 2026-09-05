@@ -10,9 +10,7 @@ import {
   BILL_ADDRESS,
   BILL_BANK,
   billedPartyInfo,
-  billCrystalCharges,
   billLrSum,
-  billPrintTotal,
   buildBillLines,
   displayBillNo,
   fmtBillDate,
@@ -346,10 +344,8 @@ export function TaxInvoicePrint({
 }) {
   const { address, gstNo } = billedPartyInfo(partyName, lrs, parties);
   const lrSum = billLrSum(lrs);
-  const total = bill ? billPrintTotal(bill, lrs) : lrSum;
   const lines = buildBillLines(lrs, bill);
   const shownNo = displayBillNo(billNo, billDate);
-  const extras = billCrystalCharges(bill).filter(([, n]) => n > 0);
   const padRows = Math.max(5, 8 - lines.length);
 
   useEffect(() => {
@@ -410,6 +406,10 @@ export function TaxInvoicePrint({
             <div className="tax-inv-line tax-inv-line-r">
               <span className="tax-inv-lab">Date</span>
               <span className="tax-inv-val">{fmtBillDate(billDate)}</span>
+            </div>
+            <div className="tax-inv-line tax-inv-line-r">
+              <span className="tax-inv-lab">RCM Applicable</span>
+              <span className="tax-inv-val">Yes</span>
             </div>
           </div>
         </div>
@@ -487,33 +487,44 @@ export function TaxInvoicePrint({
         </div>
       </div>
 
-      {extras.length ? (
-        <div className="tax-inv-charges">
-          {extras.map(([lab, amt]) => (
-            <div key={lab}>
-              <span>{lab}</span>
-              <b>{amt}</b>
-            </div>
-          ))}
-          <div className="tax-inv-charges-grand">
-            <span>Grand Total</span>
-            <b>{total}</b>
-          </div>
-        </div>
-      ) : null}
-
       <div className="tax-inv-words">
-        <b>Amount in words:</b> {amountInWordsINR(total)}
+        <b>Amount in words:</b> {amountInWordsINR(lrSum)}
       </div>
 
-      <div className="tax-inv-bank">
-        <div className="tax-inv-bank-title">Bank Details :</div>
-        <div className="tax-inv-bank-grid">
-          <div>Account Holder : {BILL_BANK.holder}</div>
-          <div>Account No {BILL_BANK.accountNo}</div>
-          <div>IFSC Code {BILL_BANK.ifsc}</div>
-          <div>Branch : {BILL_BANK.branch}</div>
+      <div className="tax-inv-below">
+        <div className="tax-inv-bank">
+          <div className="tax-inv-bank-title">Bank Details :</div>
+          <div className="tax-inv-bank-grid">
+            <div>Account Holder : {BILL_BANK.holder}</div>
+            <div>Account No {BILL_BANK.accountNo}</div>
+            <div>IFSC Code {BILL_BANK.ifsc}</div>
+            <div>Branch : {BILL_BANK.branch}</div>
+          </div>
         </div>
+        <table className="tax-inv-gstbox">
+          <tbody>
+            <tr>
+              <td>Freight</td>
+              <td>{lrSum}</td>
+            </tr>
+            <tr>
+              <td>CGST %</td>
+              <td>0.00</td>
+            </tr>
+            <tr>
+              <td>SGST %</td>
+              <td>0.00</td>
+            </tr>
+            <tr>
+              <td>IGST %</td>
+              <td>0.00</td>
+            </tr>
+            <tr>
+              <td>Total</td>
+              <td>{lrSum}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {remark ? (

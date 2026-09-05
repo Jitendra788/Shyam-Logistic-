@@ -256,8 +256,8 @@
 
 .tax-inv-party {
   display: grid;
-  grid-template-columns: 1fr 220px;
-  min-height: 58px;
+  grid-template-columns: 1fr 250px;
+  min-height: 72px;
 }
 
 .tax-inv-party-l {
@@ -270,7 +270,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
+  gap: 5px;
 }
 
 .tax-inv-line {
@@ -282,7 +282,7 @@
 }
 
 .tax-inv-line-r {
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 108px 1fr;
   margin-bottom: 0;
 }
 
@@ -424,6 +424,32 @@
   border-top: none;
   padding: 4px 10px;
   font-size: 12px;
+}
+
+.tax-inv-below {
+  display: grid;
+  grid-template-columns: 1fr 168px;
+  gap: 10px;
+  align-items: start;
+  margin-top: 4px;
+}
+
+.tax-inv-gstbox {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid #000;
+  font-size: 11px;
+}
+
+.tax-inv-gstbox td {
+  border: 1px solid #000;
+  padding: 3px 8px;
+  font-weight: 700;
+}
+
+.tax-inv-gstbox td:last-child {
+  text-align: right;
+  width: 64px;
 }
 
 .tax-inv-bank {

@@ -4,9 +4,7 @@ import {
   BILL_ADDRESS,
   BILL_BANK,
   billedPartyInfo,
-  billCrystalCharges,
   billLrSum,
-  billPrintTotal,
   buildBillLines,
   displayBillNo,
   fmtBillDate,
@@ -155,8 +153,6 @@ export async function buildBillPdfBlob(opts: {
   const lrs = bookings.filter((b) => (bill.lrIds || []).includes(b.id));
   const lines = buildBillLines(lrs, bill);
   const lrSum = billLrSum(lrs);
-  const total = billPrintTotal(bill, lrs);
-  const extras = billCrystalCharges(bill).filter(([, n]) => n > 0);
   const { address, gstNo } = billedPartyInfo(bill.partyName, lrs, parties);
   const shownNo = displayBillNo(bill.billNo, bill.billDate);
 
@@ -190,12 +186,12 @@ export async function buildBillPdfBlob(opts: {
   const boxL = 24;
   const boxR = PAGE_W - 24;
   const boxTop = 492;
-  const boxBot = 418;
+  const boxBot = 400;
   rect(page, boxL, boxBot, boxR - boxL, boxTop - boxBot, 1.5);
   line(page, boxL, 470, boxR, 470, 1.2);
   center(page, bold, "Tax Invoice", 476, 13);
 
-  const splitX = 568;
+  const splitX = 548;
   line(page, splitX, boxBot, splitX, 470, 1.1);
   text(page, bold, "Party Name", 32, 454, 9);
   {
@@ -207,15 +203,17 @@ export async function buildBillPdfBlob(opts: {
     const addr = fitCell(font, address || "", 9, splitX - 128);
     text(page, font, addr.text, 118, 438, addr.size);
   }
-  text(page, bold, "GST No", 32, 424, 9);
+  text(page, bold, "GST No", 32, 422, 9);
   {
     const g = fitCell(bold, gstNo || "", 9, splitX - 128);
-    text(page, bold, g.text, 118, 424, g.size);
+    text(page, bold, g.text, 118, 422, g.size);
   }
-  text(page, bold, "Bill No", 578, 450, 9);
-  text(page, bold, shownNo, 628, 450, 10);
-  text(page, bold, "Date", 578, 428, 9);
-  text(page, bold, fmtBillDate(bill.billDate), 628, 428, 10);
+  text(page, bold, "Bill No", 558, 448, 9);
+  text(page, bold, shownNo, 638, 448, 10);
+  text(page, bold, "Date", 558, 430, 9);
+  text(page, bold, fmtBillDate(bill.billDate), 638, 430, 10);
+  text(page, bold, "RCM Applicable", 558, 412, 9);
+  text(page, bold, "Yes", 658, 412, 10);
 
   const tableTop = boxBot;
   const tableLeft = boxL;
@@ -254,30 +252,35 @@ export async function buildBillPdfBlob(opts: {
   line(page, 650, totBot, 650, totTop, 0.7);
   line(page, totalCol.x, totBot, totalCol.x, totTop, 0.7);
 
-  let wordsTop = totBot;
-  if (extras.length) {
-    const extraH = 14 + extras.length * 12;
-    const extraBot = totBot - extraH;
-    rect(page, tableLeft, extraBot, tableRight - tableLeft, totBot - extraBot, 1.1);
-    extras.forEach(([lab, amt], i) => {
-      const y = totBot - 12 - i * 12;
-      text(page, font, lab, 32, y, 8);
-      text(page, bold, String(amt), 130, y, 9);
-    });
-    text(page, bold, "Grand Total", 520, extraBot + 5, 10);
-    text(page, bold, String(total), 620, extraBot + 5, 11);
-    wordsTop = extraBot;
-  }
+  const wordsTop = totBot;
   const wordsBot = wordsTop - 20;
   rect(page, tableLeft, wordsBot, tableRight - tableLeft, wordsTop - wordsBot, 1.3);
   text(page, bold, "Amount in words:", 32, wordsBot + 6, 10);
-  text(page, font, amountInWordsINR(total), 128, wordsBot + 6, 9);
+  text(page, font, amountInWordsINR(lrSum), 128, wordsBot + 6, 9);
 
   text(page, bold, "Bank Details :", 32, wordsBot - 16, 11);
   text(page, font, `Account Holder : ${BILL_BANK.holder}`, 32, wordsBot - 32, 10);
   text(page, font, `Account No ${BILL_BANK.accountNo}`, 230, wordsBot - 32, 10);
   text(page, font, `IFSC Code ${BILL_BANK.ifsc}`, 32, wordsBot - 48, 10);
   text(page, font, `Branch : ${BILL_BANK.branch}`, 230, wordsBot - 48, 10);
+
+  const taxX = 620;
+  const taxW = 148;
+  const taxRowH = 14;
+  const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
+  const taxVals = [String(lrSum), "0.00", "0.00", "0.00", String(lrSum)];
+  const taxTop = wordsBot - 12;
+  const taxBot = taxTop - taxRows.length * taxRowH;
+  rect(page, taxX, taxBot, taxW, taxTop - taxBot, 1.1);
+  taxRows.forEach((lab, i) => {
+    const y = taxTop - (i + 1) * taxRowH;
+    if (i > 0) line(page, taxX, y + taxRowH, taxX + taxW, y + taxRowH, 0.6);
+    text(page, font, lab, taxX + 6, y + 4, 8);
+    const val = taxVals[i];
+    const vw = bold.widthOfTextAtSize(val, 8);
+    text(page, bold, val, taxX + taxW - vw - 6, y + 4, 8);
+  });
+  line(page, taxX + 78, taxBot, taxX + 78, taxTop, 0.6);
 
   if (bill.remark) {
     text(page, bold, "Remark:", 32, wordsBot - 64, 9);
