@@ -63,6 +63,8 @@ export function billSharePeople(bill: Bill, parties: Party[]): SharePerson[] {
     },
   ].filter((x) => x.name);
 }
+
+async function fetchPdfBlob(url: string, body: unknown) {
   const res = await fetch(url, {
     method: "POST",
     credentials: "same-origin",
