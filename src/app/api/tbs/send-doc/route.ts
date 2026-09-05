@@ -1,23 +1,29 @@
 import { failSave, ok, requireAuth, bad } from "@/lib/tbs/api";
 import { getSettings } from "@/lib/store";
 import { sendPdfViaGmail } from "@/lib/tbs/sendPdfGmail";
+import {
+  COMPANY_GMAIL,
+  getGmailSmtp,
+} from "@/lib/tbs/gmailSecret";
 
 export const maxDuration = 30;
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const COMPANY_NAME = "SHYAM LOGISTICS";
-const COMPANY_EMAIL = "shyamlogisticscompany535@gmail.com";
 
 function validEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function runtimeEnv(name: string) {
-  return String((process.env as Record<string, string | undefined>)[name] || "").trim();
-}
-
 function fromHeader(email: string) {
   return `${COMPANY_NAME} <${email}>`;
+}
+
+function runtimeBag(name: string) {
+  const bag = (globalThis as { process?: { env?: Record<string, string | undefined> } })
+    .process?.env;
+  return String(bag?.[name] || "").trim();
 }
 
 async function sendResend(opts: {
@@ -69,14 +75,13 @@ export async function POST(req: Request) {
     if (!pdfBase64 || pdfBase64.length < 80) return bad("PDF missing");
 
     const settings = await getSettings().catch(() => null);
+    const smtp = await getGmailSmtp();
     const companyEmail =
-      runtimeEnv("SMTP_USER") ||
+      smtp.user ||
       String(settings?.email || "").trim() ||
-      COMPANY_EMAIL;
+      COMPANY_GMAIL;
     const gmailPass =
-      String(settings?.gmailAppPassword || "").trim() ||
-      runtimeEnv("SMTP_PASS") ||
-      runtimeEnv("GMAIL_APP_PASSWORD");
+      String(settings?.gmailAppPassword || "").trim() || smtp.pass;
     const fileName = (body.fileName || "document.pdf").replace(/[^\w.\-]+/g, "_");
     const subject = body.subject || `${COMPANY_NAME} document`;
     const text = body.text || "Please find the attached PDF.";
@@ -96,12 +101,12 @@ export async function POST(req: Request) {
       } catch (e) {
         console.error("Gmail SMTP send-doc failed", e);
         return bad(
-          "Gmail se email nahi gayi. Website Settings me company email + Gmail App Password check karein (2-Step Verification on hona chahiye).",
+          "Gmail se email nahi gayi. Gmail App Password galat ho sakta hai — naya App Password banao.",
         );
       }
     }
 
-    const key = runtimeEnv("RESEND_API_KEY");
+    const key = runtimeBag("RESEND_API_KEY");
     if (!key) {
       return bad(
         "Company email setup nahi hai. Admin → Website Settings me Gmail App Password save karein.",
@@ -109,8 +114,7 @@ export async function POST(req: Request) {
     }
 
     const configuredFrom =
-      runtimeEnv("ENQUIRY_FROM_EMAIL") ||
-      runtimeEnv("TBS_FROM_EMAIL");
+      runtimeBag("ENQUIRY_FROM_EMAIL") || runtimeBag("TBS_FROM_EMAIL");
     const payload = {
       key,
       to,
@@ -133,7 +137,7 @@ export async function POST(req: Request) {
     }
     if (!result.ok) {
       console.error("Resend send-doc failed", result.status, result.errText);
-      return bad("Company email se PDF nahi gayi. Gmail App Password Website Settings me save karein.");
+      return bad("Company email se PDF nahi gayi.");
     }
     return ok({ ok: true, to, from: companyEmail });
   } catch (e) {
