@@ -98,11 +98,6 @@ function dmy(iso: string) {
   return iso;
 }
 
-function amt(n: number | string | undefined) {
-  const v = Number(n) || 0;
-  return v ? v.toFixed(2) : "";
-}
-
 function Field({
   name,
   copyIndex,
