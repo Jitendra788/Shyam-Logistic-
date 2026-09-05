@@ -240,31 +240,31 @@ function OverlayFields({
       </Field>
 
       <Field name="freight" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.freight)}
+        {""}
       </Field>
       <Field name="doorColl" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.doorColle)}
+        {""}
       </Field>
       <Field name="doorDel" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.doorDelivery)}
+        {""}
       </Field>
       <Field name="hamali" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.hamali)}
+        {""}
       </Field>
       <Field name="stChgs" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.stCharges)}
+        {""}
       </Field>
       <Field name="totalAmt" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.total || booking.grandTotal)}
+        {""}
       </Field>
       <Field name="gstAmt" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.gstAmt)}
+        {""}
       </Field>
       <Field name="advance" copyIndex={copyIndex} className="lr-f-amt" align="right">
         {""}
       </Field>
       <Field name="balance" copyIndex={copyIndex} className="lr-f-amt" align="right">
-        {amt(booking.grandTotal || booking.total)}
+        {""}
       </Field>
 
       <Field name="eway" copyIndex={copyIndex} className="lr-f-eway">
