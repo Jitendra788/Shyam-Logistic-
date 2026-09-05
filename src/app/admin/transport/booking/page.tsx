@@ -24,10 +24,8 @@ import {
   bookingSharePeople,
   bookingSmsText,
   emailPdfTo,
-  openSms,
   partyEmail,
   typedReceiverEmail,
-  type SharePerson,
 } from "@/lib/tbs/docShare";
 import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
 import type { Bill, Booking, Challan, Masters, Party } from "@/lib/tbs/types";
@@ -252,26 +250,12 @@ export default function BookingPage() {
         fileName: `LR-${current.lrNo || current.id}.pdf`,
         blob,
       });
-      setMsg(
-        result.sent
-          ? `PDF emailed to ${result.to}`
-          : `PDF downloaded — attach in email to ${result.to}`,
-      );
+      setMsg(`PDF emailed to ${result.to} from SHYAM LOGISTICS`);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Email failed");
     } finally {
       setSaving(false);
     }
-  }
-
-  function smsBooking(person?: SharePerson) {
-    if (!current.id) return needSelectAlert("booking / LR");
-    const target = person || sharePeople.find((p) => p.phone);
-    if (!target?.phone) {
-      setMsg("Party Creation me mobile save karein, phir SMS par click karein.");
-      return;
-    }
-    openSms(target.phone, bookingSmsText(current));
   }
 
   async function shareBookingWhatsApp() {
@@ -823,7 +807,6 @@ export default function BookingPage() {
         people={sharePeople}
         busy={saving}
         onEmail={(p) => patch({ receiverEmail: p.email })}
-        onSms={(p) => smsBooking(p)}
       />
       <div className="tbs-actions" style={{ borderTop: "1px solid #ccc", paddingTop: 10 }}>
         <ActionButtons
@@ -841,13 +824,11 @@ export default function BookingPage() {
           onPrintList={() => openPrint("bookings")}
           onWhatsApp={() => void shareBookingWhatsApp()}
           onEmail={() => void emailBooking()}
-          onSms={() => smsBooking()}
           canUpdate={!!current.id}
           canDelete={!!current.id}
           canPrint={!!current.id}
           canWhatsApp={!!current.id}
           canEmail={!!current.id}
-          canSms={!!current.id}
           saving={saving}
           printLabel="Print Bill"
           extra={

@@ -26,10 +26,8 @@ import {
   billSharePeople,
   billSmsText,
   emailPdfTo,
-  openSms,
   partyEmail,
   typedReceiverEmail,
-  type SharePerson,
 } from "@/lib/tbs/docShare";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
 
@@ -285,27 +283,12 @@ export default function BillPage() {
         fileName: `Bill-${displayBillNo(row.billNo, row.billDate).replaceAll("/", "-")}.pdf`,
         blob,
       });
-      setMsg(
-        result.sent
-          ? `PDF emailed to ${result.to}`
-          : `PDF downloaded — attach in email to ${result.to}`,
-      );
+      setMsg(`PDF emailed to ${result.to} from SHYAM LOGISTICS`);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Email failed");
     } finally {
       setSaving(false);
     }
-  }
-
-  function smsBill(person?: SharePerson) {
-    const row = currentBill;
-    if (!row) return needSelectAlert("bill");
-    const target = person || sharePeople.find((p) => p.phone);
-    if (!target?.phone) {
-      setMsg("Party Creation me mobile save karein, phir SMS par click karein.");
-      return;
-    }
-    openSms(target.phone, billSmsText(row));
   }
 
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;
@@ -428,7 +411,6 @@ export default function BillPage() {
         people={sharePeople}
         busy={saving}
         onEmail={(p) => setReceiverEmail(p.email)}
-        onSms={(p) => smsBill(p)}
       />
       <div className="tbs-actions">
         <ActionButtons
@@ -457,13 +439,11 @@ export default function BillPage() {
           onPrintList={() => openPrint("bills")}
           onWhatsApp={() => void shareBill()}
           onEmail={() => void emailBill()}
-          onSms={() => smsBill()}
           canUpdate={!!editId}
           canDelete={!!editId}
           canPrint={!!editId}
           canWhatsApp={!!editId}
           canEmail={!!editId}
-          canSms={!!editId}
           saving={saving}
           printLabel="Print Bill"
           extra={

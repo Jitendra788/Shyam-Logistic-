@@ -64,20 +64,6 @@ export function billSharePeople(bill: Bill, parties: Party[]): SharePerson[] {
   ].filter((x) => x.name);
 }
 
-export function smsHref(phone: string, text: string) {
-  let digits = phone.replace(/[^\d]/g, "");
-  if (digits.length === 10) digits = `91${digits}`;
-  return `sms:${digits}?body=${encodeURIComponent(text)}`;
-}
-
-export function openSms(phone: string, text: string) {
-  if (!phone) {
-    alert("Is party ka mobile Party Creation me save karein.");
-    return;
-  }
-  window.open(smsHref(phone, text), "_self");
-}
-
 async function blobToBase64(blob: Blob) {
   const buf = await blob.arrayBuffer();
   const bytes = new Uint8Array(buf);
@@ -125,7 +111,7 @@ export async function emailPdfTo(opts: {
 }) {
   const to = opts.to.trim();
   if (!to || !to.includes("@")) {
-    throw new Error("Is party ka email Party Creation me save karein.");
+    throw new Error("Enter Receiver Email ID me sahi email likho.");
   }
   const pdfBase64 = await blobToBase64(opts.blob);
   const res = await fetch("/api/tbs/send-doc", {
@@ -142,19 +128,13 @@ export async function emailPdfTo(opts: {
   });
   const data = (await res.json().catch(() => ({}))) as {
     ok?: boolean;
-    fallback?: boolean;
     error?: string;
     to?: string;
   };
-  if (!res.ok) throw new Error(data.error || "Email send failed");
-  if (data.ok) return { sent: true as const, to };
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(opts.blob);
-  a.download = opts.fileName;
-  a.click();
-  window.setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(opts.subject)}&body=${encodeURIComponent(opts.text + "\n\nPDF download ho gaya — email me attach karein.")}`;
-  return { sent: false as const, to, fallback: true };
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || "Company email se PDF nahi gayi");
+  }
+  return { sent: true as const, to };
 }
 
 export function bookingSmsText(booking: Booking) {
