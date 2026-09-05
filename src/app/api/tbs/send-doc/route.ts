@@ -66,7 +66,9 @@ export async function POST(req: Request) {
 
     const settings = await getSettings().catch(() => null);
     const companyEmail =
-      String(settings?.email || "").trim() || COMPANY_EMAIL;
+      process.env.SMTP_USER?.trim() ||
+      String(settings?.email || "").trim() ||
+      COMPANY_EMAIL;
     const gmailPass =
       String(settings?.gmailAppPassword || "").trim() ||
       process.env.SMTP_PASS?.trim() ||
