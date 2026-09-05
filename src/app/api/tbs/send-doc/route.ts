@@ -1,5 +1,6 @@
 import { failSave, ok, requireAuth, bad } from "@/lib/tbs/api";
 import { getSettings } from "@/lib/store";
+import { sendPdfViaGmail } from "@/lib/tbs/sendPdfGmail";
 
 export const maxDuration = 30;
 export const runtime = "nodejs";
@@ -63,27 +64,55 @@ export async function POST(req: Request) {
     );
     if (!pdfBase64 || pdfBase64.length < 80) return bad("PDF missing");
 
-    const key = process.env.RESEND_API_KEY?.trim();
-    if (!key) {
-      return bad(
-        "Company email send setup nahi hai. Vercel pe RESEND_API_KEY add karein.",
-      );
-    }
-
     const settings = await getSettings().catch(() => null);
     const companyEmail =
       String(settings?.email || "").trim() || COMPANY_EMAIL;
+    const gmailPass =
+      String(settings?.gmailAppPassword || "").trim() ||
+      process.env.SMTP_PASS?.trim() ||
+      process.env.GMAIL_APP_PASSWORD?.trim() ||
+      "";
+    const fileName = (body.fileName || "document.pdf").replace(/[^\w.\-]+/g, "_");
+    const subject = body.subject || `${COMPANY_NAME} document`;
+    const text = body.text || "Please find the attached PDF.";
+
+    if (gmailPass) {
+      try {
+        await sendPdfViaGmail({
+          user: companyEmail,
+          pass: gmailPass,
+          to,
+          subject,
+          text,
+          fileName,
+          pdfBase64,
+        });
+        return ok({ ok: true, to, from: companyEmail });
+      } catch (e) {
+        console.error("Gmail SMTP send-doc failed", e);
+        return bad(
+          "Gmail se email nahi gayi. Website Settings me company email + Gmail App Password check karein (2-Step Verification on hona chahiye).",
+        );
+      }
+    }
+
+    const key = process.env.RESEND_API_KEY?.trim();
+    if (!key) {
+      return bad(
+        "Company email setup nahi hai. Admin → Website Settings me Gmail App Password save karein.",
+      );
+    }
+
     const configuredFrom =
       process.env.ENQUIRY_FROM_EMAIL?.trim() ||
       process.env.TBS_FROM_EMAIL?.trim() ||
       "";
-    const fileName = (body.fileName || "document.pdf").replace(/[^\w.\-]+/g, "_");
     const payload = {
       key,
       to,
       replyTo: companyEmail,
-      subject: body.subject || `${COMPANY_NAME} document`,
-      text: body.text || "Please find the attached PDF.",
+      subject,
+      text,
       fileName,
       pdfBase64,
     };
@@ -100,9 +129,7 @@ export async function POST(req: Request) {
     }
     if (!result.ok) {
       console.error("Resend send-doc failed", result.status, result.errText);
-      return bad(
-        "Company email se PDF nahi gayi. Resend domain / ENQUIRY_FROM_EMAIL check karein.",
-      );
+      return bad("Company email se PDF nahi gayi. Gmail App Password Website Settings me save karein.");
     }
     return ok({ ok: true, to, from: companyEmail });
   } catch (e) {

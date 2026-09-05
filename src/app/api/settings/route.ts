@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { getSettings, saveSettings } from "@/lib/store";
+import { getSettings, publicSettings, saveSettings } from "@/lib/store";
 import type { SiteSettings } from "@/lib/types";
 
 export async function GET() {
   try {
     const settings = await getSettings();
-    return NextResponse.json(settings);
+    return NextResponse.json(publicSettings(settings));
   } catch {
     return NextResponse.json(
       { error: "Failed to load settings" },
@@ -25,8 +25,19 @@ export async function PUT(request: Request) {
     if (!body.companyName || !Array.isArray(body.locations)) {
       return NextResponse.json({ error: "Invalid settings" }, { status: 400 });
     }
-    await saveSettings(body);
-    return NextResponse.json({ ok: true, settings: body });
+    const existing = await getSettings();
+    const {
+      emailPdfReady: _ready,
+      gmailAppPassword: incomingPass,
+      ...rest
+    } = body;
+    const gmailAppPassword =
+      typeof incomingPass === "string" && incomingPass.trim()
+        ? incomingPass.trim()
+        : existing.gmailAppPassword || "";
+    const next = { ...existing, ...rest, gmailAppPassword };
+    await saveSettings(next);
+    return NextResponse.json({ ok: true, settings: publicSettings(next) });
   } catch {
     return NextResponse.json(
       { error: "Failed to save settings" },

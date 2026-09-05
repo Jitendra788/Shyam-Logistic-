@@ -116,6 +116,19 @@ export async function getSettings(): Promise<SiteSettings> {
   };
 }
 
+export function publicSettings(settings: SiteSettings) {
+  const { gmailAppPassword: _hidden, ...safe } = settings;
+  const smtpPass = process.env.SMTP_PASS?.trim() || process.env.GMAIL_APP_PASSWORD?.trim();
+  return {
+    ...safe,
+    emailPdfReady: Boolean(
+      settings.gmailAppPassword?.trim() ||
+        smtpPass ||
+        process.env.RESEND_API_KEY?.trim(),
+    ),
+  };
+}
+
 export async function saveSettings(settings: SiteSettings): Promise<void> {
   await writeStoreJson("site:settings", settingsPath, settings);
 }

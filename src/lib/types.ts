@@ -56,6 +56,10 @@ export type SiteSettings = {
   missionText: string;
   gstin: string;
   email: string;
+  /** Gmail App Password for sending LR/bill PDFs. Never expose on public GET. */
+  gmailAppPassword?: string;
+  /** True when PDF email can send (password/key present). Public GET only. */
+  emailPdfReady?: boolean;
   phone: string;
   phone2: string;
   whatsapp: string;

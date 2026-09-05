@@ -168,6 +168,7 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Save failed");
+      if (data.settings) setSettings(data.settings);
       setMessage("Settings saved. Website content updated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -266,11 +267,26 @@ export default function AdminSettingsPage() {
           <Field label="Phone 2" value={settings.phone2} onChange={(v) => update("phone2", v)} />
           <Field label="WhatsApp number" value={settings.whatsapp} onChange={(v) => update("whatsapp", v)} />
           <Field label="Email" value={settings.email} onChange={(v) => update("email", v)} />
+          <Field
+            label="Gmail App Password (PDF email)"
+            value={settings.gmailAppPassword || ""}
+            onChange={(v) => update("gmailAppPassword", v)}
+            type="password"
+          />
           <Field label="Tagline" value={settings.tagline} onChange={(v) => update("tagline", v)} />
           <Field label="Hindi tagline" value={settings.hindiTagline} onChange={(v) => update("hindiTagline", v)} />
           <Field label="Slogan (home banner)" value={settings.slogan} onChange={(v) => update("slogan", v)} />
           <Field label="Working hours" value={settings.workingHours} onChange={(v) => update("workingHours", v)} />
         </div>
+        <p className="mt-2 text-sm text-muted">
+          Booking/Bill PDF company email se bhejne ke liye: Google Account (
+          {settings.email || "company email"}) → Security → 2-Step Verification
+          on → App passwords → 16-letter password yahan save karein. Blank save
+          karne par pehle wala password same rahega.
+          {settings.emailPdfReady
+            ? " PDF email ready."
+            : ""}
+        </p>
         <TextArea
           label="Also known as (comma separated — Justdial names etc.)"
           value={(settings.alsoKnownAs || []).join(", ")}
@@ -727,16 +743,20 @@ function Field({
   label,
   value,
   onChange,
+  type = "text",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  type?: string;
 }) {
   return (
     <div>
       <label className="mb-1.5 block text-sm font-medium text-ink">{label}</label>
       <input
         className="input-field"
+        type={type}
+        autoComplete={type === "password" ? "new-password" : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
