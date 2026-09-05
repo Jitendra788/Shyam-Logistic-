@@ -218,39 +218,34 @@ export async function buildBillPdfBlob(opts: {
   const tableTop = boxBot;
   const tableLeft = boxL;
   const tableRight = boxR;
-  const headerH = 18;
-  const rowH = 16;
-  const minRows = Math.max(lines.length, 10);
-  const tableBottom = tableTop - headerH - minRows * rowH;
+  const headerH = 16;
+  const rowH = 15;
+  const dataRows = Math.max(lines.length, 1);
+  const tableBottom = tableTop - headerH - dataRows * rowH;
 
   line(page, tableLeft, tableTop, tableRight, tableTop, 1.4);
   COLS.forEach((c) => {
     const tw = bold.widthOfTextAtSize(c.t, 8);
-    text(page, bold, c.t, c.x + Math.max(2, (c.w - tw) / 2), tableTop - 13, 8);
+    text(page, bold, c.t, c.x + Math.max(2, (c.w - tw) / 2), tableTop - 12, 8);
   });
   line(page, tableLeft, tableTop - headerH, tableRight, tableTop - headerH, 0.8);
 
-  for (let i = 0; i < minRows; i++) {
+  for (let i = 0; i < dataRows; i++) {
     const y = tableTop - headerH - i * rowH;
     drawRow(page, font, lines[i] || null, y, rowH, tableLeft, tableRight);
   }
 
   const gx = [tableLeft, ...COLS.map((c) => c.x + c.w).slice(0, -1), tableRight];
-  const tableHeadY = tableTop;
-  gx.forEach((x) => line(page, x, tableHeadY, x, tableBottom, 0.7));
+  gx.forEach((x) => line(page, x, tableTop, x, tableBottom, 0.7));
   line(page, tableLeft, tableBottom, tableRight, tableBottom, 1);
 
   const totTop = tableBottom;
-  const totBot = totTop - 22;
+  const totBot = totTop - 20;
   rect(page, tableLeft, totBot, tableRight - tableLeft, totTop - totBot, 1.3);
-  text(page, bold, "Total Freight : -", 32, totBot + 7, 11);
-  text(page, bold, String(printTotal), 128, totBot + 7, 12);
-  const totalCol = COLS[12];
-  text(page, bold, "Freight", 656, totBot + 7, 11);
+  text(page, bold, "Total Freight : -", 32, totBot + 6, 11);
+  text(page, bold, String(printTotal), 128, totBot + 6, 12);
   const totW = bold.widthOfTextAtSize(String(printTotal), 11);
-  text(page, bold, String(printTotal), totalCol.x + totalCol.w - totW - 6, totBot + 7, 11);
-  line(page, 650, totBot, 650, totTop, 0.7);
-  line(page, totalCol.x, totBot, totalCol.x, totTop, 0.7);
+  text(page, bold, String(printTotal), tableRight - totW - 10, totBot + 6, 11);
 
   const wordsTop = totBot;
   const wordsBot = wordsTop - 20;
@@ -280,7 +275,6 @@ export async function buildBillPdfBlob(opts: {
     const vw = bold.widthOfTextAtSize(val, 8);
     text(page, bold, val, taxX + taxW - vw - 6, y + 4, 8);
   });
-  line(page, taxX + 78, taxBot, taxX + 78, taxTop, 0.6);
 
   if (bill.remark) {
     text(page, bold, "Remark:", 32, wordsBot - 64, 9);
@@ -288,7 +282,7 @@ export async function buildBillPdfBlob(opts: {
   }
 
   if (stamp) {
-    page.drawImage(stamp, { x: 638, y: 48, width: 78, height: 78 });
+    page.drawImage(stamp, { x: 650, y: 52, width: 64, height: 64 });
   }
   text(page, bold, "Authorised Signature", 32, 36, 11);
   text(page, bold, "Reciever's Sign", 326, 36, 11);

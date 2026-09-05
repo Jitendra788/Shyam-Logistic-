@@ -348,14 +348,14 @@ export function TaxInvoicePrint({
   const printTotal = bill ? billPrintAmount(lrs, bill) : lrSum;
   const lines = buildBillLines(lrs, bill);
   const shownNo = displayBillNo(billNo, billDate);
-  const padRows = Math.max(5, 8 - lines.length);
+  const padRows = Math.max(0, 2 - lines.length);
 
   useEffect(() => {
     document.documentElement.classList.add("tax-inv-print-root");
     const style = document.createElement("style");
     style.id = "tax-inv-page-size";
     style.textContent =
-      "@media print { @page { size: letter landscape; margin: 7mm; } }";
+      "@media print { @page { size: letter landscape; margin: 5mm; } }";
     document.head.appendChild(style);
     return () => {
       document.documentElement.classList.remove("tax-inv-print-root");
@@ -483,10 +483,7 @@ export function TaxInvoicePrint({
           <span>Total Freight : -</span>
           <span className="tax-inv-amt">{printTotal}</span>
         </div>
-        <div className="tax-inv-total-r">
-          <span className="tax-inv-freight-lab">Freight</span>
-          <span className="tax-inv-freight-val">{printTotal}</span>
-        </div>
+        <div className="tax-inv-total-amt">{printTotal}</div>
       </div>
 
       <div className="tax-inv-words">
@@ -539,7 +536,7 @@ export function TaxInvoicePrint({
         <div className="tax-inv-sign-l">Authorised Signature</div>
         <div className="tax-inv-sign-c">Reciever&apos;s Sign</div>
         <div className="tax-inv-sign-r">
-          <ShyamStamp size="md" />
+          <ShyamStamp size="sm" />
           <div className="tax-inv-for">For Shyam Logistics</div>
         </div>
       </div>

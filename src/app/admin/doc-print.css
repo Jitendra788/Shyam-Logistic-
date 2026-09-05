@@ -351,22 +351,32 @@
 }
 
 .tax-inv-pad td {
-  height: 18px;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
+  height: 14px;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+}
+
+.tax-inv-pad td:first-child {
+  border-left: 1px solid #000;
+}
+
+.tax-inv-pad td:last-child {
+  border-right: 1px solid #000;
 }
 
 .tax-inv-pad:last-child td {
-  border-bottom-color: #000;
+  border-bottom: 1px solid #000;
 }
 
 .tax-inv-total-bar {
-  display: grid;
-  grid-template-columns: 1fr 70px 88px;
-  align-items: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   border: 2px solid #000;
   border-top: none;
-  min-height: 26px;
+  min-height: 24px;
 }
 
 .tax-inv-total-l {
@@ -383,23 +393,10 @@
   font-size: 14px;
 }
 
-.tax-inv-total-r {
-  display: contents;
-}
-
-.tax-inv-freight-lab,
-.tax-inv-freight-val {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 4px;
-  font-size: 13px;
-  font-weight: 800;
-  border-left: 1px solid #000;
-}
-
-.tax-inv-freight-val {
+.tax-inv-total-amt {
+  padding: 3px 12px;
   font-size: 14px;
+  font-weight: 800;
 }
 
 .tax-inv-charges {
@@ -449,9 +446,14 @@
 }
 
 .tax-inv-gstbox td {
-  border: 1px solid #000;
+  border: none;
+  border-bottom: 1px solid #000;
   padding: 3px 8px;
   font-weight: 700;
+}
+
+.tax-inv-gstbox tr:last-child td {
+  border-bottom: none;
 }
 
 .tax-inv-gstbox td:last-child {
@@ -469,8 +471,8 @@
   grid-template-columns: 1fr 1fr 1fr;
   align-items: end;
   gap: 8px;
-  margin-top: 10px;
-  min-height: 70px;
+  margin-top: 6px;
+  min-height: 52px;
 }
 
 .tax-inv-sign-r {
@@ -736,16 +738,34 @@
     padding: 0;
   }
   .tax-inv {
-    width: auto;
+    width: 100%;
     max-width: none;
     margin: 0;
+    padding: 2px 6px 4px;
     break-inside: avoid;
     page-break-inside: avoid;
     page-break-after: avoid;
   }
+  .tax-inv-brand {
+    min-height: 58px;
+    margin-bottom: 2px;
+  }
+  .tax-inv-party {
+    min-height: 58px;
+  }
+  .tax-inv-table th,
+  .tax-inv-table td {
+    padding: 2px 2px;
+    font-size: 9px;
+  }
+  .tax-inv-signs {
+    min-height: 44px;
+    margin-top: 4px;
+  }
+  .tax-inv .shyam-stamp-sm,
   .tax-inv .shyam-stamp-md,
   .tax-inv .shyam-stamp-lg {
-    width: 76px;
-    height: 76px;
+    width: 64px;
+    height: 64px;
   }
 }
