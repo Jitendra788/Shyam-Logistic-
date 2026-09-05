@@ -17,6 +17,16 @@ import { useTbsApi } from "@/components/tbs/useTbs";
 import { oldDash } from "@/lib/tbs/legacySkdb";
 import { LR_TYPES, normalizeLrType } from "@/lib/tbs/lrType";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
+import { PartyShareChips } from "@/components/tbs/PartyShareChips";
+import {
+  bookingPdfBlob,
+  bookingSharePeople,
+  bookingSmsText,
+  emailPdfTo,
+  openSms,
+  type SharePerson,
+} from "@/lib/tbs/docShare";
+import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
 import type { Bill, Booking, Challan, Masters, Party } from "@/lib/tbs/types";
 
 type Payload = {
@@ -110,6 +120,10 @@ export default function BookingPage() {
   const current = form || blank(data?.nextLr || "1");
   const parties = data?.parties || [];
   const partyNames = parties.map((p) => p.partyName);
+  const sharePeople = useMemo(
+    () => (current.id ? bookingSharePeople(current, parties) : []),
+    [current, parties],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -213,6 +227,59 @@ export default function BookingPage() {
         ? "Address filled from consignee/consignor"
         : "No saved address for this name — type Address and GST below",
     );
+  }
+
+  async function emailBooking(person?: SharePerson) {
+    if (!current.id) return needSelectAlert("booking / LR");
+    const target = person || sharePeople.find((p) => p.email);
+    if (!target?.email) {
+      setMsg("Party Creation me email save karein, phir us email par click karein.");
+      return;
+    }
+    setSaving(true);
+    setMsg("");
+    try {
+      const blob = await bookingPdfBlob(current, parties);
+      const result = await emailPdfTo({
+        to: target.email,
+        subject: `SHYAM LOGISTICS LR ${current.lrNo}`,
+        text: bookingSmsText(current),
+        fileName: `LR-${current.lrNo || current.id}.pdf`,
+        blob,
+      });
+      setMsg(
+        result.sent
+          ? `PDF emailed to ${result.to}`
+          : `PDF downloaded — attach in email to ${result.to}`,
+      );
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Email failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function smsBooking(person?: SharePerson) {
+    if (!current.id) return needSelectAlert("booking / LR");
+    const target = person || sharePeople.find((p) => p.phone);
+    if (!target?.phone) {
+      setMsg("Party Creation me mobile save karein, phir SMS par click karein.");
+      return;
+    }
+    openSms(target.phone, bookingSmsText(current));
+  }
+
+  async function shareBookingWhatsApp() {
+    if (!current.id) return needSelectAlert("booking / LR");
+    setSaving(true);
+    try {
+      const blob = await bookingPdfBlob(current, parties);
+      await sharePdfOnWhatsApp(blob, `LR-${current.lrNo || current.id}.pdf`);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "WhatsApp PDF failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function addParticular() {
@@ -723,6 +790,12 @@ export default function BookingPage() {
         </div>
       </div>
 
+      <PartyShareChips
+        people={sharePeople}
+        busy={saving}
+        onEmail={(p) => void emailBooking(p)}
+        onSms={(p) => smsBooking(p)}
+      />
       <div className="tbs-actions" style={{ borderTop: "1px solid #ccc", paddingTop: 10 }}>
         <ActionButtons
           onSave={save}
@@ -737,9 +810,15 @@ export default function BookingPage() {
             openPrint("booking", current.id);
           }}
           onPrintList={() => openPrint("bookings")}
+          onWhatsApp={() => void shareBookingWhatsApp()}
+          onEmail={() => void emailBooking()}
+          onSms={() => smsBooking()}
           canUpdate={!!current.id}
           canDelete={!!current.id}
           canPrint={!!current.id}
+          canWhatsApp={!!current.id}
+          canEmail={!!current.id}
+          canSms={!!current.id}
           saving={saving}
           printLabel="Print Bill"
           extra={

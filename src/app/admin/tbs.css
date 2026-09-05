@@ -2953,8 +2953,40 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
   border-color: #1ebe57 !important;
 }
 
-.tbs-btn-wa:hover:not(:disabled) {
-  filter: brightness(1.05);
+.tbs-btn-email {
+  background: #1d4ed8 !important;
+  color: #fff !important;
+  border-color: #1e40af !important;
+}
+
+.tbs-share-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0 4px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+}
+
+.tbs-share-chips-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tbs-share-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.tbs-share-missing {
+  color: #94a3b8;
+  font-size: 11px;
 }
 
 .tbs-btn .dot {

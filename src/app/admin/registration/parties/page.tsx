@@ -23,6 +23,7 @@ const empty = (code: string): Party => ({
   partyCode: code,
   partyName: "",
   contactNo: "",
+  email: "",
   address: "",
   gstTin: "",
   partyType: "Consigner/Consignee",
@@ -48,7 +49,8 @@ export default function PartyCreationPage() {
       (p) =>
         p.partyName.toLowerCase().includes(q) ||
         p.partyCode.includes(q) ||
-        p.contactNo.includes(q),
+        p.contactNo.includes(q) ||
+        (p.email || "").toLowerCase().includes(q),
     );
   }, [parties, search]);
 
@@ -141,6 +143,18 @@ export default function PartyCreationPage() {
                 className="tbs-input w-full"
                 value={current.contactNo}
                 onChange={(e) => set("contactNo", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label style={{ width: 120 }}>Email</label>
+              <input
+                className="tbs-input w-full"
+                type="email"
+                value={current.email || ""}
+                onChange={(e) => set("email", e.target.value)}
+                placeholder="party@email.com"
               />
             </div>
           </div>
@@ -273,6 +287,7 @@ export default function PartyCreationPage() {
           { key: "partyName", label: "Party Name", width: "180px" },
           { key: "address", label: "Address", width: "160px" },
           { key: "contactNo", label: "Contact No" },
+          { key: "email", label: "Email", width: "180px" },
           { key: "gstTin", label: "GST TIN" },
           { key: "opBalance", label: "OP Bal" },
           { key: "partyType", label: "Party Type" },

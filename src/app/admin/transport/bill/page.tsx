@@ -19,6 +19,15 @@ import { displayBillNo } from "@/lib/tbs/billPrint";
 import { needsPartyBill } from "@/lib/tbs/lrType";
 import { needSelectAlert, openPrint } from "@/lib/tbs/print";
 import { shareBillPdfOnWhatsApp } from "@/lib/tbs/billPdf";
+import { PartyShareChips } from "@/components/tbs/PartyShareChips";
+import {
+  billPdfBlob,
+  billSharePeople,
+  billSmsText,
+  emailPdfTo,
+  openSms,
+  type SharePerson,
+} from "@/lib/tbs/docShare";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
 
 type Payload = {
@@ -105,6 +114,18 @@ export default function BillPage() {
       return b.billNo.includes(q) || shown.toLowerCase().includes(q.toLowerCase());
     });
   }, [data, search]);
+
+  const currentBill = useMemo(
+    () => (data?.bills || []).find((b) => b.id === editId) || null,
+    [data, editId],
+  );
+  const sharePeople = useMemo(
+    () =>
+      currentBill
+        ? billSharePeople(currentBill, data?.parties || [])
+        : [],
+    [currentBill, data],
+  );
 
   function toggle(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -238,6 +259,48 @@ export default function BillPage() {
     }
   }
 
+  async function emailBill(person?: SharePerson) {
+    const row = currentBill;
+    if (!row) return needSelectAlert("bill");
+    const target = person || sharePeople.find((p) => p.email);
+    if (!target?.email) {
+      setMsg("Party Creation me email save karein, phir us email par click karein.");
+      return;
+    }
+    setSaving(true);
+    setMsg("");
+    try {
+      const blob = await billPdfBlob(row, data?.bookings || [], data?.parties || []);
+      const result = await emailPdfTo({
+        to: target.email,
+        subject: `SHYAM LOGISTICS Bill ${displayBillNo(row.billNo, row.billDate)}`,
+        text: billSmsText(row),
+        fileName: `Bill-${displayBillNo(row.billNo, row.billDate).replaceAll("/", "-")}.pdf`,
+        blob,
+      });
+      setMsg(
+        result.sent
+          ? `PDF emailed to ${result.to}`
+          : `PDF downloaded — attach in email to ${result.to}`,
+      );
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Email failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function smsBill(person?: SharePerson) {
+    const row = currentBill;
+    if (!row) return needSelectAlert("bill");
+    const target = person || sharePeople.find((p) => p.phone);
+    if (!target?.phone) {
+      setMsg("Party Creation me mobile save karein, phir SMS par click karein.");
+      return;
+    }
+    openSms(target.phone, billSmsText(row));
+  }
+
   if (!data && loading) return <div className="tbs-empty">Loading…</div>;
 
   return (
@@ -330,6 +393,12 @@ export default function BillPage() {
         }}
       />
 
+      <PartyShareChips
+        people={sharePeople}
+        busy={saving}
+        onEmail={(p) => void emailBill(p)}
+        onSms={(p) => smsBill(p)}
+      />
       <div className="tbs-actions">
         <ActionButtons
           onSave={save}
@@ -355,10 +424,14 @@ export default function BillPage() {
           }}
           onPrintList={() => openPrint("bills")}
           onWhatsApp={() => void shareBill()}
+          onEmail={() => void emailBill()}
+          onSms={() => smsBill()}
           canUpdate={!!editId}
           canDelete={!!editId}
           canPrint={!!editId}
           canWhatsApp={!!editId}
+          canEmail={!!editId}
+          canSms={!!editId}
           saving={saving}
           printLabel="Print Bill"
           extra={

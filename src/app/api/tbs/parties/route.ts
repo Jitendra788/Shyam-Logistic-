@@ -43,6 +43,7 @@ export async function POST(req: Request) {
         String(body.partyCode || "").trim() || nextCode(parties, "partyCode", 1),
       partyName: body.partyName.trim(),
       contactNo: body.contactNo || "",
+      email: String(body.email || "").trim(),
       address: body.address || "",
       gstTin: body.gstTin || "",
       partyType: body.partyType || "Consigner/Consignee",
@@ -73,6 +74,7 @@ export async function PUT(req: Request) {
       ...parties[idx],
       ...body,
       partyCode: String(body.partyCode || parties[idx].partyCode).trim(),
+      email: String(body.email ?? parties[idx].email ?? "").trim(),
     };
     await saveParties(parties);
     await rememberPartyType(parties[idx].partyType);

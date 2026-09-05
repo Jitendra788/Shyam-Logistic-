@@ -3,6 +3,7 @@ export type Party = {
   partyCode: string;
   partyName: string;
   contactNo: string;
+  email: string;
   address: string;
   gstTin: string;
   partyType: string;

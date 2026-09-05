@@ -125,6 +125,9 @@ export function PartyPrint({ party }: { party: Party }) {
           <b>Contact:</b> {party.contactNo}
         </div>
         <div>
+          <b>Email:</b> {party.email || "—"}
+        </div>
+        <div>
           <b>PAN:</b> {party.panNo}
         </div>
         <div className="full">

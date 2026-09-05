@@ -147,10 +147,14 @@ export function ActionButtons({
   onPrint,
   onPrintList,
   onWhatsApp,
+  onEmail,
+  onSms,
   canUpdate = false,
   canDelete = false,
   canPrint = false,
   canWhatsApp = false,
+  canEmail = false,
+  canSms = false,
   saving = false,
   printLabel = "Print",
   extra,
@@ -163,10 +167,14 @@ export function ActionButtons({
   onPrint?: () => void;
   onPrintList?: () => void;
   onWhatsApp?: () => void;
+  onEmail?: () => void;
+  onSms?: () => void;
   canUpdate?: boolean;
   canDelete?: boolean;
   canPrint?: boolean;
   canWhatsApp?: boolean;
+  canEmail?: boolean;
+  canSms?: boolean;
   saving?: boolean;
   printLabel?: string;
   extra?: React.ReactNode;
@@ -222,9 +230,31 @@ export function ActionButtons({
           className="tbs-btn tbs-btn-wa"
           onClick={onWhatsApp}
           disabled={!canWhatsApp || saving}
-          title={canWhatsApp ? "Share bill PDF on WhatsApp" : "Select a bill first"}
+          title={canWhatsApp ? "Share PDF on WhatsApp" : "Select a record first"}
         >
           WhatsApp
+        </button>
+      )}
+      {onEmail && (
+        <button
+          type="button"
+          className="tbs-btn tbs-btn-email"
+          onClick={onEmail}
+          disabled={!canEmail || saving}
+          title={canEmail ? "Email PDF to party" : "Select a record first"}
+        >
+          Email PDF
+        </button>
+      )}
+      {onSms && (
+        <button
+          type="button"
+          className="tbs-btn"
+          onClick={onSms}
+          disabled={!canSms || saving}
+          title={canSms ? "Send SMS to party mobile" : "Select a record first"}
+        >
+          SMS
         </button>
       )}
       {extra}
