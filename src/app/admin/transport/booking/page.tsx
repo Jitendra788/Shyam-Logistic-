@@ -24,6 +24,8 @@ import {
   bookingSmsText,
   emailPdfTo,
   openSms,
+  partyEmail,
+  resolveShareEmail,
   type SharePerson,
 } from "@/lib/tbs/docShare";
 import { sharePdfOnWhatsApp } from "@/lib/tbs/whatsapp";
@@ -55,6 +57,7 @@ function blank(nextLr: string): Booking {
     billingParty: "",
     consignor: "",
     consignee: "",
+    receiverEmail: "",
     address: "",
     gstNo: "",
     noOfArticles: "",
@@ -185,6 +188,10 @@ export default function BookingPage() {
         consignee: base.consignee,
         address: base.address,
         gstNo: base.gstNo,
+        receiverEmail:
+          base.receiverEmail ||
+          partyEmail(partyByName(name)) ||
+          "",
       });
     });
   }
@@ -196,6 +203,7 @@ export default function BookingPage() {
       consignor: name,
       address: matched ? filled.address || current.address : current.address,
       gstNo: matched ? filled.gstNo || current.gstNo : current.gstNo,
+      receiverEmail: current.receiverEmail || partyEmail(matched),
     });
   }
 
@@ -206,6 +214,7 @@ export default function BookingPage() {
       consignee: name,
       address: matched ? filled.address : current.address,
       gstNo: matched ? filled.gstNo || current.gstNo : current.gstNo,
+      receiverEmail: current.receiverEmail || partyEmail(matched),
     });
   }
 
@@ -231,9 +240,9 @@ export default function BookingPage() {
 
   async function emailBooking(person?: SharePerson) {
     if (!current.id) return needSelectAlert("booking / LR");
-    const target = person || sharePeople.find((p) => p.email);
-    if (!target?.email) {
-      setMsg("Party Creation me email save karein, phir us email par click karein.");
+    const to = resolveShareEmail(person, current.receiverEmail, sharePeople);
+    if (!to) {
+      setMsg("Enter Receiver Email ID, ya Party Creation me email save karke us par click karein.");
       return;
     }
     setSaving(true);
@@ -241,7 +250,7 @@ export default function BookingPage() {
     try {
       const blob = await bookingPdfBlob(current, parties);
       const result = await emailPdfTo({
-        to: target.email,
+        to,
         subject: `SHYAM LOGISTICS LR ${current.lrNo}`,
         text: bookingSmsText(current),
         fileName: `LR-${current.lrNo || current.id}.pdf`,
@@ -556,6 +565,30 @@ export default function BookingPage() {
 
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
+              <label>Enter Receiver Email ID</label>
+              <input
+                className="tbs-input w-full"
+                type="email"
+                value={current.receiverEmail || ""}
+                onChange={(e) => patch({ receiverEmail: e.target.value })}
+                placeholder="receiver@email.com"
+                list="booking-receiver-emails"
+                autoComplete="off"
+              />
+              <datalist id="booking-receiver-emails">
+                {parties
+                  .map((p) => partyEmail(p))
+                  .filter(Boolean)
+                  .filter((email, i, arr) => arr.indexOf(email) === i)
+                  .map((email) => (
+                    <option key={email} value={email} />
+                  ))}
+              </datalist>
+            </div>
+          </div>
+
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
               <label>Address</label>
               <input
                 className="tbs-input w-full"
@@ -841,6 +874,7 @@ export default function BookingPage() {
           { key: "lrNo", label: "LR No" },
           { key: "lrDate", label: "LR Date" },
           { key: "billingParty", label: "Billing Party", width: "160px" },
+          { key: "receiverEmail", label: "Receiver Email", width: "180px" },
           { key: "from", label: "From" },
           { key: "to", label: "To" },
           { key: "particulars", label: "Particulars" },

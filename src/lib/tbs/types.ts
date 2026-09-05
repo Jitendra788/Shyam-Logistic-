@@ -28,6 +28,8 @@ export type Booking = {
   billingParty: string;
   consignor: string;
   consignee: string;
+  /** PDF email destination typed on the booking form */
+  receiverEmail?: string;
   address: string;
   gstNo: string;
   noOfArticles: string;
@@ -102,6 +104,8 @@ export type Bill = {
   billNo: string;
   billDate: string;
   partyName: string;
+  /** PDF email destination typed on the bill form */
+  receiverEmail?: string;
   /** LR freight sum — old billmaster.bamt */
   totalAmount: number;
   lrCharges?: number;

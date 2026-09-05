@@ -154,6 +154,7 @@ export async function POST(req: Request) {
       billingParty: body.billingParty || "",
       consignor: body.consignor || "",
       consignee: body.consignee || "",
+      receiverEmail: String(body.receiverEmail || "").trim(),
       address: body.address || "",
       gstNo: body.gstNo || "",
       noOfArticles: body.noOfArticles || "",

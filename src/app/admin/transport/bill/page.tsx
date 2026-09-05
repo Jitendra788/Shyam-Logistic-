@@ -26,6 +26,8 @@ import {
   billSmsText,
   emailPdfTo,
   openSms,
+  partyEmail,
+  resolveShareEmail,
   type SharePerson,
 } from "@/lib/tbs/docShare";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
@@ -42,6 +44,7 @@ export default function BillPage() {
   const [billDate, setBillDate] = useState(todayISO());
   const [billNo, setBillNo] = useState("");
   const [party, setParty] = useState("");
+  const [receiverEmail, setReceiverEmail] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [remark, setRemark] = useState("");
   const [submissionDate, setSubmissionDate] = useState(todayISO());
@@ -136,6 +139,7 @@ export default function BillPage() {
     setBillNo(b.billNo);
     setBillDate(b.billDate);
     setParty(b.partyName);
+    setReceiverEmail(b.receiverEmail || "");
     setSelected(b.lrIds || []);
     setRemark(b.remark);
     setSubmissionDate(b.submissionDate);
@@ -172,6 +176,7 @@ export default function BillPage() {
         billNo: billNo || data?.nextBill,
         billDate,
         partyName: partyForSave(),
+        receiverEmail: receiverEmail.trim(),
         totalAmount: grand,
         ...extras,
         remark,
@@ -205,6 +210,7 @@ export default function BillPage() {
         billNo,
         billDate,
         partyName: partyForSave(),
+        receiverEmail: receiverEmail.trim(),
         totalAmount: grand,
         ...extras,
         remark,
@@ -262,9 +268,13 @@ export default function BillPage() {
   async function emailBill(person?: SharePerson) {
     const row = currentBill;
     if (!row) return needSelectAlert("bill");
-    const target = person || sharePeople.find((p) => p.email);
-    if (!target?.email) {
-      setMsg("Party Creation me email save karein, phir us email par click karein.");
+    const to = resolveShareEmail(
+      person,
+      receiverEmail || row.receiverEmail,
+      sharePeople,
+    );
+    if (!to) {
+      setMsg("Enter Receiver Email ID, ya Party Creation me email save karke us par click karein.");
       return;
     }
     setSaving(true);
@@ -272,7 +282,7 @@ export default function BillPage() {
     try {
       const blob = await billPdfBlob(row, data?.bookings || [], data?.parties || []);
       const result = await emailPdfTo({
-        to: target.email,
+        to,
         subject: `SHYAM LOGISTICS Bill ${displayBillNo(row.billNo, row.billDate)}`,
         text: billSmsText(row),
         fileName: `Bill-${displayBillNo(row.billNo, row.billDate).replaceAll("/", "-")}.pdf`,
@@ -332,8 +342,13 @@ export default function BillPage() {
             className="tbs-input w-full"
             value={party}
             onChange={(e) => {
-              setParty(e.target.value);
+              const name = e.target.value;
+              setParty(name);
               setSelected([]);
+              const p = (data?.parties || []).find(
+                (x) => x.partyName === name,
+              );
+              if (p && !receiverEmail.trim()) setReceiverEmail(partyEmail(p));
             }}
             placeholder="Type or select…"
             list="bill-party-suggestions"
@@ -343,6 +358,30 @@ export default function BillPage() {
             {partyNames.map((n) => (
               <option key={n} value={n} />
             ))}
+          </datalist>
+        </div>
+      </div>
+
+      <div className="tbs-row">
+        <div className="tbs-field" style={{ flex: 1 }}>
+          <label>Enter Receiver Email ID</label>
+          <input
+            className="tbs-input w-full"
+            type="email"
+            value={receiverEmail}
+            onChange={(e) => setReceiverEmail(e.target.value)}
+            placeholder="receiver@email.com"
+            list="bill-receiver-emails"
+            autoComplete="off"
+          />
+          <datalist id="bill-receiver-emails">
+            {(data?.parties || [])
+              .map((p) => partyEmail(p))
+              .filter(Boolean)
+              .filter((email, i, arr) => arr.indexOf(email) === i)
+              .map((email) => (
+                <option key={email} value={email} />
+              ))}
           </datalist>
         </div>
       </div>
@@ -408,6 +447,7 @@ export default function BillPage() {
             setRemark("");
             setBillNo("");
             setParty("");
+            setReceiverEmail("");
             setLrCharges(0);
             setDetention(0);
             setHamali(0);
@@ -454,6 +494,7 @@ export default function BillPage() {
             { key: "billNo", label: "Bill No" },
             { key: "date", label: "Date" },
             { key: "partyName", label: "Party Name", width: "180px" },
+            { key: "receiverEmail", label: "Receiver Email", width: "180px" },
             { key: "billAmount", label: "Bill Amount" },
             { key: "print", label: "Print" },
             { key: "wa", label: "WhatsApp" },

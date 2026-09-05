@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       billNo: displayBillNo(String(serial), billDate),
       billDate,
       partyName: (body.partyName || "").trim(),
+      receiverEmail: String(body.receiverEmail || "").trim(),
       totalAmount: Number(body.totalAmount) || 0,
       lrCharges: Number(body.lrCharges) || 0,
       detention: Number(body.detention) || 0,
