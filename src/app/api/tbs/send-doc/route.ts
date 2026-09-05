@@ -12,6 +12,10 @@ function validEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function runtimeEnv(name: string) {
+  return String((process.env as Record<string, string | undefined>)[name] || "").trim();
+}
+
 function fromHeader(email: string) {
   return `${COMPANY_NAME} <${email}>`;
 }
@@ -66,14 +70,13 @@ export async function POST(req: Request) {
 
     const settings = await getSettings().catch(() => null);
     const companyEmail =
-      process.env.SMTP_USER?.trim() ||
+      runtimeEnv("SMTP_USER") ||
       String(settings?.email || "").trim() ||
       COMPANY_EMAIL;
     const gmailPass =
       String(settings?.gmailAppPassword || "").trim() ||
-      process.env.SMTP_PASS?.trim() ||
-      process.env.GMAIL_APP_PASSWORD?.trim() ||
-      "";
+      runtimeEnv("SMTP_PASS") ||
+      runtimeEnv("GMAIL_APP_PASSWORD");
     const fileName = (body.fileName || "document.pdf").replace(/[^\w.\-]+/g, "_");
     const subject = body.subject || `${COMPANY_NAME} document`;
     const text = body.text || "Please find the attached PDF.";
@@ -98,7 +101,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const key = process.env.RESEND_API_KEY?.trim();
+    const key = runtimeEnv("RESEND_API_KEY");
     if (!key) {
       return bad(
         "Company email setup nahi hai. Admin → Website Settings me Gmail App Password save karein.",
@@ -106,9 +109,8 @@ export async function POST(req: Request) {
     }
 
     const configuredFrom =
-      process.env.ENQUIRY_FROM_EMAIL?.trim() ||
-      process.env.TBS_FROM_EMAIL?.trim() ||
-      "";
+      runtimeEnv("ENQUIRY_FROM_EMAIL") ||
+      runtimeEnv("TBS_FROM_EMAIL");
     const payload = {
       key,
       to,
