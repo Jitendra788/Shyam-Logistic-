@@ -4,9 +4,21 @@ function env(name: string) {
   const bag =
     (globalThis as { process?: { env?: Record<string, string | undefined> } })
       .process?.env || process.env;
-  const v = bag[name]?.trim();
+  const key = Object.keys(bag).find((k) => k === name);
+  const v = (key ? bag[key] : "")?.trim();
   if (!v) return "";
   return v.replace(/^["']|["']$/g, "");
+}
+
+/** SDK prefers Vercel OIDC over the blob RW token; that breaks local/prod store mismatch. */
+async function withBlobToken<T>(fn: () => Promise<T>): Promise<T> {
+  const oidc = process.env.VERCEL_OIDC_TOKEN;
+  if (oidc) delete process.env.VERCEL_OIDC_TOKEN;
+  try {
+    return await fn();
+  } finally {
+    if (oidc) process.env.VERCEL_OIDC_TOKEN = oidc;
+  }
 }
 
 export function hasBlobStore() {
@@ -37,11 +49,13 @@ export async function blobGet<T>(key: string): Promise<BlobRead<T>> {
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const result = await get(blobPath(key), {
-        access: "private",
-        useCache: false,
-        token: blobToken(),
-      });
+      const result = await withBlobToken(() =>
+        get(blobPath(key), {
+          access: "private",
+          useCache: false,
+          token: blobToken(),
+        }),
+      );
       if (!result || result.statusCode === 304 || !result.stream) {
         return { ok: true, value: undefined };
       }
@@ -66,7 +80,9 @@ export async function blobClearAll(): Promise<boolean> {
   try {
     let cursor: string | undefined;
     do {
-      const page = await list({ prefix: "tbs/", token, cursor });
+      const page = await withBlobToken(() =>
+        list({ prefix: "tbs/", token, cursor }),
+      );
       const urls = page.blobs.map((b) => b.url);
       if (urls.length) await del(urls, { token });
       cursor = page.hasMore ? page.cursor : undefined;
@@ -80,14 +96,16 @@ export async function blobClearAll(): Promise<boolean> {
 
 export async function blobSet(key: string, value: unknown): Promise<boolean> {
   try {
-    await put(blobPath(key), JSON.stringify(value), {
-      access: "private",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-      cacheControlMaxAge: 0,
-      contentType: "application/json",
-      token: blobToken(),
-    });
+    await withBlobToken(() =>
+      put(blobPath(key), JSON.stringify(value), {
+        access: "private",
+        addRandomSuffix: false,
+        allowOverwrite: true,
+        cacheControlMaxAge: 0,
+        contentType: "application/json",
+        token: blobToken(),
+      }),
+    );
     return true;
   } catch (err) {
     console.error("Blob set failed", key, err);
