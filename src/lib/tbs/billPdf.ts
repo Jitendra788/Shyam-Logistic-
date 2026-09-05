@@ -153,7 +153,7 @@ export async function buildBillPdfBlob(opts: {
 }): Promise<Blob> {
   const { bill, bookings, parties = [] } = opts;
   const lrs = bookings.filter((b) => (bill.lrIds || []).includes(b.id));
-  const lines = buildBillLines(lrs);
+  const lines = buildBillLines(lrs, bill);
   const lrSum = billLrSum(lrs);
   const total = billPrintTotal(bill, lrs);
   const extras = billCrystalCharges(bill).filter(([, n]) => n > 0);

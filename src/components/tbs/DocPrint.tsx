@@ -347,7 +347,7 @@ export function TaxInvoicePrint({
   const { address, gstNo } = billedPartyInfo(partyName, lrs, parties);
   const lrSum = billLrSum(lrs);
   const total = bill ? billPrintTotal(bill, lrs) : lrSum;
-  const lines = buildBillLines(lrs);
+  const lines = buildBillLines(lrs, bill);
   const shownNo = displayBillNo(billNo, billDate);
   const extras = billCrystalCharges(bill).filter(([, n]) => n > 0);
   const padRows = Math.max(5, 8 - lines.length);

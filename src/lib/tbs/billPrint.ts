@@ -119,13 +119,31 @@ export function billLrSum(lrs: Booking[]) {
   return lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
 }
 
-export function buildBillLines(lrs: Booking[]): BillPrintLine[] {
+export function splitAmount(total: number, n: number): number[] {
+  if (n <= 0) return [];
+  const cents = Math.round((Number(total) || 0) * 100);
+  const base = Math.floor(cents / n);
+  const rem = cents - base * n;
+  return Array.from({ length: n }, (_, i) => (base + (i < rem ? 1 : 0)) / 100);
+}
+
+/** Per-LR hamali: each booking's hamali, or bill hamali split equally when rows are empty. */
+export function hamaliPerLr(lrs: Booking[], billHamali?: number): number[] {
+  const fromLr = lrs.map((b) => Number(b.hamali) || 0);
+  if (fromLr.some((n) => n > 0)) return fromLr;
+  const extra = Number(billHamali) || 0;
+  if (extra > 0 && lrs.length) return splitAmount(extra, lrs.length);
+  return fromLr;
+}
+
+export function buildBillLines(lrs: Booking[], bill?: Partial<Bill>): BillPrintLine[] {
+  const hamalis = hamaliPerLr(lrs, bill?.hamali);
   return lrs.map((b, i) => {
     const freight = Number(b.freight || 0);
-    const hamali = Number(b.hamali || 0);
+    const hamali = hamalis[i] || 0;
     const halting = Number(b.barrier || 0);
     const other = lrOtherCharges(b);
-    const rowTotal = Number(b.grandTotal) || freight + hamali + halting + other;
+    const rowTotal = freight + hamali + halting + other;
     return {
       sr: String(i + 1),
       lrNo: b.lrNo || "",

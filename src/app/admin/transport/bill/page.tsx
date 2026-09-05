@@ -97,10 +97,18 @@ export default function BillPage() {
     [partyLrs, selected],
   );
 
+  const selectedHamali = useMemo(
+    () =>
+      partyLrs
+        .filter((b) => selected.includes(b.id))
+        .reduce((sum, b) => sum + (Number(b.hamali) || 0), 0),
+    [partyLrs, selected],
+  );
+
   const extras = {
     lrCharges,
     detention,
-    hamali,
+    hamali: Number(hamali) || selectedHamali,
     doorDelivery,
     doorCollection,
     other,
