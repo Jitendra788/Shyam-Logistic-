@@ -119,6 +119,22 @@ export function billLrSum(lrs: Booking[]) {
   return lrs.reduce((s, b) => s + Number(b.grandTotal || b.freight || 0), 0);
 }
 
+export function bookingInvoiceNo(b: Booking) {
+  const extra = b as Booking & { invoiceNo?: string; invNo?: string };
+  return String(extra.invNoDate || extra.invoiceNo || extra.invNo || "").trim();
+}
+
+export function billPrintAmount(lrs: Booking[], bill?: Partial<Bill>) {
+  const hamalis = hamaliPerLr(lrs, bill?.hamali);
+  return lrs.reduce((sum, b, i) => {
+    const freight = Number(b.freight || 0);
+    const hamali = hamalis[i] || 0;
+    const halting = Number(b.barrier || 0);
+    const other = lrOtherCharges(b);
+    return sum + freight + hamali + halting + other;
+  }, 0);
+}
+
 export function splitAmount(total: number, n: number): number[] {
   if (n <= 0) return [];
   const cents = Math.round((Number(total) || 0) * 100);
@@ -148,7 +164,7 @@ export function buildBillLines(lrs: Booking[], bill?: Partial<Bill>): BillPrintL
       sr: String(i + 1),
       lrNo: b.lrNo || "",
       lrDate: fmtLrDate(b.lrDate),
-      invNo: b.invNoDate || "",
+      invNo: bookingInvoiceNo(b),
       weight: blankNum(Number(b.chargedWt || b.actualWt || 0)),
       vehicle: b.vehicleNo || "",
       from: b.from || b.bookingFrom || "",

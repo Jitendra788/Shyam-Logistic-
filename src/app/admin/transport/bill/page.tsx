@@ -374,6 +374,7 @@ export default function BillPage() {
           { key: "select", label: "Select" },
           { key: "loadFor", label: "Load For" },
           { key: "lrNo", label: "LR No" },
+          { key: "invNoDate", label: "Invoice No", width: "120px" },
           { key: "lrDate", label: "LR Date" },
           { key: "billingParty", label: "Billing Party", width: "140px" },
           { key: "from", label: "From" },

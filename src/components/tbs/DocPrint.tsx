@@ -11,6 +11,7 @@ import {
   BILL_BANK,
   billedPartyInfo,
   billLrSum,
+  billPrintAmount,
   buildBillLines,
   displayBillNo,
   fmtBillDate,
@@ -344,6 +345,7 @@ export function TaxInvoicePrint({
 }) {
   const { address, gstNo } = billedPartyInfo(partyName, lrs, parties);
   const lrSum = billLrSum(lrs);
+  const printTotal = bill ? billPrintAmount(lrs, bill) : lrSum;
   const lines = buildBillLines(lrs, bill);
   const shownNo = displayBillNo(billNo, billDate);
   const padRows = Math.max(5, 8 - lines.length);
@@ -454,7 +456,7 @@ export function TaxInvoicePrint({
               <td>{row.sr}</td>
               <td>{row.lrNo}</td>
               <td>{row.lrDate}</td>
-              <td>{row.invNo}</td>
+              <td className="tax-inv-inv">{row.invNo}</td>
               <td>{row.weight}</td>
               <td>{row.vehicle}</td>
               <td>{row.from}</td>
@@ -479,16 +481,16 @@ export function TaxInvoicePrint({
       <div className="tax-inv-total-bar">
         <div className="tax-inv-total-l">
           <span>Total Freight : -</span>
-          <span className="tax-inv-amt">{lrSum}</span>
+          <span className="tax-inv-amt">{printTotal}</span>
         </div>
         <div className="tax-inv-total-r">
           <span className="tax-inv-freight-lab">Freight</span>
-          <span className="tax-inv-freight-val">{lrSum}</span>
+          <span className="tax-inv-freight-val">{printTotal}</span>
         </div>
       </div>
 
       <div className="tax-inv-words">
-        <b>Amount in words:</b> {amountInWordsINR(lrSum)}
+        <b>Amount in words:</b> {amountInWordsINR(printTotal)}
       </div>
 
       <div className="tax-inv-below">
@@ -505,7 +507,7 @@ export function TaxInvoicePrint({
           <tbody>
             <tr>
               <td>Freight</td>
-              <td>{lrSum}</td>
+              <td>{printTotal}</td>
             </tr>
             <tr>
               <td>CGST %</td>
@@ -521,7 +523,7 @@ export function TaxInvoicePrint({
             </tr>
             <tr>
               <td>Total</td>
-              <td>{lrSum}</td>
+              <td>{printTotal}</td>
             </tr>
           </tbody>
         </table>

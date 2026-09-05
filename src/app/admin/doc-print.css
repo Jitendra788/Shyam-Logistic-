@@ -309,7 +309,7 @@
 .tax-inv-table .c-sr { width: 5%; }
 .tax-inv-table .c-lr { width: 7%; }
 .tax-inv-table .c-date { width: 9%; }
-.tax-inv-table .c-inv { width: 10%; }
+.tax-inv-table .c-inv { width: 12%; }
 .tax-inv-table .c-wt { width: 7%; }
 .tax-inv-table .c-veh { width: 10%; }
 .tax-inv-table .c-from { width: 8%; }
@@ -330,6 +330,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tax-inv-table td.tax-inv-inv {
+  white-space: normal;
+  word-break: break-word;
+  font-size: 9px;
+  line-height: 1.15;
 }
 
 .tax-inv-table th {

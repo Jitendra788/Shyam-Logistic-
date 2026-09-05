@@ -4,7 +4,7 @@ import {
   BILL_ADDRESS,
   BILL_BANK,
   billedPartyInfo,
-  billLrSum,
+  billPrintAmount,
   buildBillLines,
   displayBillNo,
   fmtBillDate,
@@ -25,8 +25,8 @@ const COLS = [
   { t: "Sr No", x: 24, w: 38 },
   { t: "LR No", x: 62, w: 50 },
   { t: "LR Date", x: 112, w: 70 },
-  { t: "Invoice No", x: 182, w: 78 },
-  { t: "Weight", x: 260, w: 52 },
+  { t: "Invoice No", x: 182, w: 88 },
+  { t: "Weight", x: 270, w: 42 },
   { t: "Vehicle No.", x: 312, w: 78 },
   { t: "From", x: 390, w: 62 },
   { t: "To", x: 452, w: 62 },
@@ -152,7 +152,7 @@ export async function buildBillPdfBlob(opts: {
   const { bill, bookings, parties = [] } = opts;
   const lrs = bookings.filter((b) => (bill.lrIds || []).includes(b.id));
   const lines = buildBillLines(lrs, bill);
-  const lrSum = billLrSum(lrs);
+  const printTotal = billPrintAmount(lrs, bill);
   const { address, gstNo } = billedPartyInfo(bill.partyName, lrs, parties);
   const shownNo = displayBillNo(bill.billNo, bill.billDate);
 
@@ -244,11 +244,11 @@ export async function buildBillPdfBlob(opts: {
   const totBot = totTop - 22;
   rect(page, tableLeft, totBot, tableRight - tableLeft, totTop - totBot, 1.3);
   text(page, bold, "Total Freight : -", 32, totBot + 7, 11);
-  text(page, bold, String(lrSum), 128, totBot + 7, 12);
+  text(page, bold, String(printTotal), 128, totBot + 7, 12);
   const totalCol = COLS[12];
   text(page, bold, "Freight", 656, totBot + 7, 11);
-  const totW = bold.widthOfTextAtSize(String(lrSum), 11);
-  text(page, bold, String(lrSum), totalCol.x + totalCol.w - totW - 6, totBot + 7, 11);
+  const totW = bold.widthOfTextAtSize(String(printTotal), 11);
+  text(page, bold, String(printTotal), totalCol.x + totalCol.w - totW - 6, totBot + 7, 11);
   line(page, 650, totBot, 650, totTop, 0.7);
   line(page, totalCol.x, totBot, totalCol.x, totTop, 0.7);
 
@@ -256,7 +256,7 @@ export async function buildBillPdfBlob(opts: {
   const wordsBot = wordsTop - 20;
   rect(page, tableLeft, wordsBot, tableRight - tableLeft, wordsTop - wordsBot, 1.3);
   text(page, bold, "Amount in words:", 32, wordsBot + 6, 10);
-  text(page, font, amountInWordsINR(lrSum), 128, wordsBot + 6, 9);
+  text(page, font, amountInWordsINR(printTotal), 128, wordsBot + 6, 9);
 
   text(page, bold, "Bank Details :", 32, wordsBot - 16, 11);
   text(page, font, `Account Holder : ${BILL_BANK.holder}`, 32, wordsBot - 32, 10);
@@ -268,7 +268,7 @@ export async function buildBillPdfBlob(opts: {
   const taxW = 148;
   const taxRowH = 14;
   const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
-  const taxVals = [String(lrSum), "0.00", "0.00", "0.00", String(lrSum)];
+  const taxVals = [String(printTotal), "0.00", "0.00", "0.00", String(printTotal)];
   const taxTop = wordsBot - 12;
   const taxBot = taxTop - taxRows.length * taxRowH;
   rect(page, taxX, taxBot, taxW, taxTop - taxBot, 1.1);
