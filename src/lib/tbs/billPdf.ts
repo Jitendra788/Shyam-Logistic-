@@ -262,23 +262,24 @@ export async function buildBillPdfBlob(opts: {
   const gstLeft = COLS[10].x;
   const gstRight = tableRight;
   const gstW = gstRight - gstLeft;
-  const taxRowH = 16;
+  const taxRowH = 18;
   const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
   const taxVals = [String(printTotal), "0.00", "0.00", "0.00", String(printTotal)];
-  const taxTop = wordsBot - 8;
-  const taxBot = taxTop - taxRows.length * taxRowH;
-  const taxSplit = gstLeft + Math.round(gstW * 0.52);
-  rect(page, gstLeft, taxBot, gstW, taxTop - taxBot, 1.1);
-  line(page, taxSplit, taxBot, taxSplit, taxTop, 0.7);
+  const taxTop = wordsBot - 6;
+  const taxH = taxRows.length * taxRowH;
+  const taxBot = taxTop - taxH;
+  const taxSplit = gstLeft + 92;
+  rect(page, gstLeft, taxBot, gstW, taxH, 1.2);
+  line(page, taxSplit, taxBot, taxSplit, taxTop, 0.8);
   taxRows.forEach((lab, i) => {
-    const rowTop = taxTop - i * taxRowH;
-    const rowBot = rowTop - taxRowH;
-    if (i > 0) line(page, gstLeft, rowTop, gstRight, rowTop, 0.6);
-    const textY = rowBot + 5;
-    text(page, font, lab, gstLeft + 5, textY, 9);
+    const top = taxTop - i * taxRowH;
+    const bot = top - taxRowH;
+    if (i > 0) line(page, gstLeft, top, gstRight, top, 0.7);
+    const baseline = bot + 6;
+    text(page, font, lab, gstLeft + 6, baseline, 10);
     const val = taxVals[i];
-    const vw = bold.widthOfTextAtSize(val, 9);
-    text(page, bold, val, gstRight - vw - 5, textY, 9);
+    const vw = bold.widthOfTextAtSize(val, 10);
+    text(page, bold, val, gstRight - vw - 6, baseline, 10);
   });
 
   if (bill.remark) {

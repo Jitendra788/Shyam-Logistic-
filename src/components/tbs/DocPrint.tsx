@@ -500,26 +500,20 @@ export function TaxInvoicePrint({
             <div>Branch : {BILL_BANK.branch}</div>
           </div>
         </div>
-        <table className="tax-inv-gstbox">
-          <tbody>
-            {[
-              ["Freight", printTotal],
-              ["CGST %", "0.00"],
-              ["SGST %", "0.00"],
-              ["IGST %", "0.00"],
-              ["Total", printTotal],
-            ].map(([lab, val]) => (
-              <tr key={String(lab)}>
-                <td>
-                  <div className="tax-inv-gst-line">
-                    <span>{lab}</span>
-                    <span>{val}</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="tax-inv-gstbox">
+          {[
+            ["Freight", printTotal],
+            ["CGST %", "0.00"],
+            ["SGST %", "0.00"],
+            ["IGST %", "0.00"],
+            ["Total", printTotal],
+          ].map(([lab, val]) => (
+            <div key={String(lab)} className="tax-inv-gst-row">
+              <span className="tax-inv-gst-k">{lab}</span>
+              <span className="tax-inv-gst-v">{val}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {remark ? (

@@ -439,60 +439,44 @@
 }
 
 .tax-inv-gstbox {
-  width: 200px;
-  flex: 0 0 200px;
-  border-collapse: collapse;
-  table-layout: fixed;
+  display: block !important;
+  width: 228px;
+  flex: 0 0 228px;
   border: 1.5px solid #000;
-  font-size: 11px;
+  box-sizing: border-box;
 }
 
-.tax-inv-gstbox,
-.tax-inv-gstbox tbody {
-  display: table !important;
-  width: 200px;
-}
-
-.tax-inv-gstbox tbody {
-  display: table-row-group !important;
-}
-
-.tax-inv-gstbox tr {
-  display: table-row !important;
-}
-
-.tax-inv-gstbox td {
-  display: table-cell !important;
-  border: none;
+.tax-inv-gst-row {
+  display: grid !important;
+  grid-template-columns: 118px 108px !important;
+  grid-template-rows: 22px !important;
+  align-items: stretch;
   border-bottom: 1px solid #000;
-  padding: 0;
-  font-weight: 700;
 }
 
-.tax-inv-gstbox tr:last-child td {
+.tax-inv-gstbox .tax-inv-gst-row:last-child {
   border-bottom: none;
 }
 
-.tax-inv-gst-line {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center;
-  justify-content: space-between;
-  white-space: nowrap;
-  min-height: 22px;
+.tax-inv-gst-k,
+.tax-inv-gst-v {
+  display: block !important;
+  height: 22px;
+  line-height: 22px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap !important;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.tax-inv-gst-line span:first-child {
-  flex: 1 1 auto;
-  padding: 4px 8px;
+.tax-inv-gst-k {
   border-right: 1px solid #000;
   text-align: left;
 }
 
-.tax-inv-gst-line span:last-child {
-  flex: 0 0 78px;
-  padding: 4px 8px;
+.tax-inv-gst-v {
   text-align: right;
   font-weight: 800;
 }
@@ -798,21 +782,20 @@
     display: flex !important;
     justify-content: space-between;
   }
-  .tax-inv-gstbox,
-  .tax-inv-gstbox tbody {
-    width: 200px;
+  .tax-inv-gstbox {
+    display: block !important;
+    width: 228px !important;
   }
-  .tax-inv-gstbox tr {
-    display: table-row !important;
+  .tax-inv-gst-row {
+    display: grid !important;
+    grid-template-columns: 118px 108px !important;
+    grid-template-rows: 20px !important;
   }
-  .tax-inv-gstbox td {
-    display: table-cell !important;
-    padding: 0;
-  }
-  .tax-inv-gst-line {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
+  .tax-inv-gst-k,
+  .tax-inv-gst-v {
+    height: 20px;
+    line-height: 20px;
+    font-size: 11px;
   }
   .tax-inv .shyam-stamp-sm,
   .tax-inv .shyam-stamp-md,
