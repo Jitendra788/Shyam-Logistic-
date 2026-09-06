@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { getSettings, publicSettings, saveSettings } from "@/lib/store";
+import { COMPANY_GMAIL, saveGmailSmtp } from "@/lib/tbs/gmailSecret";
 import type { SiteSettings } from "@/lib/types";
 
 export async function GET() {
@@ -37,6 +38,9 @@ export async function PUT(request: Request) {
         : existing.gmailAppPassword || "";
     const next = { ...existing, ...rest, gmailAppPassword };
     await saveSettings(next);
+    if (gmailAppPassword) {
+      await saveGmailSmtp(COMPANY_GMAIL, gmailAppPassword);
+    }
     return NextResponse.json({ ok: true, settings: publicSettings(next) });
   } catch {
     return NextResponse.json(
