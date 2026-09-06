@@ -262,20 +262,18 @@ export async function buildBillPdfBlob(opts: {
   const gstLeft = COLS[10].x;
   const gstRight = tableRight;
   const gstW = gstRight - gstLeft;
-  const taxRowH = 18;
+  const taxRowH = 16;
   const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
   const taxVals = [String(printTotal), "0.00", "0.00", "0.00", String(printTotal)];
   const taxTop = wordsBot - 6;
   const taxH = taxRows.length * taxRowH;
   const taxBot = taxTop - taxH;
-  const taxSplit = gstLeft + 92;
   rect(page, gstLeft, taxBot, gstW, taxH, 1.2);
-  line(page, taxSplit, taxBot, taxSplit, taxTop, 0.8);
   taxRows.forEach((lab, i) => {
     const top = taxTop - i * taxRowH;
     const bot = top - taxRowH;
     if (i > 0) line(page, gstLeft, top, gstRight, top, 0.7);
-    const baseline = bot + 6;
+    const baseline = bot + 5;
     text(page, font, lab, gstLeft + 6, baseline, 10);
     const val = taxVals[i];
     const vw = bold.widthOfTextAtSize(val, 10);

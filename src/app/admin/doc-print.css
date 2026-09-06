@@ -440,46 +440,41 @@
 
 .tax-inv-gstbox {
   display: block !important;
-  width: 240px;
-  flex: 0 0 240px;
+  width: 200px;
+  flex: 0 0 200px;
   border: 1.5px solid #000;
   box-sizing: border-box;
 }
 
 .tax-inv-gst-row {
-  display: block !important;
-  position: relative;
-  height: 22px;
-  line-height: 22px;
-  padding: 0 88px 0 8px;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 8px;
   border-bottom: 1px solid #000;
+  white-space: nowrap !important;
   font-size: 12px;
   font-weight: 700;
-  white-space: nowrap !important;
-  overflow: hidden;
-  box-sizing: border-box;
 }
 
 .tax-inv-gstbox .tax-inv-gst-row:last-child {
   border-bottom: none;
 }
 
-.tax-inv-gst-k {
+.tax-inv-gst-k,
+.tax-inv-gst-v {
   display: inline !important;
+  border: none !important;
+  padding: 0 !important;
+  height: auto;
+  line-height: 1.3;
 }
 
 .tax-inv-gst-v {
-  display: block !important;
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 80px;
-  height: 22px;
-  line-height: 22px;
-  padding: 0 8px;
-  text-align: right;
   font-weight: 800;
-  white-space: nowrap !important;
 }
 
 .tax-inv-bank {
@@ -785,22 +780,19 @@
   }
   .tax-inv-gstbox {
     display: block !important;
-    width: 240px !important;
+    width: 200px !important;
   }
   .tax-inv-gst-row {
-    display: block !important;
-    height: 22px !important;
-    line-height: 22px !important;
-    white-space: nowrap !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
   }
+  .tax-inv-gst-k,
   .tax-inv-gst-v {
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    width: 80px !important;
-    height: 22px !important;
-    line-height: 22px !important;
-    text-align: right !important;
+    display: inline !important;
+    height: auto;
+    line-height: 1.3;
+    font-size: 11px;
   }
   .tax-inv .shyam-stamp-sm,
   .tax-inv .shyam-stamp-md,
