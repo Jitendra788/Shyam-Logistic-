@@ -1,21 +1,11 @@
-import { env as nodeEnv } from "node:process";
 import { hasPostgres, pgGet, pgSet } from "@/lib/db/postgres";
 import { blobGet, blobSet, hasBlobStore } from "@/lib/db/blobKv";
+import { runtimeEnv } from "@/lib/runtimeEnv";
 import { getSettings } from "@/lib/store";
 
 const KEY = "site:gmail-smtp";
 
 export const COMPANY_GMAIL = "shyamlogisticscompany535@gmail.com";
-
-/** Walk env keys so Next/Turbopack cannot replace a named env with "" at build. */
-function readRuntime(name: string) {
-  const bag =
-    (globalThis as { process?: { env?: NodeJS.ProcessEnv } }).process?.env ||
-    nodeEnv;
-  const key = Object.keys(bag).find((k) => k === name);
-  if (!key) return "";
-  return String(bag[key] || "").trim();
-}
 
 function cleanPass(value: string) {
   return value.replace(/\s/g, "");
@@ -25,7 +15,7 @@ type Stored = { user?: string; pass?: string };
 
 export async function getGmailSmtp(): Promise<{ user: string; pass: string }> {
   const fromEnv = cleanPass(
-    readRuntime("GMAIL_APP_PASSWORD") || readRuntime("SMTP_PASS"),
+    runtimeEnv("GMAIL_APP_PASSWORD") || runtimeEnv("SMTP_PASS"),
   );
   let storedPass = "";
   if (hasBlobStore()) {

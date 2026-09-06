@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { runtimeEnv } from "@/lib/runtimeEnv";
 
 type GlobalPg = typeof globalThis & {
   __shyamPg?: ReturnType<typeof neon>;
@@ -6,9 +7,7 @@ type GlobalPg = typeof globalThis & {
 };
 
 function env(name: string) {
-  const v = process.env[name]?.trim();
-  if (!v) return "";
-  return v.replace(/^["']|["']$/g, "");
+  return runtimeEnv(name);
 }
 
 export function postgresUrl() {

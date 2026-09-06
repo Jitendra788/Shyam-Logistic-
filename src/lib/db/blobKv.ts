@@ -1,13 +1,8 @@
 import { BlobNotFoundError, del, get, list, put } from "@vercel/blob";
+import { runtimeEnv } from "@/lib/runtimeEnv";
 
 function env(name: string) {
-  const bag =
-    (globalThis as { process?: { env?: Record<string, string | undefined> } })
-      .process?.env || process.env;
-  const key = Object.keys(bag).find((k) => k === name);
-  const v = (key ? bag[key] : "")?.trim();
-  if (!v) return "";
-  return v.replace(/^["']|["']$/g, "");
+  return runtimeEnv(name);
 }
 
 /** SDK prefers Vercel OIDC over the blob RW token; that breaks local/prod store mismatch. */
