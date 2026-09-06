@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { loadBrandPngBytes } from "@/lib/tbs/embedBrandPng";
 
 const COMPANY_NAME = "SHYAM LOGISTICS";
 
@@ -13,6 +14,7 @@ async function sendWith(opts: {
   text: string;
   fileName: string;
   pdfBytes: Buffer;
+  logoBytes?: Uint8Array | null;
 }) {
   const transporter = nodemailer.createTransport({
     host: opts.host,
@@ -20,18 +22,30 @@ async function sendWith(opts: {
     secure: opts.secure,
     auth: { user: opts.user, pass: opts.pass },
   });
+  const attachments: Array<{
+    filename: string;
+    content: Buffer;
+    contentType: string;
+  }> = [
+    {
+      filename: opts.fileName,
+      content: opts.pdfBytes,
+      contentType: "application/pdf",
+    },
+  ];
+  if (opts.logoBytes?.length) {
+    attachments.push({
+      filename: "SHYAM-LOGISTICS-logo.png",
+      content: Buffer.from(opts.logoBytes),
+      contentType: "image/png",
+    });
+  }
   await transporter.sendMail({
     from: `"${COMPANY_NAME}" <${opts.user}>`,
     to: opts.to,
     subject: opts.subject,
     text: opts.text,
-    attachments: [
-      {
-        filename: opts.fileName,
-        content: opts.pdfBytes,
-        contentType: "application/pdf",
-      },
-    ],
+    attachments,
   });
 }
 
@@ -50,6 +64,7 @@ export async function sendPdfViaGmail(opts: {
     ? Buffer.from(opts.pdfBytes)
     : Buffer.from(String(opts.pdfBase64 || ""), "base64");
   if (pdfBytes.length < 80) throw new Error("PDF missing");
+  const logoBytes = await loadBrandPngBytes("shyam-peacock-mark-print.png");
   const common = {
     user: opts.user,
     pass,
@@ -58,6 +73,7 @@ export async function sendPdfViaGmail(opts: {
     text: opts.text,
     fileName: opts.fileName,
     pdfBytes,
+    logoBytes,
   };
   try {
     await sendWith({
