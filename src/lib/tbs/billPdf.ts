@@ -252,13 +252,15 @@ export async function buildBillPdfBlob(opts: {
   const totalCol = COLS[12];
   for (let i = 0; i < gstN; i++) {
     const y = dataBottom - i * footH;
-    if (i === 4) {
+    if (i >= 3) {
       line(page, otherCol.x, y, tableRight, y, 0.7);
     } else {
       line(page, tableLeft, y, tableRight, y, 0.7);
     }
     const baseline = y - footH + 6;
-    if (i === 3) {
+    if (i === 2) {
+      text(page, bold, "Bank Details :", 32, baseline, 10);
+    } else if (i === 3) {
       text(page, font, `Account Holder : ${BILL_BANK.holder}`, 32, baseline, 9);
       text(page, font, `Account No ${BILL_BANK.accountNo}`, 280, baseline, 9);
     } else if (i === 4) {

@@ -447,13 +447,21 @@
   vertical-align: top !important;
   white-space: normal !important;
   height: auto;
+  padding: 2px 8px 4px !important;
+}
+
+.tax-inv-bank-head {
+  font-weight: 800;
+  margin: 0 0 2px;
+  line-height: 1.2;
 }
 
 .tax-inv-bank-row {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  padding: 2px 0;
+  padding: 0;
+  line-height: 1.35;
 }
 
 .tax-inv-bank-row span {
