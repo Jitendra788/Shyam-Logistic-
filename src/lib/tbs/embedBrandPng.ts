@@ -6,7 +6,7 @@ export async function embedBrandPng(
   fileName: string,
 ): Promise<PDFImage | null> {
   try {
-    const bytes = await readBrandPng(fileName);
+    const bytes = await loadBrandPngBytes(fileName);
     if (!bytes?.length) return null;
     return await pdf.embedPng(bytes);
   } catch {
@@ -14,7 +14,7 @@ export async function embedBrandPng(
   }
 }
 
-async function readBrandPng(fileName: string): Promise<Uint8Array | null> {
+export async function loadBrandPngBytes(fileName: string): Promise<Uint8Array | null> {
   if (typeof window !== "undefined") {
     const res = await fetch(`/brand/${fileName}`);
     if (!res.ok) return null;

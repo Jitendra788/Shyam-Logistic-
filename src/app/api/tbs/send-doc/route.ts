@@ -5,6 +5,11 @@ import { smtpPassFromProcess } from "@/lib/tbs/smtpEnvBindings";
 import { buildLrPdf } from "@/lib/tbs/lrPdf";
 import { buildBillPdfBlob } from "@/lib/tbs/billPdf";
 import { getBills, getBookings, getParties } from "@/lib/tbs/store";
+import {
+  billEmailRows,
+  bookingEmailRows,
+  buildDocEmail,
+} from "@/lib/tbs/docEmail";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
 
 export const maxDuration = 60;
@@ -21,7 +26,13 @@ async function pdfFromRequest(body: {
   kind?: string;
   id?: string;
   pdfBase64?: string;
-}): Promise<{ bytes: Uint8Array; fileName: string }> {
+}): Promise<{
+  bytes: Uint8Array;
+  fileName: string;
+  title: string;
+  html: string;
+  text: string;
+}> {
   const kind = String(body.kind || "");
   const id = String(body.id || "").trim();
   if (kind === "booking" && id) {
@@ -32,7 +43,14 @@ async function pdfFromRequest(body: {
     const booking = bookings.find((b) => b.id === id || b.lrNo === id);
     if (!booking) throw new Error("Booking not found. Save first, then email.");
     const bytes = await buildLrPdf(booking, parties);
-    return { bytes, fileName: `LR-${booking.lrNo || id}.pdf` };
+    const fileName = `LR-${booking.lrNo || id}.pdf`;
+    const title = `Consignment Note / LR ${booking.lrNo || ""}`.trim();
+    const mail = buildDocEmail({
+      title,
+      rows: bookingEmailRows(booking),
+      fileName,
+    });
+    return { bytes, fileName, title, ...mail };
   }
   if (kind === "bill" && id) {
     const [bills, bookings, parties] = await Promise.all([
@@ -42,13 +60,23 @@ async function pdfFromRequest(body: {
     ]);
     const bill = bills.find((b: Bill) => b.id === id || b.billNo === id);
     if (!bill) throw new Error("Bill not found. Save first, then email.");
+    const lrs = (bookings as Booking[]).filter((b) =>
+      (bill.lrIds || []).includes(b.id),
+    );
     const blob = await buildBillPdfBlob({
       bill,
       bookings: bookings as Booking[],
       parties,
     });
     const bytes = new Uint8Array(await blob.arrayBuffer());
-    return { bytes, fileName: `Bill-${bill.billNo || id}.pdf` };
+    const fileName = `Bill-${bill.billNo || id}.pdf`;
+    const title = `Tax Invoice ${bill.billNo || ""}`.trim();
+    const mail = buildDocEmail({
+      title,
+      rows: billEmailRows(bill, lrs),
+      fileName,
+    });
+    return { bytes, fileName, title, ...mail };
   }
   const pdfBase64 = String(body.pdfBase64 || "").replace(
     /^data:application\/pdf;base64,/,
@@ -57,9 +85,17 @@ async function pdfFromRequest(body: {
   if (!pdfBase64 || pdfBase64.length < 80) {
     throw new Error("PDF missing");
   }
+  const fileName = "document.pdf";
+  const mail = buildDocEmail({
+    title: "SHYAM LOGISTICS Document",
+    rows: [{ label: "Note", value: "Please find the attached PDF for print." }],
+    fileName,
+  });
   return {
     bytes: Buffer.from(pdfBase64, "base64"),
-    fileName: "document.pdf",
+    fileName,
+    title: "SHYAM LOGISTICS Document",
+    ...mail,
   };
 }
 
@@ -94,8 +130,9 @@ export async function POST(req: Request) {
         user: COMPANY_GMAIL,
         pass,
         to,
-        subject: body.subject || `${COMPANY_NAME} document`,
-        text: body.text || "Please find the attached PDF.",
+        subject: body.subject || built.title || `${COMPANY_NAME} document`,
+        text: built.text,
+        html: built.html,
         fileName,
         pdfBytes: built.bytes,
       });
