@@ -6,9 +6,9 @@ import { buildLrPdf } from "@/lib/tbs/lrPdf";
 import { buildBillPdfBlob } from "@/lib/tbs/billPdf";
 import { getBills, getBookings, getParties } from "@/lib/tbs/store";
 import {
-  billEmailRows,
-  bookingEmailRows,
-  buildDocEmail,
+  billEmailText,
+  bookingEmailText,
+  genericEmailText,
 } from "@/lib/tbs/docEmail";
 import type { Bill, Booking, Party } from "@/lib/tbs/types";
 
@@ -30,7 +30,6 @@ async function pdfFromRequest(body: {
   bytes: Uint8Array;
   fileName: string;
   title: string;
-  html: string;
   text: string;
 }> {
   const kind = String(body.kind || "");
@@ -44,13 +43,8 @@ async function pdfFromRequest(body: {
     if (!booking) throw new Error("Booking not found. Save first, then email.");
     const bytes = await buildLrPdf(booking, parties);
     const fileName = `LR-${booking.lrNo || id}.pdf`;
-    const title = `Consignment Note / LR ${booking.lrNo || ""}`.trim();
-    const mail = buildDocEmail({
-      title,
-      rows: bookingEmailRows(booking),
-      fileName,
-    });
-    return { bytes, fileName, title, ...mail };
+    const mail = bookingEmailText(booking);
+    return { bytes, fileName, ...mail };
   }
   if (kind === "bill" && id) {
     const [bills, bookings, parties] = await Promise.all([
@@ -70,13 +64,8 @@ async function pdfFromRequest(body: {
     });
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const fileName = `Bill-${bill.billNo || id}.pdf`;
-    const title = `Tax Invoice ${bill.billNo || ""}`.trim();
-    const mail = buildDocEmail({
-      title,
-      rows: billEmailRows(bill, lrs),
-      fileName,
-    });
-    return { bytes, fileName, title, ...mail };
+    const mail = billEmailText(bill, lrs);
+    return { bytes, fileName, ...mail };
   }
   const pdfBase64 = String(body.pdfBase64 || "").replace(
     /^data:application\/pdf;base64,/,
@@ -86,15 +75,10 @@ async function pdfFromRequest(body: {
     throw new Error("PDF missing");
   }
   const fileName = "document.pdf";
-  const mail = buildDocEmail({
-    title: "SHYAM LOGISTICS Document",
-    rows: [{ label: "Note", value: "Please find the attached PDF for print." }],
-    fileName,
-  });
+  const mail = genericEmailText(fileName);
   return {
     bytes: Buffer.from(pdfBase64, "base64"),
     fileName,
-    title: "SHYAM LOGISTICS Document",
     ...mail,
   };
 }
@@ -132,7 +116,6 @@ export async function POST(req: Request) {
         to,
         subject: body.subject || built.title || `${COMPANY_NAME} document`,
         text: built.text,
-        html: built.html,
         fileName,
         pdfBytes: built.bytes,
       });
