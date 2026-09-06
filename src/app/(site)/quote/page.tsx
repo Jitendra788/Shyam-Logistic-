@@ -30,7 +30,7 @@ export default async function QuotePage() {
 
       <section className="py-10 sm:py-14 md:py-16">
         <div className="site-container max-w-3xl">
-          <div className="rounded-2xl border border-line bg-white p-6 sm:p-8">
+          <div className="rounded-2xl border border-line bg-white p-4 sm:p-6 md:p-8">
             <QuoteForm
               notifyEmail={settings.email}
               phone={settings.phone}

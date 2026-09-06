@@ -124,7 +124,7 @@ export function BrandLogo({
       </span>
 
       {showWordmark && (
-        <span className="flex min-w-0 flex-1 flex-col leading-none">
+        <span className="tbs-brand-word flex min-w-0 flex-1 flex-col leading-none">
           <span
             className={`max-w-full truncate font-display font-bold uppercase tracking-[0.04em] ${s.first} ${
               variant === "dark" ? "text-white" : "text-navy"

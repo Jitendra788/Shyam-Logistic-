@@ -189,7 +189,7 @@ export default function AdminSettingsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="section-label">Full website control</p>
-          <h1 className="mt-1 font-display text-3xl font-bold text-navy">
+          <h1 className="mt-1 font-display text-2xl font-bold text-navy sm:text-3xl">
             Admin Settings
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted">

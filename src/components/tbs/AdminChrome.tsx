@@ -112,7 +112,7 @@ export function AdminChrome({
     <div className="tbs-topbar-actions" ref={wrapRef}>
       <button
         type="button"
-        className="tbs-top-btn tbs-top-btn-gold"
+        className="tbs-top-btn tbs-top-btn-gold tbs-hide-narrow"
         disabled={backingUp}
         onClick={onBackup}
         aria-label="Download Excel backup"
@@ -125,7 +125,7 @@ export function AdminChrome({
 
       <button
         type="button"
-        className="tbs-icon-btn"
+        className="tbs-icon-btn tbs-hide-narrow"
         onClick={toggleTheme}
         aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         title={theme === "dark" ? "Light mode" : "Dark mode"}
@@ -202,6 +202,17 @@ export function AdminChrome({
             >
               Profile
             </Link>
+            <button
+              type="button"
+              className="tbs-drop-item"
+              disabled={backingUp}
+              onClick={() => {
+                setOpen(null);
+                onBackup();
+              }}
+            >
+              {backingUp ? "Saving backup…" : "Excel Backup"}
+            </button>
             <button type="button" className="tbs-drop-item" onClick={toggleTheme}>
               <MoonIcon />
               {theme === "dark" ? "Light mode" : "Dark mode"}

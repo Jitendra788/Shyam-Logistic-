@@ -284,11 +284,11 @@ export function QuoteForm({
         {status === "loading" ? "Submitting..." : "Submit enquiry"}
       </button>
 
-      <div className="flex flex-wrap gap-2 pt-1">
+      <div className="grid grid-cols-1 gap-2 pt-1 min-[400px]:grid-cols-2 sm:flex sm:flex-wrap">
         {tel1 ? (
           <a
             href={`tel:+91${tel1}`}
-            className="inline-flex min-h-10 items-center justify-center rounded-md bg-red px-3 text-sm font-semibold text-white"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-red px-3 text-sm font-semibold text-white sm:w-auto"
           >
             Call {phone.replace(/(\d{5})(\d{5})/, "$1 $2")}
           </a>
@@ -296,7 +296,7 @@ export function QuoteForm({
         {tel2 ? (
           <a
             href={`tel:+91${tel2}`}
-            className="inline-flex min-h-10 items-center justify-center rounded-md bg-navy px-3 text-sm font-semibold text-white"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-navy px-3 text-sm font-semibold text-white sm:w-auto"
           >
             Call {phone2.replace(/(\d{5})(\d{5})/, "$1 $2")}
           </a>
@@ -306,7 +306,7 @@ export function QuoteForm({
             href={liveWaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#128c7e] px-3 text-sm font-semibold text-white"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-[#128c7e] px-3 text-sm font-semibold text-white sm:w-auto"
           >
             WhatsApp
           </a>
@@ -314,7 +314,7 @@ export function QuoteForm({
         {liveMailUrl ? (
           <a
             href={liveMailUrl}
-            className="inline-flex min-h-10 items-center justify-center rounded-md border border-line bg-white px-3 text-sm font-semibold text-navy"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-line bg-white px-3 text-sm font-semibold text-navy sm:w-auto"
           >
             Email
           </a>

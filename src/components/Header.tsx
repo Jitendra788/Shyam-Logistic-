@@ -117,7 +117,7 @@ export function Header({
         <div className="flex shrink-0 items-center gap-2 lg:hidden">
           <Link
             href="/quote"
-            className="btn-primary !min-h-0 !px-3 !py-2 !text-xs sm:!text-sm"
+            className="btn-primary !min-h-0 !px-3 !py-2 !text-xs max-[380px]:hidden sm:!text-sm"
           >
             Quote
           </Link>

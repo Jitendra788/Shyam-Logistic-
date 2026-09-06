@@ -45,6 +45,7 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -53,6 +54,7 @@ body {
   font-family: var(--font-body), system-ui, sans-serif;
   overflow-x: hidden;
   min-width: 0;
+  overflow-wrap: break-word;
 }
 
 img,
@@ -62,6 +64,11 @@ canvas {
   max-width: 100%;
   height: auto;
 }
+
+iframe {
+  max-width: 100%;
+}
+
 
 .font-display {
   font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
@@ -380,6 +387,11 @@ canvas {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  main .btn-stack-mobile > a,
+  main .btn-stack-mobile > button {
+    width: 100%;
+  }
 }
 
 main,
@@ -419,4 +431,12 @@ section {
   font-size: 0.875rem;
   font-weight: 600;
   color: #fff;
+}
+
+@media print {
+  html,
+  body {
+    overflow: visible;
+    overflow-wrap: normal;
+  }
 }

@@ -551,7 +551,9 @@ html.tbs-theme-dark .tbs-window-title {
 .tbs-body {
   display: flex;
   flex: 1;
+  min-width: 0;
   min-height: 0;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -2756,6 +2758,8 @@ html.tbs-theme-dark .tbs-window-title {
     0 10px 28px rgba(10, 31, 61, 0.06);
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
   min-height: calc(100vh - 120px);
   overflow: hidden;
 }
@@ -2808,6 +2812,7 @@ html.tbs-theme-dark .tbs-window-title {
 .tbs-window-body {
   padding: 12px 14px 16px;
   flex: 1;
+  min-width: 0;
   background: #fff;
 }
 
@@ -2895,16 +2900,19 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
 .tbs-input.w-sm,
 .tbs-select.w-sm {
   width: 100px;
+  max-width: 100%;
 }
 
 .tbs-input.w-md,
 .tbs-select.w-md {
   width: 160px;
+  max-width: 100%;
 }
 
 .tbs-input.w-lg,
 .tbs-select.w-lg {
   width: 240px;
+  max-width: 100%;
 }
 
 .tbs-input.w-xl,
@@ -3142,9 +3150,12 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
 
 .tbs-search {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .tbs-toolbar-end {
@@ -3367,6 +3378,14 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
     display: none;
   }
 
+  .tbs-hide-narrow {
+    display: none !important;
+  }
+
+  .tbs-page-meta {
+    max-width: min(28vw, 180px);
+  }
+
   .tbs-nav-backdrop {
     display: block;
   }
@@ -3507,6 +3526,14 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
     height: 34px;
     padding: 0 10px;
     font-size: 12px;
+  }
+
+  .tbs-hide-narrow {
+    display: none !important;
+  }
+
+  .tbs-topbar-logo .tbs-brand-word {
+    max-width: 9.5rem;
   }
 
   .tbs-btn-label-full {
@@ -3740,6 +3767,10 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
   .tbs-snap-grid,
   .tbs-attention-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tbs-topbar-logo .tbs-brand-word {
+    display: none;
   }
 
   .tbs-btn,
@@ -4152,6 +4183,37 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
 
   .login-panel {
     padding: 48px 56px;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-screen {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .login-shell {
+    min-height: 100dvh;
+    border-radius: 0;
+    width: 100%;
+  }
+
+  .login-hero {
+    min-height: 180px;
+  }
+
+  .login-hero-copy {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .login-panel {
+    padding: 24px 18px calc(24px + env(safe-area-inset-bottom, 0));
+  }
+
+  .login-form input {
+    font-size: 16px;
   }
 }
 
