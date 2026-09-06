@@ -457,9 +457,10 @@
 }
 
 .tax-inv-bank-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: start;
+  column-gap: 28px;
   padding: 0;
   line-height: 1.35;
 }
