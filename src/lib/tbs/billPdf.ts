@@ -244,18 +244,19 @@ export async function buildBillPdfBlob(opts: {
   const leftLines = [
     `Total Freight : -  ${printTotal}`,
     `Amount in words:  ${words}`,
-    "Bank Details :",
-    `Account Holder : ${BILL_BANK.holder}     Account No ${BILL_BANK.accountNo}`,
-    `IFSC Code ${BILL_BANK.ifsc}     Branch : ${BILL_BANK.branch}`,
   ];
   const otherCol = COLS[11];
   const totalCol = COLS[12];
   const holderLine = `Account Holder : ${BILL_BANK.holder}`;
   const ifscLine = `IFSC Code ${BILL_BANK.ifsc}`;
-  const bankRightX =
+  const accNoLine = `Account No ${BILL_BANK.accountNo}`;
+  const branchLine = `Branch : ${BILL_BANK.branch}`;
+  const bankRightX = Math.min(
     32 +
-    Math.max(font.widthOfTextAtSize(holderLine, 9), font.widthOfTextAtSize(ifscLine, 9)) +
-    16;
+      Math.max(font.widthOfTextAtSize(holderLine, 9), font.widthOfTextAtSize(ifscLine, 9)) +
+      16,
+    otherCol.x - Math.max(font.widthOfTextAtSize(accNoLine, 9), font.widthOfTextAtSize(branchLine, 9)) - 8,
+  );
   for (let i = 0; i < gstN; i++) {
     const y = dataBottom - i * footH;
     if (i >= 3) {
@@ -266,13 +267,11 @@ export async function buildBillPdfBlob(opts: {
     const baseline = y - footH + 6;
     if (i === 2) {
       text(page, bold, "Bank Details :", 32, baseline, 10);
-    } else if (i === 3) {
-      text(page, font, holderLine, 32, baseline, 9);
-      text(page, font, `Account No ${BILL_BANK.accountNo}`, bankRightX, baseline, 9);
-    } else if (i === 4) {
-      text(page, font, ifscLine, 32, baseline, 9);
-      text(page, font, `Branch : ${BILL_BANK.branch}`, bankRightX, baseline, 9);
-    } else {
+      text(page, font, holderLine, 32, baseline - 11, 9);
+      text(page, font, accNoLine, bankRightX, baseline - 11, 9);
+      text(page, font, ifscLine, 32, baseline - 22, 9);
+      text(page, font, branchLine, bankRightX, baseline - 22, 9);
+    } else if (i < 2) {
       const left = fitCell(i === 1 ? font : bold, leftLines[i], i === 1 ? 8 : 10, otherCol.x - tableLeft - 10);
       text(page, i === 1 ? font : bold, left.text, 32, baseline, left.size);
     }

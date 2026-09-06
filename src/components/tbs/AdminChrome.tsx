@@ -204,7 +204,7 @@ export function AdminChrome({
             </Link>
             <button
               type="button"
-              className="tbs-drop-item"
+              className="tbs-drop-item tbs-show-narrow"
               disabled={backingUp}
               onClick={() => {
                 setOpen(null);
@@ -213,7 +213,14 @@ export function AdminChrome({
             >
               {backingUp ? "Saving backup…" : "Excel Backup"}
             </button>
-            <button type="button" className="tbs-drop-item" onClick={toggleTheme}>
+            <button
+              type="button"
+              className="tbs-drop-item"
+              onClick={() => {
+                toggleTheme();
+                setOpen(null);
+              }}
+            >
               <MoonIcon />
               {theme === "dark" ? "Light mode" : "Dark mode"}
             </button>

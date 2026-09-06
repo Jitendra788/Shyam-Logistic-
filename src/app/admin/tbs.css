@@ -507,6 +507,10 @@ html.tbs-theme-dark .tbs-window-title {
   color: #fff;
 }
 
+.tbs-show-narrow {
+  display: none !important;
+}
+
 .tbs-btn-label-short {
   display: none;
 }
@@ -3380,6 +3384,10 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
 
   .tbs-hide-narrow {
     display: none !important;
+  }
+
+  .tbs-show-narrow {
+    display: flex !important;
   }
 
   .tbs-page-meta {
