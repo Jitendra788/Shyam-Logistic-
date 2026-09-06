@@ -502,26 +502,22 @@ export function TaxInvoicePrint({
         </div>
         <table className="tax-inv-gstbox">
           <tbody>
-            <tr>
-              <td>Freight</td>
-              <td>{printTotal}</td>
-            </tr>
-            <tr>
-              <td>CGST %</td>
-              <td>0.00</td>
-            </tr>
-            <tr>
-              <td>SGST %</td>
-              <td>0.00</td>
-            </tr>
-            <tr>
-              <td>IGST %</td>
-              <td>0.00</td>
-            </tr>
-            <tr>
-              <td>Total</td>
-              <td>{printTotal}</td>
-            </tr>
+            {[
+              ["Freight", printTotal],
+              ["CGST %", "0.00"],
+              ["SGST %", "0.00"],
+              ["IGST %", "0.00"],
+              ["Total", printTotal],
+            ].map(([lab, val]) => (
+              <tr key={String(lab)}>
+                <td>
+                  <div className="tax-inv-gst-line">
+                    <span>{lab}</span>
+                    <span>{val}</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
