@@ -23,7 +23,13 @@ async function sendWith(opts: {
     secure: opts.secure,
     auth: { user: opts.user, pass: opts.pass },
   });
-  const attachments: nodemailer.SendMailOptions["attachments"] = [
+  const attachments: Array<{
+    filename: string;
+    content: Buffer;
+    contentType: string;
+    cid?: string;
+    contentDisposition?: "inline" | "attachment";
+  }> = [
     {
       filename: opts.fileName,
       content: opts.pdfBytes,

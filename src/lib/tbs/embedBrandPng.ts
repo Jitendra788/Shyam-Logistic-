@@ -28,7 +28,7 @@ export async function loadBrandPngBytes(fileName: string): Promise<Uint8Array | 
   ];
   for (const file of files) {
     try {
-      return await readFile(file);
+      return await readFile(/*turbopackIgnore: true*/ file);
     } catch {
       /* try next */
     }
