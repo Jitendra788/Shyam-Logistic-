@@ -259,21 +259,23 @@ export async function buildBillPdfBlob(opts: {
   text(page, font, `IFSC Code ${BILL_BANK.ifsc}`, 32, wordsBot - 48, 10);
   text(page, font, `Branch : ${BILL_BANK.branch}`, 230, wordsBot - 48, 10);
 
-  const taxX = 620;
-  const taxW = 148;
-  const taxRowH = 14;
+  const taxX = 598;
+  const taxW = 170;
+  const taxRowH = 16;
   const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
   const taxVals = [String(printTotal), "0.00", "0.00", "0.00", String(printTotal)];
   const taxTop = wordsBot - 12;
   const taxBot = taxTop - taxRows.length * taxRowH;
+  const taxSplit = taxX + 88;
   rect(page, taxX, taxBot, taxW, taxTop - taxBot, 1.1);
+  line(page, taxSplit, taxBot, taxSplit, taxTop, 0.6);
   taxRows.forEach((lab, i) => {
     const y = taxTop - (i + 1) * taxRowH;
     if (i > 0) line(page, taxX, y + taxRowH, taxX + taxW, y + taxRowH, 0.6);
-    text(page, font, lab, taxX + 6, y + 4, 8);
+    text(page, font, lab, taxX + 6, y + 5, 9);
     const val = taxVals[i];
-    const vw = bold.widthOfTextAtSize(val, 8);
-    text(page, bold, val, taxX + taxW - vw - 6, y + 4, 8);
+    const vw = bold.widthOfTextAtSize(val, 9);
+    text(page, bold, val, taxX + taxW - vw - 6, y + 5, 9);
   });
 
   if (bill.remark) {
