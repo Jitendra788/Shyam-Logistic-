@@ -430,51 +430,22 @@
   font-size: 12px;
 }
 
-.tax-inv-below {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.tax-inv-gstbox {
-  display: block !important;
-  width: 200px;
-  flex: 0 0 200px;
-  border: 1.5px solid #000;
-  box-sizing: border-box;
-}
-
-.tax-inv-gst-row {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 3px 8px;
-  border-bottom: 1px solid #000;
+.tax-inv-gst-sum td {
+  height: 18px;
   white-space: nowrap !important;
-  font-size: 12px;
+  overflow: visible;
+}
+
+.tax-inv-gst-lab {
+  text-align: left !important;
   font-weight: 700;
+  padding-left: 6px !important;
 }
 
-.tax-inv-gstbox .tax-inv-gst-row:last-child {
-  border-bottom: none;
-}
-
-.tax-inv-gst-k,
-.tax-inv-gst-v {
-  display: inline !important;
-  border: none !important;
-  padding: 0 !important;
-  height: auto;
-  line-height: 1.3;
-}
-
-.tax-inv-gst-v {
+.tax-inv-gst-val {
+  text-align: right !important;
   font-weight: 800;
+  padding-right: 6px !important;
 }
 
 .tax-inv-bank {
@@ -774,25 +745,10 @@
     padding: 2px 2px;
     font-size: 9px;
   }
-  .tax-inv-below {
-    display: flex !important;
-    justify-content: space-between;
-  }
-  .tax-inv-gstbox {
-    display: block !important;
-    width: 200px !important;
-  }
-  .tax-inv-gst-row {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-  }
-  .tax-inv-gst-k,
-  .tax-inv-gst-v {
-    display: inline !important;
-    height: auto;
-    line-height: 1.3;
-    font-size: 11px;
+  .tax-inv-gst-lab,
+  .tax-inv-gst-val {
+    white-space: nowrap !important;
+    font-size: 10px;
   }
   .tax-inv .shyam-stamp-sm,
   .tax-inv .shyam-stamp-md,

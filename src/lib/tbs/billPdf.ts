@@ -221,7 +221,9 @@ export async function buildBillPdfBlob(opts: {
   const headerH = 16;
   const rowH = 15;
   const dataRows = Math.max(lines.length, 1);
-  const tableBottom = tableTop - headerH - dataRows * rowH;
+  const gstN = 5;
+  const dataBottom = tableTop - headerH - dataRows * rowH;
+  const tableBottom = dataBottom - gstN * rowH;
 
   line(page, tableLeft, tableTop, tableRight, tableTop, 1.4);
   COLS.forEach((c) => {
@@ -233,6 +235,20 @@ export async function buildBillPdfBlob(opts: {
   for (let i = 0; i < dataRows; i++) {
     const y = tableTop - headerH - i * rowH;
     drawRow(page, font, lines[i] || null, y, rowH, tableLeft, tableRight);
+  }
+
+  const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
+  const taxVals = [String(printTotal), "0.00", "0.00", "0.00", String(printTotal)];
+  const otherCol = COLS[11];
+  const totalCol = COLS[12];
+  for (let i = 0; i < gstN; i++) {
+    const y = dataBottom - i * rowH;
+    line(page, tableLeft, y, tableRight, y, 0.6);
+    const baseline = y - rowH + 5;
+    text(page, font, taxRows[i], otherCol.x + 3, baseline, 8);
+    const val = taxVals[i];
+    const vw = bold.widthOfTextAtSize(val, 8);
+    text(page, bold, val, totalCol.x + totalCol.w - vw - 4, baseline, 8);
   }
 
   const gx = [tableLeft, ...COLS.map((c) => c.x + c.w).slice(0, -1), tableRight];
@@ -258,27 +274,6 @@ export async function buildBillPdfBlob(opts: {
   text(page, font, `Account No ${BILL_BANK.accountNo}`, 230, wordsBot - 32, 10);
   text(page, font, `IFSC Code ${BILL_BANK.ifsc}`, 32, wordsBot - 48, 10);
   text(page, font, `Branch : ${BILL_BANK.branch}`, 230, wordsBot - 48, 10);
-
-  const gstLeft = COLS[10].x;
-  const gstRight = tableRight;
-  const gstW = gstRight - gstLeft;
-  const taxRowH = 16;
-  const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
-  const taxVals = [String(printTotal), "0.00", "0.00", "0.00", String(printTotal)];
-  const taxTop = wordsBot - 6;
-  const taxH = taxRows.length * taxRowH;
-  const taxBot = taxTop - taxH;
-  rect(page, gstLeft, taxBot, gstW, taxH, 1.2);
-  taxRows.forEach((lab, i) => {
-    const top = taxTop - i * taxRowH;
-    const bot = top - taxRowH;
-    if (i > 0) line(page, gstLeft, top, gstRight, top, 0.7);
-    const baseline = bot + 5;
-    text(page, font, lab, gstLeft + 6, baseline, 10);
-    const val = taxVals[i];
-    const vw = bold.widthOfTextAtSize(val, 10);
-    text(page, bold, val, gstRight - vw - 6, baseline, 10);
-  });
 
   if (bill.remark) {
     text(page, bold, "Remark:", 32, wordsBot - 64, 9);

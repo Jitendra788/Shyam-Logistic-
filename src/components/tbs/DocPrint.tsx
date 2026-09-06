@@ -475,6 +475,21 @@ export function TaxInvoicePrint({
               ))}
             </tr>
           ))}
+          {[
+            ["Freight", printTotal],
+            ["CGST %", "0.00"],
+            ["SGST %", "0.00"],
+            ["IGST %", "0.00"],
+            ["Total", printTotal],
+          ].map(([lab, val]) => (
+            <tr key={String(lab)} className="tax-inv-gst-sum">
+              <td colSpan={11} className="tax-inv-gst-span">
+                &nbsp;
+              </td>
+              <td className="tax-inv-gst-lab">{lab}</td>
+              <td className="tax-inv-gst-val">{val}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
@@ -499,20 +514,6 @@ export function TaxInvoicePrint({
             <div>IFSC Code {BILL_BANK.ifsc}</div>
             <div>Branch : {BILL_BANK.branch}</div>
           </div>
-        </div>
-        <div className="tax-inv-gstbox">
-          {[
-            ["Freight", printTotal],
-            ["CGST %", "0.00"],
-            ["SGST %", "0.00"],
-            ["IGST %", "0.00"],
-            ["Total", printTotal],
-          ].map(([lab, val]) => (
-            <div key={String(lab)} className="tax-inv-gst-row">
-              <span className="tax-inv-gst-k">{lab}</span>
-              <span className="tax-inv-gst-v">{val}</span>
-            </div>
-          ))}
         </div>
       </div>
 
