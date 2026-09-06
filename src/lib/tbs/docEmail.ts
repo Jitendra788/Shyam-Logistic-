@@ -14,7 +14,7 @@ function fmtDate(iso: string) {
 
 function signOff() {
   return [
-    "Dhanyavaad.",
+    "Thank you.",
     "",
     OWNER,
     `Owner, ${COMPANY}`,
@@ -26,9 +26,9 @@ export function bookingEmailText(b: Booking): { title: string; text: string } {
   const lr = b.lrNo || "";
   const title = `SHYAM LOGISTICS LR ${lr}`.trim();
   const lines = [
-    "Namaste,",
+    "Dear Sir / Madam,",
     "",
-    `${COMPANY} se aapka Consignment Note / LR PDF bhej rahe hain. Print kar lijiye.`,
+    `Please find attached the Consignment Note / LR PDF from ${COMPANY} for your print.`,
     "",
     lr ? `LR No: ${lr}` : "",
     b.lrDate ? `Date: ${fmtDate(b.lrDate)}` : "",
@@ -49,9 +49,9 @@ export function billEmailText(
   const amt = billPrintAmount(bookings, bill);
   const title = `SHYAM LOGISTICS Bill ${no}`.trim();
   const lines = [
-    "Namaste,",
+    "Dear Sir / Madam,",
     "",
-    `${COMPANY} se aapka Tax Invoice / Bill PDF bhej rahe hain. Print kar lijiye.`,
+    `Please find attached the Tax Invoice / Bill PDF from ${COMPANY} for your print.`,
     "",
     no ? `Bill No: ${no}` : "",
     bill.billDate ? `Date: ${fmtBillDate(bill.billDate)}` : "",
@@ -66,9 +66,9 @@ export function genericEmailText(fileName: string): { title: string; text: strin
   return {
     title: `${COMPANY} document`,
     text: [
-      "Namaste,",
+      "Dear Sir / Madam,",
       "",
-      `${COMPANY} se PDF bhej rahe hain. Print kar lijiye.`,
+      `Please find attached the PDF from ${COMPANY} for your print.`,
       fileName ? `File: ${fileName}` : "",
       "",
       signOff(),
