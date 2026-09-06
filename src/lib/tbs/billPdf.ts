@@ -222,8 +222,9 @@ export async function buildBillPdfBlob(opts: {
   const rowH = 15;
   const dataRows = Math.max(lines.length, 1);
   const gstN = 5;
+  const footH = 18;
   const dataBottom = tableTop - headerH - dataRows * rowH;
-  const tableBottom = dataBottom - gstN * rowH;
+  const tableBottom = dataBottom - gstN * footH;
 
   line(page, tableLeft, tableTop, tableRight, tableTop, 1.4);
   COLS.forEach((c) => {
@@ -239,12 +240,22 @@ export async function buildBillPdfBlob(opts: {
 
   const taxRows = ["Freight", "CGST %", "SGST %", "IGST %", "Total"] as const;
   const taxVals = [String(printTotal), "0.00", "0.00", "0.00", String(printTotal)];
+  const words = amountInWordsINR(printTotal);
+  const leftLines = [
+    `Total Freight : -  ${printTotal}`,
+    `Amount in words:  ${words}`,
+    "Bank Details :",
+    `Account Holder : ${BILL_BANK.holder}     Account No ${BILL_BANK.accountNo}`,
+    `IFSC Code ${BILL_BANK.ifsc}     Branch : ${BILL_BANK.branch}`,
+  ];
   const otherCol = COLS[11];
   const totalCol = COLS[12];
   for (let i = 0; i < gstN; i++) {
-    const y = dataBottom - i * rowH;
-    line(page, tableLeft, y, tableRight, y, 0.6);
-    const baseline = y - rowH + 5;
+    const y = dataBottom - i * footH;
+    line(page, tableLeft, y, tableRight, y, 0.7);
+    const baseline = y - footH + 6;
+    const left = fitCell(i === 1 ? font : bold, leftLines[i], i === 1 ? 8 : 10, otherCol.x - tableLeft - 10);
+    text(page, i === 1 ? font : bold, left.text, 32, baseline, left.size);
     text(page, font, taxRows[i], otherCol.x + 3, baseline, 8);
     const val = taxVals[i];
     const vw = bold.widthOfTextAtSize(val, 8);
@@ -252,32 +263,16 @@ export async function buildBillPdfBlob(opts: {
   }
 
   const gx = [tableLeft, ...COLS.map((c) => c.x + c.w).slice(0, -1), tableRight];
-  gx.forEach((x) => line(page, x, tableTop, x, tableBottom, 0.7));
+  gx.forEach((x) => line(page, x, tableTop, x, dataBottom, 0.7));
+  line(page, tableLeft, dataBottom, tableLeft, tableBottom, 0.7);
+  line(page, otherCol.x, dataBottom, otherCol.x, tableBottom, 0.7);
+  line(page, totalCol.x, dataBottom, totalCol.x, tableBottom, 0.7);
+  line(page, tableRight, dataBottom, tableRight, tableBottom, 0.7);
   line(page, tableLeft, tableBottom, tableRight, tableBottom, 1);
 
-  const totTop = tableBottom;
-  const totBot = totTop - 20;
-  rect(page, tableLeft, totBot, tableRight - tableLeft, totTop - totBot, 1.3);
-  text(page, bold, "Total Freight : -", 32, totBot + 6, 11);
-  text(page, bold, String(printTotal), 128, totBot + 6, 12);
-  const totW = bold.widthOfTextAtSize(String(printTotal), 11);
-  text(page, bold, String(printTotal), tableRight - totW - 10, totBot + 6, 11);
-
-  const wordsTop = totBot;
-  const wordsBot = wordsTop - 20;
-  rect(page, tableLeft, wordsBot, tableRight - tableLeft, wordsTop - wordsBot, 1.3);
-  text(page, bold, "Amount in words:", 32, wordsBot + 6, 10);
-  text(page, font, amountInWordsINR(printTotal), 128, wordsBot + 6, 9);
-
-  text(page, bold, "Bank Details :", 32, wordsBot - 16, 11);
-  text(page, font, `Account Holder : ${BILL_BANK.holder}`, 32, wordsBot - 32, 10);
-  text(page, font, `Account No ${BILL_BANK.accountNo}`, 230, wordsBot - 32, 10);
-  text(page, font, `IFSC Code ${BILL_BANK.ifsc}`, 32, wordsBot - 48, 10);
-  text(page, font, `Branch : ${BILL_BANK.branch}`, 230, wordsBot - 48, 10);
-
   if (bill.remark) {
-    text(page, bold, "Remark:", 32, wordsBot - 64, 9);
-    text(page, font, bill.remark.slice(0, 90), 80, wordsBot - 64, 9);
+    text(page, bold, "Remark:", 32, tableBottom - 16, 9);
+    text(page, font, bill.remark.slice(0, 90), 80, tableBottom - 16, 9);
   }
 
   if (stamp) {

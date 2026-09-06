@@ -431,9 +431,20 @@
 }
 
 .tax-inv-gst-sum td {
-  height: 18px;
+  height: 22px;
   white-space: nowrap !important;
-  overflow: visible;
+  overflow: hidden;
+}
+
+.tax-inv-gst-span {
+  text-align: left !important;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px !important;
+}
+
+.tax-inv-gst-gap {
+  margin-left: 28px;
 }
 
 .tax-inv-gst-lab {

@@ -475,47 +475,45 @@ export function TaxInvoicePrint({
               ))}
             </tr>
           ))}
-          {[
-            ["Freight", printTotal],
-            ["CGST %", "0.00"],
-            ["SGST %", "0.00"],
-            ["IGST %", "0.00"],
-            ["Total", printTotal],
-          ].map(([lab, val]) => (
-            <tr key={String(lab)} className="tax-inv-gst-sum">
-              <td colSpan={11} className="tax-inv-gst-span">
-                &nbsp;
-              </td>
-              <td className="tax-inv-gst-lab">{lab}</td>
-              <td className="tax-inv-gst-val">{val}</td>
-            </tr>
-          ))}
+          <tr className="tax-inv-gst-sum">
+            <td colSpan={11} className="tax-inv-gst-span">
+              Total Freight : - <b>{printTotal}</b>
+            </td>
+            <td className="tax-inv-gst-lab">Freight</td>
+            <td className="tax-inv-gst-val">{printTotal}</td>
+          </tr>
+          <tr className="tax-inv-gst-sum">
+            <td colSpan={11} className="tax-inv-gst-span">
+              Amount in words: <b>{amountInWordsINR(printTotal)}</b>
+            </td>
+            <td className="tax-inv-gst-lab">CGST %</td>
+            <td className="tax-inv-gst-val">0.00</td>
+          </tr>
+          <tr className="tax-inv-gst-sum">
+            <td colSpan={11} className="tax-inv-gst-span">
+              <b>Bank Details :</b>
+            </td>
+            <td className="tax-inv-gst-lab">SGST %</td>
+            <td className="tax-inv-gst-val">0.00</td>
+          </tr>
+          <tr className="tax-inv-gst-sum">
+            <td colSpan={11} className="tax-inv-gst-span">
+              Account Holder : {BILL_BANK.holder}
+              <span className="tax-inv-gst-gap">Account No {BILL_BANK.accountNo}</span>
+            </td>
+            <td className="tax-inv-gst-lab">IGST %</td>
+            <td className="tax-inv-gst-val">0.00</td>
+          </tr>
+          <tr className="tax-inv-gst-sum">
+            <td colSpan={11} className="tax-inv-gst-span">
+              IFSC Code {BILL_BANK.ifsc}
+              <span className="tax-inv-gst-gap">Branch : {BILL_BANK.branch}</span>
+            </td>
+            <td className="tax-inv-gst-lab">Total</td>
+            <td className="tax-inv-gst-val">{printTotal}</td>
+          </tr>
         </tbody>
       </table>
-
-      <div className="tax-inv-total-bar">
-        <div className="tax-inv-total-l">
-          <span>Total Freight : -</span>
-          <span className="tax-inv-amt">{printTotal}</span>
-        </div>
-        <div className="tax-inv-total-amt">{printTotal}</div>
-      </div>
-
-      <div className="tax-inv-words">
-        <b>Amount in words:</b> {amountInWordsINR(printTotal)}
-      </div>
-
-      <div className="tax-inv-below">
-        <div className="tax-inv-bank">
-          <div className="tax-inv-bank-title">Bank Details :</div>
-          <div className="tax-inv-bank-grid">
-            <div>Account Holder : {BILL_BANK.holder}</div>
-            <div>Account No {BILL_BANK.accountNo}</div>
-            <div>IFSC Code {BILL_BANK.ifsc}</div>
-            <div>Branch : {BILL_BANK.branch}</div>
-          </div>
-        </div>
-      </div>
 
       {remark ? (
         <div className="tax-inv-remark">
