@@ -1,7 +1,11 @@
 import { BlobNotFoundError, del, get, list, put } from "@vercel/blob";
 import { runtimeEnv } from "@/lib/runtimeEnv";
+import { blobTokenFromProcess } from "@/lib/tbs/smtpEnvBindings";
 
 function env(name: string) {
+  if (name === "BLOB_READ_WRITE_TOKEN" || name === "VERCEL_BLOB_READ_WRITE_TOKEN") {
+    return blobTokenFromProcess() || runtimeEnv(name);
+  }
   return runtimeEnv(name);
 }
 

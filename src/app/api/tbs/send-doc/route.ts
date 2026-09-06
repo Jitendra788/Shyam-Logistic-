@@ -1,6 +1,7 @@
 import { failSave, ok, requireAuth, bad } from "@/lib/tbs/api";
 import { sendPdfViaGmail } from "@/lib/tbs/sendPdfGmail";
 import { COMPANY_GMAIL, getGmailSmtp } from "@/lib/tbs/gmailSecret";
+import { smtpPassFromProcess } from "@/lib/tbs/smtpEnvBindings";
 import { buildLrPdf } from "@/lib/tbs/lrPdf";
 import { buildBillPdfBlob } from "@/lib/tbs/billPdf";
 import { getBills, getBookings, getParties } from "@/lib/tbs/store";
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
     const built = await pdfFromRequest(body);
     const fileName = (body.fileName || built.fileName).replace(/[^\w.\-]+/g, "_");
     const smtp = await getGmailSmtp();
-    const pass = smtp.pass;
+    const pass = smtp.pass || smtpPassFromProcess();
     if (!pass) {
       return bad(
         "Company email setup nahi hai. Gmail App Password server pe save nahi mili.",

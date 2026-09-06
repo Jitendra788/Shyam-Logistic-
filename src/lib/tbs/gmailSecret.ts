@@ -2,6 +2,7 @@ import { hasPostgres, pgGet, pgSet } from "@/lib/db/postgres";
 import { blobGet, blobSet, hasBlobStore } from "@/lib/db/blobKv";
 import { runtimeEnv } from "@/lib/runtimeEnv";
 import { getSettings } from "@/lib/store";
+import { smtpPassFromProcess } from "@/lib/tbs/smtpEnvBindings";
 
 const KEY = "site:gmail-smtp";
 
@@ -15,7 +16,9 @@ type Stored = { user?: string; pass?: string };
 
 export async function getGmailSmtp(): Promise<{ user: string; pass: string }> {
   const fromEnv = cleanPass(
-    runtimeEnv("GMAIL_APP_PASSWORD") || runtimeEnv("SMTP_PASS"),
+    smtpPassFromProcess() ||
+      runtimeEnv("GMAIL_APP_PASSWORD") ||
+      runtimeEnv("SMTP_PASS"),
   );
   let storedPass = "";
   if (hasBlobStore()) {

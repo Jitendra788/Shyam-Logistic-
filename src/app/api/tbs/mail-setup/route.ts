@@ -1,5 +1,6 @@
 import { failSave, ok, requireAuth, bad } from "@/lib/tbs/api";
 import { COMPANY_GMAIL, getGmailSmtp, saveGmailSmtp } from "@/lib/tbs/gmailSecret";
+import { smtpPassFromProcess } from "@/lib/tbs/smtpEnvBindings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,11 @@ export async function GET() {
   if (denied) return denied;
   try {
     const smtp = await getGmailSmtp();
-    return ok({ ok: true, ready: Boolean(smtp.pass), from: COMPANY_GMAIL });
+    return ok({
+      ok: true,
+      ready: Boolean(smtp.pass || smtpPassFromProcess()),
+      from: COMPANY_GMAIL,
+    });
   } catch (e) {
     return failSave(e);
   }
