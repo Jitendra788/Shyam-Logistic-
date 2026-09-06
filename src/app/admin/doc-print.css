@@ -443,8 +443,21 @@
   padding: 3px 8px !important;
 }
 
-.tax-inv-gst-gap {
-  margin-left: 28px;
+.tax-inv-bank-block {
+  vertical-align: top !important;
+  white-space: normal !important;
+  height: auto;
+}
+
+.tax-inv-bank-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 2px 0;
+}
+
+.tax-inv-bank-row span {
+  white-space: nowrap;
 }
 
 .tax-inv-gst-lab {

@@ -252,10 +252,22 @@ export async function buildBillPdfBlob(opts: {
   const totalCol = COLS[12];
   for (let i = 0; i < gstN; i++) {
     const y = dataBottom - i * footH;
-    line(page, tableLeft, y, tableRight, y, 0.7);
+    if (i === 4) {
+      line(page, otherCol.x, y, tableRight, y, 0.7);
+    } else {
+      line(page, tableLeft, y, tableRight, y, 0.7);
+    }
     const baseline = y - footH + 6;
-    const left = fitCell(i === 1 ? font : bold, leftLines[i], i === 1 ? 8 : 10, otherCol.x - tableLeft - 10);
-    text(page, i === 1 ? font : bold, left.text, 32, baseline, left.size);
+    if (i === 3) {
+      text(page, font, `Account Holder : ${BILL_BANK.holder}`, 32, baseline, 9);
+      text(page, font, `Account No ${BILL_BANK.accountNo}`, 280, baseline, 9);
+    } else if (i === 4) {
+      text(page, font, `IFSC Code ${BILL_BANK.ifsc}`, 32, baseline, 9);
+      text(page, font, `Branch : ${BILL_BANK.branch}`, 280, baseline, 9);
+    } else {
+      const left = fitCell(i === 1 ? font : bold, leftLines[i], i === 1 ? 8 : 10, otherCol.x - tableLeft - 10);
+      text(page, i === 1 ? font : bold, left.text, 32, baseline, left.size);
+    }
     text(page, font, taxRows[i], otherCol.x + 3, baseline, 8);
     const val = taxVals[i];
     const vw = bold.widthOfTextAtSize(val, 8);

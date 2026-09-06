@@ -497,18 +497,20 @@ export function TaxInvoicePrint({
             <td className="tax-inv-gst-val">0.00</td>
           </tr>
           <tr className="tax-inv-gst-sum">
-            <td colSpan={11} className="tax-inv-gst-span">
-              Account Holder : {BILL_BANK.holder}
-              <span className="tax-inv-gst-gap">Account No {BILL_BANK.accountNo}</span>
+            <td rowSpan={2} colSpan={11} className="tax-inv-gst-span tax-inv-bank-block">
+              <div className="tax-inv-bank-row">
+                <span>Account Holder : {BILL_BANK.holder}</span>
+                <span>Account No {BILL_BANK.accountNo}</span>
+              </div>
+              <div className="tax-inv-bank-row">
+                <span>IFSC Code {BILL_BANK.ifsc}</span>
+                <span>Branch : {BILL_BANK.branch}</span>
+              </div>
             </td>
             <td className="tax-inv-gst-lab">IGST %</td>
             <td className="tax-inv-gst-val">0.00</td>
           </tr>
           <tr className="tax-inv-gst-sum">
-            <td colSpan={11} className="tax-inv-gst-span">
-              IFSC Code {BILL_BANK.ifsc}
-              <span className="tax-inv-gst-gap">Branch : {BILL_BANK.branch}</span>
-            </td>
             <td className="tax-inv-gst-lab">Total</td>
             <td className="tax-inv-gst-val">{printTotal}</td>
           </tr>
