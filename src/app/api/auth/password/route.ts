@@ -16,6 +16,12 @@ export async function PUT(req: Request) {
     };
     const currentPassword = String(body.currentPassword || "");
     const newPassword = String(body.newPassword || "");
+    if (!currentPassword.trim()) {
+      return NextResponse.json(
+        { error: "Pehle current password likho" },
+        { status: 400 },
+      );
+    }
     if (!(await verifyAdminPassword(currentPassword))) {
       return NextResponse.json(
         { error: "Current password galat hai" },

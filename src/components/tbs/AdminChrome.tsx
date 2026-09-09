@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Enquiry } from "@/lib/types";
 
 const THEME_KEY = "tbs-theme";
@@ -127,6 +128,14 @@ export function AdminChrome({
   async function savePassword() {
     setPwError("");
     setPwOk("");
+    if (!pwCurrent.trim()) {
+      setPwError("Pehle current password likho");
+      return;
+    }
+    if (pwNext.length < 8) {
+      setPwError("Naya password kam se kam 8 characters ka hona chahiye");
+      return;
+    }
     if (pwNext !== pwConfirm) {
       setPwError("Naya password aur confirm match nahi karte");
       return;
@@ -294,7 +303,8 @@ export function AdminChrome({
         ) : null}
       </div>
     </div>
-    {pwOpen ? (
+    {pwOpen && typeof document !== "undefined"
+      ? createPortal(
       <div
         className="tbs-pw-backdrop"
         role="presentation"
@@ -309,12 +319,13 @@ export function AdminChrome({
           aria-modal="true"
         >
           <h2 id="tbs-pw-title">Change password</h2>
-          <p className="tbs-pw-lead">Current password likho, phir naya password set karo.</p>
+          <p className="tbs-pw-lead">Teen fields bharo: current, naya, confirm.</p>
           <label>
             Current password
             <input
               type="password"
               autoComplete="current-password"
+              autoFocus
               value={pwCurrent}
               onChange={(e) => setPwCurrent(e.target.value)}
             />
@@ -353,8 +364,10 @@ export function AdminChrome({
             </button>
           </div>
         </div>
-      </div>
-    ) : null}
+      </div>,
+      document.body,
+    )
+      : null}
     </>
   );
 }

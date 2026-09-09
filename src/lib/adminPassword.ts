@@ -1,6 +1,7 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { hasPostgres, pgGet, pgSet } from "@/lib/db/postgres";
+import { sqliteGet, sqliteSet } from "@/lib/db/sqlite";
 import { blobGet, blobSet, hasBlobStore } from "@/lib/db/blobKv";
 import { getAdminCredentials } from "@/lib/auth";
 
@@ -34,6 +35,8 @@ async function readStored(): Promise<Stored | null> {
     const row = await pgGet<Stored>(KEY);
     if (row?.salt && row?.hash) return row;
   }
+  const local = await sqliteGet<Stored>(KEY);
+  if (local?.salt && local?.hash) return local;
   return null;
 }
 
@@ -42,7 +45,7 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
   const stored = await readStored();
   if (stored?.salt && stored?.hash) {
     const hash = await hashPassword(password, stored.salt);
-    return safeEqual(hash, stored.hash);
+    if (safeEqual(hash, stored.hash)) return true;
   }
   return safeEqual(password, envPassword());
 }
@@ -53,5 +56,6 @@ export async function saveAdminPassword(password: string): Promise<boolean> {
   const value: Stored = { salt, hash };
   const blobOk = hasBlobStore() ? await blobSet(KEY, value) : false;
   const pgOk = hasPostgres() ? await pgSet(KEY, value) : false;
-  return blobOk || pgOk;
+  const sqlOk = await sqliteSet(KEY, value);
+  return blobOk || pgOk || sqlOk;
 }
