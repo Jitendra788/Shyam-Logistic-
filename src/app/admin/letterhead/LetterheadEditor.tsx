@@ -46,6 +46,11 @@ export function LetterheadEditor() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
+    document.documentElement.classList.add("lh-print-root");
+    return () => document.documentElement.classList.remove("lh-print-root");
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       const res = await fetch("/api/settings", { cache: "no-store" });
@@ -149,7 +154,7 @@ export function LetterheadEditor() {
           </button>
         )}
         <button type="button" className="tbs-btn tbs-btn-print" onClick={() => window.print()}>
-          Print A4
+          Print A4 Portrait
         </button>
         {msg ? <span className="lh-msg">{msg}</span> : null}
       </div>
@@ -202,7 +207,7 @@ export function LetterheadEditor() {
               </p>
             </div>
           </header>
-          <hr className="lh-rule" />
+          <div className="lh-rule" />
           <div className="lh-date-row">
             <label htmlFor="lh-date">Date :</label>
             <input
@@ -217,7 +222,7 @@ export function LetterheadEditor() {
             className="lh-letter"
             value={letter}
             onChange={(e) => setLetter(e.target.value)}
-            placeholder=""
+            placeholder="Type your letter / form content here..."
             spellCheck
           />
         </article>
