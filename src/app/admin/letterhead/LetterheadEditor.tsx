@@ -29,7 +29,6 @@ function primaryIndex(settings: SiteSettings) {
 export function LetterheadEditor() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [company, setCompany] = useState("SHYAM LOGISTIC");
-  const [tagline, setTagline] = useState("Fleet Owners & Transport Contractors");
   const [address, setAddress] = useState(FALLBACK_ADDRESS);
   const [email, setEmail] = useState("shyamlogisticscompany535@gmail.com");
   const [gstin, setGstin] = useState("27AXGPL2293R1ZP");
@@ -162,10 +161,6 @@ export function LetterheadEditor() {
             <input value={company} onChange={(e) => setCompany(e.target.value)} />
           </label>
           <label>
-            Tagline
-            <input value={tagline} onChange={(e) => setTagline(e.target.value)} />
-          </label>
-          <label>
             Address
             <textarea rows={3} value={address} onChange={(e) => setAddress(e.target.value)} />
           </label>
@@ -195,7 +190,6 @@ export function LetterheadEditor() {
             <img className="lh-logo" src={DEFAULT_MARK_URL} alt={company} />
             <div className="lh-copy">
               <h1 className="lh-name">{company}</h1>
-              <p className="lh-tag">{tagline}</p>
               <p className="lh-line">{address}</p>
               <p className="lh-line">Email : {email}</p>
               <p className="lh-line">GST : {gstin}</p>
@@ -223,7 +217,7 @@ export function LetterheadEditor() {
             className="lh-letter"
             value={letter}
             onChange={(e) => setLetter(e.target.value)}
-            placeholder="Type your letter / form content here..."
+            placeholder=""
             spellCheck
           />
         </article>

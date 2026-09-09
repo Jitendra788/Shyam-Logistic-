@@ -20,7 +20,7 @@
   width: min(210mm, 100%);
   min-height: 297mm;
   margin: 0 auto;
-  padding: 12mm 14mm 16mm;
+  padding: 8mm 12mm 12mm;
   background: #fff;
   color: #0a1f3d;
   box-shadow: 0 8px 28px rgba(10, 31, 61, 0.12);
@@ -29,13 +29,13 @@
 
 .lh-head {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
 }
 
 .lh-logo {
-  width: 78px;
-  height: 78px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   object-fit: contain;
 }
@@ -48,11 +48,11 @@
 .lh-name {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 34px;
+  font-size: 22px;
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.1;
   color: #b71c1c;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
 .lh-msg {
@@ -81,7 +81,7 @@
   color: #0a1f3d;
 }
 
-.lh-edit label:nth-child(3) {
+.lh-edit label:nth-child(2) {
   grid-column: 1 / -1;
 }
 
@@ -107,12 +107,12 @@
   }
 
   .lh-name {
-    font-size: clamp(1.35rem, 6vw, 2rem);
+    font-size: 1.25rem;
   }
 
   .lh-logo {
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
   }
 
   .lh-head {
@@ -124,17 +124,10 @@
   }
 }
 
-.lh-tag {
-  margin: 4px 0 0;
-  font-size: 14px;
-  font-weight: 800;
-  color: #0a1f3d;
-}
-
 .lh-line {
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 1.45;
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
   color: #123056;
 }
 
@@ -149,8 +142,8 @@
 }
 
 .lh-rule {
-  height: 3px;
-  margin: 12px 0 8px;
+  height: 2px;
+  margin: 8px 0 6px;
   background: #0a1f3d;
   border: 0;
 }
@@ -160,8 +153,8 @@
   justify-content: flex-end;
   align-items: baseline;
   gap: 8px;
-  margin: 0 0 14px;
-  font-size: 13px;
+  margin: 0 0 8px;
+  font-size: 12px;
   font-weight: 700;
   color: #0a1f3d;
 }
@@ -235,19 +228,20 @@
   }
 
   .lh-sheet {
-    width: 100%;
-    min-height: auto;
+    width: 210mm;
+    min-height: 277mm;
     margin: 0;
     padding: 0;
     box-shadow: none;
   }
 
   .lh-letter {
-    min-height: 180mm;
+    min-height: 200mm;
+    border-color: #1b5e5a;
     box-shadow: none;
   }
 
   .lh-letter::placeholder {
-    color: transparent;
+    color: transparent !important;
   }
 }
