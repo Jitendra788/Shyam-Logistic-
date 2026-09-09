@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Enquiry } from "@/lib/types";
+import "./password-modal.css";
 
 const THEME_KEY = "tbs-theme";
 
@@ -305,74 +306,73 @@ export function AdminChrome({
     </div>
     {pwOpen && typeof document !== "undefined"
       ? createPortal(
-      <div
-        className="tbs-pw-backdrop"
-        role="presentation"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) setPwOpen(false);
-        }}
-      >
-        <div
-          className="tbs-pw-modal"
-          role="dialog"
-          aria-labelledby="tbs-pw-title"
-          aria-modal="true"
-        >
-          <h2 id="tbs-pw-title">Change password</h2>
-          <p className="tbs-pw-lead">Teen fields bharo: current, naya, confirm.</p>
-          <label>
-            Current password
-            <input
-              type="password"
-              autoComplete="current-password"
-              autoFocus
-              value={pwCurrent}
-              onChange={(e) => {
-                setPwCurrent(e.target.value);
-                setPwOk("");
+          <div
+            className="sl-pass-back"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setPwOpen(false);
+            }}
+          >
+            <form
+              className="sl-pass-box"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void savePassword();
               }}
-            />
-          </label>
-          <label>
-            New password
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={pwNext}
-              onChange={(e) => {
-                setPwNext(e.target.value);
-                setPwOk("");
-              }}
-            />
-          </label>
-          <label>
-            Confirm new password
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={pwConfirm}
-              onChange={(e) => setPwConfirm(e.target.value)}
-            />
-          </label>
-          {pwError ? <p className="tbs-pw-err">{pwError}</p> : null}
-          {pwOk ? <p className="tbs-pw-ok">{pwOk}</p> : null}
-          <div className="tbs-pw-actions">
-            <button
-              type="button"
-              className="tbs-pw-save"
-              disabled={pwSaving}
-              onClick={() => void savePassword()}
             >
-              {pwSaving ? "Saving…" : "Save password"}
-            </button>
-            <button type="button" className="tbs-pw-cancel" onClick={() => setPwOpen(false)}>
-              Close
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body,
-    )
+              <h2>Change password</h2>
+              <p>Current, naya, aur confirm password likho, phir Save dabaao.</p>
+              <label className="sl-pass-field">
+                Current password
+                <input
+                  type="password"
+                  name="current_password"
+                  autoComplete="current-password"
+                  value={pwCurrent}
+                  onChange={(e) => {
+                    setPwCurrent(e.target.value);
+                    setPwOk("");
+                  }}
+                />
+              </label>
+              <label className="sl-pass-field">
+                New password
+                <input
+                  type="password"
+                  name="new_password"
+                  autoComplete="new-password"
+                  value={pwNext}
+                  onChange={(e) => {
+                    setPwNext(e.target.value);
+                    setPwOk("");
+                  }}
+                />
+              </label>
+              <label className="sl-pass-field">
+                Confirm new password
+                <input
+                  type="password"
+                  name="confirm_password"
+                  autoComplete="off"
+                  value={pwConfirm}
+                  onChange={(e) => setPwConfirm(e.target.value)}
+                />
+              </label>
+              {pwError ? <p className="sl-pass-err">{pwError}</p> : null}
+              {pwOk ? <p className="sl-pass-ok">{pwOk}</p> : null}
+              <button className="sl-pass-save" type="submit" disabled={pwSaving}>
+                {pwSaving ? "Saving…" : "Save password"}
+              </button>
+              <button
+                className="sl-pass-close"
+                type="button"
+                onClick={() => setPwOpen(false)}
+              >
+                Close
+              </button>
+            </form>
+          </div>,
+          document.body,
+        )
       : null}
     </>
   );
