@@ -416,8 +416,6 @@ body:has(.tbs-root) {
   gap: 8px;
   margin-top: 8px;
 }
-  color: var(--tbs-red);
-}
 
 .tbs-drop-foot {
   display: block;

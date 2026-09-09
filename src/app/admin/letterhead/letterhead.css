@@ -97,13 +97,12 @@
   min-height: 210mm;
 }
 
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 10mm 12mm;
-  }
+@page {
+  size: A4 portrait;
+  margin: 10mm 12mm;
+}
 
-  html,
+@media print {
   body,
   .tbs-root,
   .tbs-body,
