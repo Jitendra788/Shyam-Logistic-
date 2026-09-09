@@ -54,6 +54,53 @@
   letter-spacing: 0.01em;
 }
 
+.lh-msg {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.lh-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.lh-edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0a1f3d;
+}
+
+.lh-edit label:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.lh-edit input,
+.lh-edit textarea {
+  width: 100%;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .lh-edit {
+    grid-template-columns: 1fr;
+  }
+}
+
 .lh-tag {
   margin: 4px 0 0;
   font-size: 14px;
@@ -63,7 +110,7 @@
 
 .lh-line {
   margin: 6px 0 0;
-  font-size: 12.5px;
+  font-size: 11px;
   line-height: 1.45;
   color: #123056;
 }
@@ -117,7 +164,8 @@
   .tbs-sidebar,
   .tbs-nav-backdrop,
   .tbs-mobile-toggle,
-  .lh-toolbar {
+  .lh-toolbar,
+  .lh-edit {
     display: none !important;
   }
 
