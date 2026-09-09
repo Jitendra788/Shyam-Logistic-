@@ -35,6 +35,13 @@ export function LetterheadEditor() {
   const [gstin, setGstin] = useState("27AXGPL2293R1ZP");
   const [phone, setPhone] = useState("8459858242");
   const [phone2, setPhone2] = useState("9057420562");
+  const [letter, setLetter] = useState("");
+  const [letterDate, setLetterDate] = useState(() => {
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  });
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -202,8 +209,23 @@ export function LetterheadEditor() {
             </div>
           </header>
           <hr className="lh-rule" />
-          <p className="lh-date">Date : ______ / ______ / 20______</p>
-          <div className="lh-body" />
+          <div className="lh-date-row">
+            <label htmlFor="lh-date">Date :</label>
+            <input
+              id="lh-date"
+              className="lh-date-input"
+              value={letterDate}
+              onChange={(e) => setLetterDate(e.target.value)}
+              placeholder="DD/MM/YYYY"
+            />
+          </div>
+          <textarea
+            className="lh-letter"
+            value={letter}
+            onChange={(e) => setLetter(e.target.value)}
+            placeholder="Type your letter / form content here..."
+            spellCheck
+          />
         </article>
       </div>
     </div>

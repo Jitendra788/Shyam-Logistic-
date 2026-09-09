@@ -110,7 +110,7 @@
 
 .lh-line {
   margin: 6px 0 0;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.45;
   color: #123056;
 }
@@ -132,16 +132,49 @@
   border: 0;
 }
 
-.lh-date {
-  text-align: right;
+.lh-date-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 14px;
   font-size: 13px;
   font-weight: 700;
   color: #0a1f3d;
-  letter-spacing: 0.04em;
 }
 
-.lh-body {
-  min-height: 210mm;
+.lh-date-input {
+  width: 9.5rem;
+  border: none;
+  border-bottom: 1px solid #0a1f3d;
+  padding: 2px 4px;
+  background: transparent;
+  font: inherit;
+  font-weight: 500;
+  color: #0a1f3d;
+  outline: none;
+}
+
+.lh-letter {
+  display: block;
+  width: 100%;
+  min-height: 180mm;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1.5px solid #1b5e5a;
+  border-radius: 2px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.lh-letter::placeholder {
+  color: #94a3b8;
 }
 
 @page {
@@ -184,5 +217,14 @@
     margin: 0;
     padding: 0;
     box-shadow: none;
+  }
+
+  .lh-letter {
+    min-height: 180mm;
+    box-shadow: none;
+  }
+
+  .lh-letter::placeholder {
+    color: transparent;
   }
 }
