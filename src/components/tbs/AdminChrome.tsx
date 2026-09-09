@@ -51,6 +51,13 @@ export function AdminChrome({
   );
   const [newEnquiries, setNewEnquiries] = useState<Enquiry[]>([]);
   const [open, setOpen] = useState<"user" | "bell" | null>(null);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNext, setPwNext] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwError, setPwError] = useState("");
+  const [pwOk, setPwOk] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -88,7 +95,10 @@ export function AdminChrome({
       if (!wrapRef.current?.contains(e.target as Node)) setOpen(null);
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(null);
+      if (e.key === "Escape") {
+        setOpen(null);
+        setPwOpen(false);
+      }
     }
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
@@ -104,11 +114,52 @@ export function AdminChrome({
     applyTheme(next);
   }
 
+  function openPassword() {
+    setOpen(null);
+    setPwError("");
+    setPwOk("");
+    setPwCurrent("");
+    setPwNext("");
+    setPwConfirm("");
+    setPwOpen(true);
+  }
+
+  async function savePassword() {
+    setPwError("");
+    setPwOk("");
+    if (pwNext !== pwConfirm) {
+      setPwError("Naya password aur confirm match nahi karte");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const res = await fetch("/api/auth/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: pwCurrent,
+          newPassword: pwNext,
+        }),
+      });
+      const data = (await res.json()) as { error?: string; ok?: boolean };
+      if (!res.ok) throw new Error(data.error || "Password change failed");
+      setPwOk("Password change ho gaya. Agli baar naya password se login karo.");
+      setPwCurrent("");
+      setPwNext("");
+      setPwConfirm("");
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : "Password change failed");
+    } finally {
+      setPwSaving(false);
+    }
+  }
+
   const name = me.displayName || "Admin User";
   const company = me.company || "SHYAM LOGISTICS";
   const badge = newEnquiries.length;
 
   return (
+    <>
     <div className="tbs-topbar-actions" ref={wrapRef}>
       <button
         type="button"
@@ -204,6 +255,14 @@ export function AdminChrome({
             </Link>
             <button
               type="button"
+              className="tbs-drop-item"
+              onClick={openPassword}
+            >
+              <LockIcon />
+              Change password
+            </button>
+            <button
+              type="button"
               className="tbs-drop-item tbs-show-narrow"
               disabled={backingUp}
               onClick={() => {
@@ -235,6 +294,90 @@ export function AdminChrome({
         ) : null}
       </div>
     </div>
+    {pwOpen ? (
+      <div
+        className="tbs-pw-backdrop"
+        role="presentation"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) setPwOpen(false);
+        }}
+      >
+        <div
+          className="tbs-pw-modal"
+          role="dialog"
+          aria-labelledby="tbs-pw-title"
+          aria-modal="true"
+        >
+          <h2 id="tbs-pw-title">Change password</h2>
+          <p className="tbs-pw-lead">Current password likho, phir naya password set karo.</p>
+          <label>
+            Current password
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={pwCurrent}
+              onChange={(e) => setPwCurrent(e.target.value)}
+            />
+          </label>
+          <label>
+            New password
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={pwNext}
+              onChange={(e) => setPwNext(e.target.value)}
+            />
+          </label>
+          <label>
+            Confirm new password
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={pwConfirm}
+              onChange={(e) => setPwConfirm(e.target.value)}
+            />
+          </label>
+          {pwError ? <p className="tbs-pw-err">{pwError}</p> : null}
+          {pwOk ? <p className="tbs-pw-ok">{pwOk}</p> : null}
+          <div className="tbs-pw-actions">
+            <button type="button" className="tbs-btn" onClick={() => setPwOpen(false)}>
+              Close
+            </button>
+            <button
+              type="button"
+              className="tbs-btn tbs-btn-print"
+              disabled={pwSaving}
+              onClick={() => void savePassword()}
+            >
+              {pwSaving ? "Saving…" : "Save password"}
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+    </>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect
+        x="5"
+        y="11"
+        width="14"
+        height="10"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M8 11V8a4 4 0 0 1 8 0v3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

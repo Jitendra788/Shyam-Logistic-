@@ -4,6 +4,7 @@ import {
   getAdminCredentials,
   sessionCookieOptions,
 } from "@/lib/auth";
+import { verifyAdminPassword } from "@/lib/adminPassword";
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +13,8 @@ export async function POST(request: Request) {
     const password = String(body.password || "");
 
     const creds = getAdminCredentials();
-    if (username !== creds.username || password !== creds.password) {
+    const passOk = await verifyAdminPassword(password);
+    if (username !== creds.username || !passOk) {
       return NextResponse.json(
         { error: "Invalid username or password" },
         { status: 401 }
