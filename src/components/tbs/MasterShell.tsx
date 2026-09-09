@@ -19,7 +19,10 @@ const navGroups: NavGroup[] = [
     id: "registration",
     label: "Registration",
     mark: "R",
-    links: [{ href: "/admin/registration/parties", label: "Party Creation" }],
+    links: [
+      { href: "/admin/registration/parties", label: "Party Creation" },
+      { href: "/admin/letterhead", label: "Letterhead" },
+    ],
   },
   {
     id: "transport",
@@ -107,7 +110,8 @@ const navGroups: NavGroup[] = [
 ];
 
 function groupOpenForPath(pathname: string): string {
-  if (pathname.startsWith("/admin/registration")) return "registration";
+  if (pathname.startsWith("/admin/registration") || pathname.startsWith("/admin/letterhead"))
+    return "registration";
   if (pathname.startsWith("/admin/transport")) return "transport";
   if (pathname.startsWith("/admin/reports")) return "reports";
   if (pathname.startsWith("/admin/website")) return "website";
