@@ -327,7 +327,10 @@ export function AdminChrome({
               autoComplete="current-password"
               autoFocus
               value={pwCurrent}
-              onChange={(e) => setPwCurrent(e.target.value)}
+              onChange={(e) => {
+                setPwCurrent(e.target.value);
+                setPwOk("");
+              }}
             />
           </label>
           <label>
@@ -336,7 +339,10 @@ export function AdminChrome({
               type="password"
               autoComplete="new-password"
               value={pwNext}
-              onChange={(e) => setPwNext(e.target.value)}
+              onChange={(e) => {
+                setPwNext(e.target.value);
+                setPwOk("");
+              }}
             />
           </label>
           <label>
@@ -351,16 +357,16 @@ export function AdminChrome({
           {pwError ? <p className="tbs-pw-err">{pwError}</p> : null}
           {pwOk ? <p className="tbs-pw-ok">{pwOk}</p> : null}
           <div className="tbs-pw-actions">
-            <button type="button" className="tbs-btn" onClick={() => setPwOpen(false)}>
-              Close
-            </button>
             <button
               type="button"
-              className="tbs-btn tbs-btn-print"
+              className="tbs-pw-save"
               disabled={pwSaving}
               onClick={() => void savePassword()}
             >
               {pwSaving ? "Saving…" : "Save password"}
+            </button>
+            <button type="button" className="tbs-pw-cancel" onClick={() => setPwOpen(false)}>
+              Close
             </button>
           </div>
         </div>

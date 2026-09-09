@@ -391,6 +391,10 @@ iframe {
   main .btn-stack-mobile > button {
     width: 100%;
   }
+
+  .input-field {
+    font-size: 16px;
+  }
 }
 
 main,
