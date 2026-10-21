@@ -37,9 +37,14 @@ type Row = {
 };
 
 const STATUS_STYLE: Record<
-  Exclude<StatusKey, "pending" | "">,
+  Exclude<StatusKey, "">,
   { bg: string; color: string; label: string }
 > = {
+  pending: {
+    bg: "#fff3e0",
+    color: "#e65100",
+    label: "Pending",
+  },
   not_delivered_not_billed: {
     bg: "#2e7d32",
     color: "#fff",
