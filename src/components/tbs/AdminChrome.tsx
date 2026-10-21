@@ -60,7 +60,9 @@ export function AdminChrome({
   const [pwError, setPwError] = useState("");
   const [pwOk, setPwOk] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
+  const [showPw, setShowPw] = useState({ cur: false, next: false, confirm: false });
   const wrapRef = useRef<HTMLDivElement>(null);
+  const currentPwRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTheme(readTheme());
@@ -99,7 +101,7 @@ export function AdminChrome({
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setOpen(null);
-        setPwOpen(false);
+        if (!pwSaving) setPwOpen(false);
       }
     }
     document.addEventListener("mousedown", onDoc);
@@ -108,7 +110,11 @@ export function AdminChrome({
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, []);
+  }, [pwSaving]);
+
+  useEffect(() => {
+    if (pwOpen) currentPwRef.current?.focus();
+  }, [pwOpen]);
 
   function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
@@ -117,12 +123,14 @@ export function AdminChrome({
   }
 
   function openPassword() {
+    if (!me.authenticated && me.authenticated !== undefined) return;
     setOpen(null);
     setPwError("");
     setPwOk("");
     setPwCurrent("");
     setPwNext("");
     setPwConfirm("");
+    setShowPw({ cur: false, next: false, confirm: false });
     setPwOpen(true);
   }
 
@@ -145,18 +153,31 @@ export function AdminChrome({
     try {
       const res = await fetch("/api/auth/password", {
         method: "PUT",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentPassword: pwCurrent,
           newPassword: pwNext,
+          confirmPassword: pwConfirm,
         }),
       });
-      const data = (await res.json()) as { error?: string; ok?: boolean };
+      const data = (await res.json()) as {
+        error?: string;
+        ok?: boolean;
+        relogin?: boolean;
+      };
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Password change failed");
-      setPwOk("Password change ho gaya. Agli baar naya password se login karo.");
+      setPwOk("Password change ho gaya. Naye password se login karo.");
       setPwCurrent("");
       setPwNext("");
       setPwConfirm("");
+      window.setTimeout(() => {
+        window.location.href = "/admin/login?changed=1";
+      }, 700);
     } catch (err) {
       setPwError(err instanceof Error ? err.message : "Password change failed");
     } finally {
@@ -306,56 +327,94 @@ export function AdminChrome({
     </div>
     {pwOpen && typeof document !== "undefined"
       ? createPortal(
-          <div
-            className="sl-pass-back"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setPwOpen(false);
-            }}
-          >
+          <div className="sl-pass-back" role="presentation">
             <form
               className="sl-pass-box"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="sl-pass-title"
               onSubmit={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 void savePassword();
               }}
             >
-              <h2>Change password</h2>
-              <p>Current, naya, aur confirm password likho, phir Save dabaao.</p>
+              <h2 id="sl-pass-title">Change password</h2>
+              <p>
+                Sirf aapke login ke liye. Current password zaroori hai — bina uske
+                koi naya password set nahi kar sakta.
+              </p>
               <label className="sl-pass-field">
                 Current password
-                <input
-                  type="password"
-                  name="current_password"
-                  autoComplete="current-password"
-                  value={pwCurrent}
-                  onChange={(e) => {
-                    setPwCurrent(e.target.value);
-                    setPwOk("");
-                  }}
-                />
+                <span className="sl-pass-row">
+                  <input
+                    ref={currentPwRef}
+                    id="sl-pass-current"
+                    type={showPw.cur ? "text" : "password"}
+                    name="current_password"
+                    autoComplete="current-password"
+                    value={pwCurrent}
+                    onChange={(e) => {
+                      setPwCurrent(e.target.value);
+                      setPwOk("");
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="sl-pass-eye"
+                    onClick={() => setShowPw((s) => ({ ...s, cur: !s.cur }))}
+                  >
+                    {showPw.cur ? "Hide" : "Show"}
+                  </button>
+                </span>
               </label>
               <label className="sl-pass-field">
                 New password
-                <input
-                  type="password"
-                  name="new_password"
-                  autoComplete="new-password"
-                  value={pwNext}
-                  onChange={(e) => {
-                    setPwNext(e.target.value);
-                    setPwOk("");
-                  }}
-                />
+                <span className="sl-pass-row">
+                  <input
+                    type={showPw.next ? "text" : "password"}
+                    name="new_password"
+                    autoComplete="new-password"
+                    value={pwNext}
+                    onChange={(e) => {
+                      setPwNext(e.target.value);
+                      setPwOk("");
+                    }}
+                    minLength={8}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="sl-pass-eye"
+                    onClick={() => setShowPw((s) => ({ ...s, next: !s.next }))}
+                  >
+                    {showPw.next ? "Hide" : "Show"}
+                  </button>
+                </span>
               </label>
               <label className="sl-pass-field">
                 Confirm new password
-                <input
-                  type="password"
-                  name="confirm_password"
-                  autoComplete="off"
-                  value={pwConfirm}
-                  onChange={(e) => setPwConfirm(e.target.value)}
-                />
+                <span className="sl-pass-row">
+                  <input
+                    type={showPw.confirm ? "text" : "password"}
+                    name="confirm_password"
+                    autoComplete="new-password"
+                    value={pwConfirm}
+                    onChange={(e) => setPwConfirm(e.target.value)}
+                    minLength={8}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="sl-pass-eye"
+                    onClick={() =>
+                      setShowPw((s) => ({ ...s, confirm: !s.confirm }))
+                    }
+                  >
+                    {showPw.confirm ? "Hide" : "Show"}
+                  </button>
+                </span>
               </label>
               {pwError ? <p className="sl-pass-err">{pwError}</p> : null}
               {pwOk ? <p className="sl-pass-ok">{pwOk}</p> : null}
@@ -365,6 +424,7 @@ export function AdminChrome({
               <button
                 className="sl-pass-close"
                 type="button"
+                disabled={pwSaving}
                 onClick={() => setPwOpen(false)}
               >
                 Close

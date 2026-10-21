@@ -143,6 +143,20 @@ export type NoteVoucher = {
   voucherNo: string;
 };
 
+export type DriverRegister = {
+  id: string;
+  date: string;
+  driverName: string;
+  brokerName: string;
+  lrNo: string;
+  lorryNo: string;
+  mobileNo: string;
+  advance: number;
+  balance: number;
+  expense: number;
+  challanNo: string;
+};
+
 export type Masters = {
   stations: string[];
   vehicles: string[];

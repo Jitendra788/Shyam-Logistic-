@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { clearSessionCookieOptions, isAuthenticated } from "@/lib/auth";
 import { saveAdminPassword, verifyAdminPassword } from "@/lib/adminPassword";
 
 export const runtime = "nodejs";
@@ -13,9 +13,11 @@ export async function PUT(req: Request) {
     const body = (await req.json()) as {
       currentPassword?: string;
       newPassword?: string;
+      confirmPassword?: string;
     };
     const currentPassword = String(body.currentPassword || "");
     const newPassword = String(body.newPassword || "");
+    const confirmPassword = String(body.confirmPassword || newPassword);
     if (!currentPassword.trim()) {
       return NextResponse.json(
         { error: "Pehle current password likho" },
@@ -40,6 +42,12 @@ export async function PUT(req: Request) {
         { status: 400 },
       );
     }
+    if (confirmPassword && confirmPassword !== newPassword) {
+      return NextResponse.json(
+        { error: "Naya password aur confirm match nahi karte" },
+        { status: 400 },
+      );
+    }
     if (currentPassword === newPassword) {
       return NextResponse.json(
         { error: "Naya password purane se alag hona chahiye" },
@@ -56,7 +64,9 @@ export async function PUT(req: Request) {
         { status: 503 },
       );
     }
-    return NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true, relogin: true });
+    res.cookies.set(clearSessionCookieOptions());
+    return res;
   } catch {
     return NextResponse.json({ error: "Password change failed" }, { status: 500 });
   }

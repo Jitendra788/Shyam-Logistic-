@@ -46,3 +46,28 @@ export function unusedOrNext(
   if (Number.isFinite(n) && n > 0 && !used.has(n)) return String(n);
   return nextAvailableCode(items, key, start);
 }
+
+export function sameDocNo(a: unknown, b: unknown) {
+  const x = String(a ?? "").trim();
+  const y = String(b ?? "").trim();
+  if (!x || !y) return false;
+  if (x.toLowerCase() === y.toLowerCase()) return true;
+  const nx = toDocNum(x);
+  const ny = toDocNum(y);
+  return Number.isFinite(nx) && Number.isFinite(ny) && nx === ny;
+}
+
+export function findDupByNo<T extends { id?: string }>(
+  items: T[],
+  key: keyof T,
+  value: string,
+  exceptId?: string,
+) {
+  const v = String(value || "").trim();
+  if (!v) return undefined;
+  return items.find((row) => row.id !== exceptId && sameDocNo(row[key], v));
+}
+
+export function duplicateDocMessage(label: string, value: string) {
+  return `${label} ${value} already saved hai. Same ${label} se duplicate save nahi ho sakta. Please unique / naya ${label} enter karein, phir Save dabao.`;
+}

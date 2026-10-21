@@ -15,14 +15,17 @@ export function openPrint(
     | "bookings"
     | "challans"
     | "bills"
-    | "mrs",
+    | "mrs"
+    | "lorry-records",
   id?: string,
-  opts?: { auto?: boolean; noteType?: string },
+  opts?: { auto?: boolean; noteType?: string; from?: string; to?: string },
 ) {
   const q = new URLSearchParams();
   q.set("type", type);
   if (id) q.set("id", id);
   if (opts?.noteType) q.set("noteType", opts.noteType);
+  if (opts?.from) q.set("from", opts.from);
+  if (opts?.to) q.set("to", opts.to);
   if (opts?.auto !== false) q.set("auto", "1");
   window.open(`/admin/print?${q.toString()}`, "_blank", "noopener,noreferrer");
 }

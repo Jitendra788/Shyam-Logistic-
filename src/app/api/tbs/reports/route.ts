@@ -16,15 +16,23 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const kind = searchParams.get("kind") || "booking";
+  const [parties, bookings, bills, receipts, challans, notes] = await Promise.all([
+    getParties(),
+    getBookings(),
+    getBills(),
+    getMoneyReceipts(),
+    getChallans(),
+    getNotes(),
+  ]);
   const payload = buildTbsReport(
     kind,
     {
-      parties: await getParties(),
-      bookings: await getBookings(),
-      bills: await getBills(),
-      receipts: await getMoneyReceipts(),
-      challans: await getChallans(),
-      notes: await getNotes(),
+      parties,
+      bookings,
+      bills,
+      receipts,
+      challans,
+      notes,
     },
     {
       from: searchParams.get("from") || "",

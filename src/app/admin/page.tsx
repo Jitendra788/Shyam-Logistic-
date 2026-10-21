@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAdminAuth } from "@/components/tbs/useTbs";
 import { partyLabel } from "@/lib/tbs/partyLabel";
 
@@ -12,10 +12,22 @@ type BookingRow = {
   party: string;
   from: string;
   to: string;
+  vehicle?: string;
   amount: number;
   delivered: boolean;
   billed: boolean;
+  onChallan?: boolean;
 };
+
+type PartySnap = {
+  id: string;
+  partyName: string;
+  contactNo: string;
+  gstTin: string;
+  address: string;
+};
+
+type ListKind = "all" | "lhc" | "bill" | "parties" | "pending";
 
 type Bucket = { count: number; amount: number };
 
@@ -73,6 +85,7 @@ type Dash = {
     hireCount: number;
     enquiries: number;
     lrTotal: number;
+    lhc?: number;
   };
   completed: {
     lrs: number;
@@ -98,6 +111,8 @@ type Dash = {
   pendingList: BookingRow[];
   completedList: BookingRow[];
   recentBookings?: BookingRow[];
+  lrRows?: BookingRow[];
+  partySnap?: PartySnap[];
   months?: { key: string; label: string; bookings: number; freight: number }[];
   vehicles?: { total: number; onRoad: number; idle: number; list: string[] };
 };
@@ -197,7 +212,7 @@ function WeekSpark({
     return `${x},${y}`;
   });
   return (
-    <svg className="tbs-spark" viewBox={`0 0 ${w} ${h}`} aria-hidden>
+    <svg className="tbs-spark tbs-hide-phone" viewBox={`0 0 ${w} ${h}`} aria-hidden>
       <polyline points={pts.join(" ")} fill="none" stroke="currentColor" strokeWidth="1.6" />
     </svg>
   );
@@ -371,6 +386,7 @@ export default function AdminMasterPage() {
   const [wiping, setWiping] = useState(false);
   const [q, setQ] = useState("");
   const [clock, setClock] = useState("");
+  const [listKind, setListKind] = useState<ListKind | null>(null);
 
   async function loadDash(opts?: { silent?: boolean }) {
     if (!opts?.silent) setLoading(true);
@@ -405,6 +421,7 @@ export default function AdminMasterPage() {
           hireCount: 0,
           enquiries: 0,
           lrTotal: 0,
+          lhc: 0,
         },
         completed: json.completed || {
           lrs: 0,
@@ -436,6 +453,8 @@ export default function AdminMasterPage() {
         months: json.months || [],
         vehicles: json.vehicles || { total: 0, onRoad: 0, idle: 0, list: [] },
         recentBookings: json.recentBookings || [],
+        lrRows: json.lrRows || json.pendingList || [],
+        partySnap: json.partySnap || [],
       });
     } catch (e) {
       setErr(
@@ -479,7 +498,10 @@ export default function AdminMasterPage() {
   useEffect(() => {
     if (!ready) return;
     void loadDash();
-    const refresh = window.setInterval(() => void loadDash({ silent: true }), 10000);
+    const refresh = window.setInterval(() => {
+      if (document.hidden) return;
+      void loadDash({ silent: true });
+    }, 30000);
     return () => window.clearInterval(refresh);
   }, [ready]);
 
@@ -500,6 +522,13 @@ export default function AdminMasterPage() {
   if (!ready) return <div className="tbs-empty">Loading…</div>;
 
   const p = data?.pending;
+  const lrAll = data?.lrRows || [];
+  const pendingLhcAmt = lrAll
+    .filter((r) => !r.onChallan)
+    .reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const unbilledAmt = lrAll
+    .filter((r) => !r.billed)
+    .reduce((s, r) => s + (Number(r.amount) || 0), 0);
   const c = data?.completed;
   const pr = data?.profit;
   const profitPositive = (pr?.profit ?? 0) >= 0;
@@ -586,7 +615,13 @@ export default function AdminMasterPage() {
     (aging?.d16_30.count || 0) +
     (aging?.d30plus.count || 0);
 
-  const attention: { href: string; label: string; value: string; tone: string }[] = [];
+  const attention: {
+    href: string;
+    label: string;
+    value: string;
+    tone: string;
+    modal?: "pending";
+  }[] = [];
   if (p) {
     if (p.outstandingAmt > 0)
       attention.push({
@@ -594,6 +629,14 @@ export default function AdminMasterPage() {
         label: "Outstanding",
         value: inr(p.outstandingAmt),
         tone: "red",
+      });
+    if (p.lrTotal > 0)
+      attention.push({
+        href: "#pending-booking",
+        label: "Pending booking",
+        value: String(p.lrTotal),
+        tone: "amber",
+        modal: "pending",
       });
     if (p.deliveredNotBilled > 0)
       attention.push({
@@ -627,6 +670,127 @@ export default function AdminMasterPage() {
 
   return (
     <div className="tbs-dash tbs-dash-pro">
+      <section className="tbs-sum-row" aria-label="Key totals">
+        <button
+          type="button"
+          className="tbs-sum-card teal"
+          onClick={() => setListKind("all")}
+        >
+          <span className="tbs-sum-ico" aria-hidden>
+            📋
+          </span>
+          <span className="tbs-sum-copy">
+            <b>Total Bookings</b>
+            <strong>{(data?.counts.bookings ?? 0).toLocaleString("en-IN")}</strong>
+            <em>All LR bookings</em>
+          </span>
+          <span className="tbs-sum-go" aria-hidden>
+            →
+          </span>
+        </button>
+        <button
+          type="button"
+          className="tbs-sum-card blue"
+          onClick={() => setListKind("lhc")}
+        >
+          <span className="tbs-sum-ico" aria-hidden>
+            🚚
+          </span>
+          <span className="tbs-sum-copy">
+            <b>Pending LHC</b>
+            <strong>{(p?.lhc ?? 0).toLocaleString("en-IN")}</strong>
+            <em>
+              {pendingLhcAmt > 0
+                ? `${inr(pendingLhcAmt)} awaiting hire`
+                : "Awaiting lorry hire"}
+            </em>
+          </span>
+          <span className="tbs-sum-go" aria-hidden>
+            →
+          </span>
+        </button>
+        <button
+          type="button"
+          className="tbs-sum-card amber"
+          onClick={() => setListKind("bill")}
+        >
+          <span className="tbs-sum-ico" aria-hidden>
+            🧾
+          </span>
+          <span className="tbs-sum-copy">
+            <b>Pending Bill</b>
+            <strong>{(p?.bill ?? 0).toLocaleString("en-IN")}</strong>
+            <em>
+              {unbilledAmt > 0 ? `${inr(unbilledAmt)} unbilled` : "Unbilled LRs"}
+            </em>
+          </span>
+          <span className="tbs-sum-go" aria-hidden>
+            →
+          </span>
+        </button>
+        <button
+          type="button"
+          className="tbs-sum-card navy"
+          onClick={() => setListKind("parties")}
+        >
+          <span className="tbs-sum-ico" aria-hidden>
+            👥
+          </span>
+          <span className="tbs-sum-copy">
+            <b>Customers</b>
+            <strong>{(data?.counts.parties ?? 0).toLocaleString("en-IN")}</strong>
+            <em>Party master</em>
+          </span>
+          <span className="tbs-sum-go" aria-hidden>
+            →
+          </span>
+        </button>
+      </section>
+
+      {p &&
+      (p.outstandingAmt > 0 ||
+        p.hireCount > 0 ||
+        p.delivery > 0 ||
+        (p.enquiries || 0) > 0) ? (
+        <div className="tbs-need-row" aria-label="Needs action">
+          {p.outstandingAmt > 0 ? (
+            <Link
+              href="/admin/reports/party-outstanding/billingwise"
+              className="tbs-need hot"
+            >
+              <b>Outstanding</b>
+              <strong>{inr(p.outstandingAmt)}</strong>
+              <em>{p.outstandingBills} bills</em>
+            </Link>
+          ) : null}
+          {p.hireCount > 0 ? (
+            <Link href="/admin/transport/lhp/new" className="tbs-need">
+              <b>Hire due</b>
+              <strong>{inr(p.hireAmt)}</strong>
+              <em>{p.hireCount} challans</em>
+            </Link>
+          ) : null}
+          {p.delivery > 0 ? (
+            <button
+              type="button"
+              className="tbs-need"
+              onClick={() => setListKind("pending")}
+            >
+              <b>Pending delivery</b>
+              <strong>{p.delivery}</strong>
+              <em>Open list</em>
+            </button>
+          ) : null}
+          {(p.enquiries || 0) > 0 ? (
+            <Link href="/admin/website/enquiries" className="tbs-need">
+              <b>Enquiries</b>
+              <strong>{p.enquiries}</strong>
+              <em>Website leads</em>
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+
       <section className="tbs-dash-hero">
         <div className="tbs-dash-hero-top">
           <div className="tbs-dash-hero-id">
@@ -643,7 +807,7 @@ export default function AdminMasterPage() {
               </span>
               <h1>
                 {greeting()}
-                <span className="tbs-dash-brand"> · SHYAM LOGISTICS</span>
+                <span className="tbs-dash-brand tbs-hide-phone"> · SHYAM LOGISTICS</span>
               </h1>
               <p>
                 Live bookings, collections, hire and pending LRs — one control
@@ -762,6 +926,7 @@ export default function AdminMasterPage() {
         )}
       </section>
 
+      <h2 className="tbs-sum-quick-title">Quick actions</h2>
       <div className="tbs-quick-grid">
         {quickActions.map((m) => (
           <Link
@@ -892,6 +1057,47 @@ export default function AdminMasterPage() {
                     <p className="tbs-ov-empty">No vehicles moving today</p>
                   )}
                 </>
+              )}
+            </article>
+
+            <article className="tbs-ov-card">
+              <header className="tbs-ov-head">
+                <h2>Pending Booking</h2>
+                <button
+                  type="button"
+                  className="tbs-ov-linkbtn"
+                  onClick={() => setListKind("pending")}
+                >
+                  View list
+                </button>
+              </header>
+              {pendingRows.length === 0 ? (
+                <p className="tbs-ov-empty">No pending bookings</p>
+              ) : (
+                <ul className="tbs-recent-list">
+                  {pendingRows.slice(0, 8).map((r) => (
+                    <li key={r.id}>
+                      <div>
+                        <button
+                          type="button"
+                          className="tbs-recent-lr"
+                          onClick={() => setListKind("pending")}
+                        >
+                          {r.lrNo}
+                        </button>
+                        <span>
+                          {partyLabel(r.party)} · {r.from} → {r.to}
+                        </span>
+                      </div>
+                      <div className="tbs-recent-meta">
+                        <strong>{inr(r.amount)}</strong>
+                        <em className={`tbs-recent-st ${statusClass(r)}`}>
+                          {statusLabel(r)}
+                        </em>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
             </article>
 
@@ -1150,16 +1356,28 @@ export default function AdminMasterPage() {
             <span>{attention.length} item{attention.length === 1 ? "" : "s"}</span>
           </div>
           <div className="tbs-attention-grid">
-            {attention.map((a) => (
-              <Link
-                key={a.href + a.label}
-                href={a.href}
-                className={`tbs-attention-card tbs-att-${a.tone}`}
-              >
-                <span>{a.label}</span>
-                <strong>{a.value}</strong>
-              </Link>
-            ))}
+            {attention.map((a) =>
+              a.modal === "pending" ? (
+                <button
+                  key={a.label}
+                  type="button"
+                  className={`tbs-attention-card tbs-att-${a.tone}`}
+                  onClick={() => setListKind("pending")}
+                >
+                  <span>{a.label}</span>
+                  <strong>{a.value}</strong>
+                </button>
+              ) : (
+                <Link
+                  key={a.href + a.label}
+                  href={a.href}
+                  className={`tbs-attention-card tbs-att-${a.tone}`}
+                >
+                  <span>{a.label}</span>
+                  <strong>{a.value}</strong>
+                </Link>
+              ),
+            )}
           </div>
         </section>
       ) : null}
@@ -1271,7 +1489,13 @@ export default function AdminMasterPage() {
                   <h2>Pending</h2>
                   <p className="tbs-pc-subline">Work still open</p>
                 </div>
-                <span className="tbs-pc-badge warn">{p!.lrTotal} LR</span>
+                <button
+                  type="button"
+                  className="tbs-pc-badge warn"
+                  onClick={() => setListKind("pending")}
+                >
+                  {p!.lrTotal} LR
+                </button>
               </header>
               <div className="tbs-pc-kpis">
                 <Link
@@ -1331,9 +1555,13 @@ export default function AdminMasterPage() {
               <div className="tbs-dash-table-wrap">
                 <div className="tbs-pc-table-head">
                   <h3 className="tbs-pc-sub">Pending LRs</h3>
-                  <Link href="/admin/reports/booking" className="tbs-pc-more">
+                  <button
+                    type="button"
+                    className="tbs-pc-more"
+                    onClick={() => setListKind("pending")}
+                  >
                     View all →
-                  </Link>
+                  </button>
                 </div>
                 {pendingRows.length === 0 ? (
                   <div className="tbs-empty-box">
@@ -1341,7 +1569,7 @@ export default function AdminMasterPage() {
                     <Link href="/admin/transport/booking">Create booking →</Link>
                   </div>
                 ) : (
-                  <LrTable rows={pendingRows} />
+                  <LrTable rows={pendingRows} onOpen={() => setListKind("pending")} />
                 )}
               </div>
             </section>
@@ -1416,7 +1644,11 @@ export default function AdminMasterPage() {
                     <Link href="/admin/reports/booking">Open booking report →</Link>
                   </div>
                 ) : (
-                  <LrTable rows={completedRows} completed />
+                  <LrTable
+                    rows={completedRows}
+                    completed
+                    href="/admin/reports/booking?status=delivered_billed"
+                  />
                 )}
               </div>
             </section>
@@ -1618,6 +1850,23 @@ export default function AdminMasterPage() {
           {wiping ? "Deleting…" : "Clear all data"}
         </button>
       </div>
+
+      {listKind ? (
+        <PendingListModal
+          kind={listKind}
+          lrRows={
+            listKind === "all"
+              ? data?.lrRows || []
+              : listKind === "lhc"
+                ? (data?.lrRows || []).filter((r) => !r.onChallan)
+                : listKind === "bill"
+                  ? (data?.lrRows || []).filter((r) => !r.billed)
+                  : data?.pendingList || []
+          }
+          parties={data?.partySnap || []}
+          onClose={() => setListKind(null)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1625,9 +1874,13 @@ export default function AdminMasterPage() {
 function LrTable({
   rows,
   completed,
+  href = "/admin/reports/booking?status=delivered_billed",
+  onOpen,
 }: {
   rows: BookingRow[];
   completed?: boolean;
+  href?: string;
+  onOpen?: () => void;
 }) {
   return (
     <div className="tbs-table-scroll">
@@ -1644,14 +1897,25 @@ function LrTable({
           {rows.map((b) => (
             <tr key={b.id}>
               <td>
-                <Link href="/admin/transport/booking" className="tbs-lr-link">
-                  <div className="tbs-lr-cell">
-                    <strong>{b.lrNo}</strong>
-                    <small>
-                      {fmtDate(b.lrDate)} · {b.from || "—"}→{b.to || "—"}
-                    </small>
-                  </div>
-                </Link>
+                {onOpen ? (
+                  <button type="button" className="tbs-lr-link" onClick={onOpen}>
+                    <div className="tbs-lr-cell">
+                      <strong>{b.lrNo}</strong>
+                      <small>
+                        {fmtDate(b.lrDate)} · {b.from || "—"}→{b.to || "—"}
+                      </small>
+                    </div>
+                  </button>
+                ) : (
+                  <Link href={href} className="tbs-lr-link">
+                    <div className="tbs-lr-cell">
+                      <strong>{b.lrNo}</strong>
+                      <small>
+                        {fmtDate(b.lrDate)} · {b.from || "—"}→{b.to || "—"}
+                      </small>
+                    </div>
+                  </Link>
+                )}
               </td>
               <td>{partyLabel(b.party)}</td>
               <td>
@@ -1666,6 +1930,287 @@ function LrTable({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function pageItems(page: number, pages: number) {
+  if (pages <= 1) return [1] as (number | "…")[];
+  if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
+  const out: (number | "…")[] = [1];
+  const start = Math.max(2, page - 1);
+  const end = Math.min(pages - 1, page + 1);
+  if (start > 2) out.push("…");
+  for (let i = start; i <= end; i++) out.push(i);
+  if (end < pages - 1) out.push("…");
+  out.push(pages);
+  return out;
+}
+
+const LIST_META: Record<
+  ListKind,
+  { title: string; subtitle: string; href: string; empty: string }
+> = {
+  all: {
+    title: "Total Bookings",
+    subtitle: "All LR bookings",
+    href: "/admin/transport/booking",
+    empty: "No bookings",
+  },
+  lhc: {
+    title: "Pending LHC",
+    subtitle: "Awaiting lorry hire",
+    href: "/admin/transport/lhc",
+    empty: "No LRs awaiting lorry hire",
+  },
+  bill: {
+    title: "Pending Bill",
+    subtitle: "Unbilled LRs",
+    href: "/admin/transport/bill",
+    empty: "No unbilled LRs",
+  },
+  pending: {
+    title: "Pending Booking",
+    subtitle: "Not delivered or not billed",
+    href: "/admin/transport/booking",
+    empty: "No pending bookings",
+  },
+  parties: {
+    title: "Customers",
+    subtitle: "Party master",
+    href: "/admin/registration/parties",
+    empty: "No parties",
+  },
+};
+
+function PendingListModal({
+  kind,
+  lrRows,
+  parties,
+  onClose,
+}: {
+  kind: ListKind;
+  lrRows: BookingRow[];
+  parties: PartySnap[];
+  onClose: () => void;
+}) {
+  const meta = LIST_META[kind];
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const isParty = kind === "parties";
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const filteredLr = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return lrRows;
+    return lrRows.filter((r) =>
+      [
+        r.lrNo,
+        r.lrDate,
+        r.from,
+        r.to,
+        r.vehicle,
+        partyLabel(r.party),
+        r.amount,
+        r.billed ? "yes" : "no",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [lrRows, search]);
+
+  const filteredParties = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return parties;
+    return parties.filter((p) =>
+      [p.partyName, p.contactNo, p.gstTin, p.address].join(" ").toLowerCase().includes(q),
+    );
+  }, [parties, search]);
+
+  const filteredLen = isParty ? filteredParties.length : filteredLr.length;
+  const pages = Math.max(1, Math.ceil(filteredLen / pageSize));
+  const safePage = Math.min(page, pages);
+  const start = (safePage - 1) * pageSize;
+  const lrSlice = filteredLr.slice(start, start + pageSize);
+  const partySlice = filteredParties.slice(start, start + pageSize);
+  const fromN = filteredLen ? start + 1 : 0;
+  const toN = Math.min(start + pageSize, filteredLen);
+
+  return (
+    <div className="tbs-plist-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="tbs-plist"
+        role="dialog"
+        aria-labelledby="tbs-plist-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="tbs-plist-head">
+          <div>
+            <h2 id="tbs-plist-title">{meta.title}</h2>
+            <p>{meta.subtitle}</p>
+          </div>
+          <div className="tbs-plist-actions">
+            <Link href={meta.href} className="tbs-plist-open">
+              Open module →
+            </Link>
+            <button type="button" className="tbs-plist-x" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </div>
+        </header>
+
+        <div className="tbs-plist-tools">
+          <label>
+            Show
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value) || 10);
+                setPage(1);
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            entries
+          </label>
+          <label className="tbs-plist-search">
+            Search:
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </label>
+        </div>
+
+        <div className="tbs-plist-tablewrap">
+          <table className="tbs-plist-table">
+            {isParty ? (
+              <>
+                <thead>
+                  <tr>
+                    <th>Party Name</th>
+                    <th>Contact</th>
+                    <th>GST</th>
+                    <th>Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {partySlice.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="tbs-plist-empty">
+                        {meta.empty}
+                      </td>
+                    </tr>
+                  ) : (
+                    partySlice.map((p) => (
+                      <tr key={p.id}>
+                        <td>{p.partyName}</td>
+                        <td>{p.contactNo || "—"}</td>
+                        <td>{p.gstTin || "—"}</td>
+                        <td>{p.address || "—"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </>
+            ) : (
+              <>
+                <thead>
+                  <tr>
+                    <th>LR No</th>
+                    <th>Date</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Vehicle</th>
+                    <th>Party</th>
+                    <th>Amount</th>
+                    <th>Billed</th>
+                    {kind === "lhc" || kind === "all" ? <th>LHC</th> : null}
+                  </tr>
+                </thead>
+                <tbody>
+                  {lrSlice.length === 0 ? (
+                    <tr>
+                      <td colSpan={kind === "lhc" || kind === "all" ? 9 : 8} className="tbs-plist-empty">
+                        {meta.empty}
+                      </td>
+                    </tr>
+                  ) : (
+                    lrSlice.map((r) => (
+                      <tr key={r.id}>
+                        <td>{r.lrNo}</td>
+                        <td>{r.lrDate || "—"}</td>
+                        <td>{r.from || "—"}</td>
+                        <td>{r.to || "—"}</td>
+                        <td>{r.vehicle || "—"}</td>
+                        <td>{partyLabel(r.party)}</td>
+                        <td>{Math.round(Number(r.amount) || 0)}</td>
+                        <td>{r.billed ? "Yes" : "No"}</td>
+                        {kind === "lhc" || kind === "all" ? (
+                          <td>{r.onChallan ? "Yes" : "No"}</td>
+                        ) : null}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </>
+            )}
+          </table>
+        </div>
+
+        <footer className="tbs-plist-foot">
+          <span>
+            Showing {fromN} to {toN} of {filteredLen} entries
+          </span>
+          <div className="tbs-plist-pager">
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setPage((n) => Math.max(1, n - 1))}
+            >
+              Previous
+            </button>
+            {pageItems(safePage, pages).map((item, i) =>
+              item === "…" ? (
+                <span key={`g${i}`} className="tbs-plist-gap">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  className={item === safePage ? "on" : ""}
+                  onClick={() => setPage(item)}
+                >
+                  {item}
+                </button>
+              ),
+            )}
+            <button
+              type="button"
+              disabled={safePage >= pages}
+              onClick={() => setPage((n) => Math.min(pages, n + 1))}
+            >
+              Next
+            </button>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

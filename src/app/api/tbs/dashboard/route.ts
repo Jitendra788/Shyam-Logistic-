@@ -282,51 +282,52 @@ export async function GET() {
   const pendingLrTotal =
     notDeliveredNotBilled + billedNotDelivered + deliveredNotBilled;
 
+  const onChallanIds = new Set<string>();
+  for (const c of challans) {
+    for (const id of c.lrIds || []) onChallanIds.add(id);
+  }
+  const pendingLhc = bookings.filter((b) => !onChallanIds.has(b.id)).length;
+
+  const asLrRow = (b: (typeof bookings)[number], billed: boolean) => ({
+    id: b.id,
+    lrNo: b.lrNo,
+    lrDate: b.lrDate,
+    party: b.billingParty,
+    from: b.from,
+    to: b.to,
+    vehicle: (b.vehicleNo || "").trim().toUpperCase(),
+    amount: Number(b.grandTotal || b.total || b.freight || 0),
+    delivered: Boolean(b.delivered),
+    billed,
+    onChallan: onChallanIds.has(b.id),
+  });
+
+  const lrRows = [...bookings]
+    .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
+    .map((b) => asLrRow(b, lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))));
+
+  const partySnap = parties.map((p) => ({
+    id: p.id,
+    partyName: p.partyName,
+    contactNo: p.contactNo || "",
+    gstTin: p.gstTin || "",
+    address: p.address || "",
+  }));
+
   const recentBookings = [...bookings]
     .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
     .slice(0, 8)
-    .map((b) => ({
-      id: b.id,
-      lrNo: b.lrNo,
-      lrDate: b.lrDate,
-      party: b.billingParty,
-      from: b.from,
-      to: b.to,
-      amount: Number(b.grandTotal || b.total || b.freight || 0),
-      delivered: Boolean(b.delivered),
-      billed: lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)),
-    }));
+    .map((b) => asLrRow(b, lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))));
 
   const pendingList = [...bookings]
     .filter((b) => !(Boolean(b.delivered) && lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))))
     .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
-    .slice(0, 8)
-    .map((b) => ({
-      id: b.id,
-      lrNo: b.lrNo,
-      lrDate: b.lrDate,
-      party: b.billingParty,
-      from: b.from,
-      to: b.to,
-      amount: Number(b.grandTotal || b.total || b.freight || 0),
-      delivered: Boolean(b.delivered),
-      billed: lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)),
-    }));
+    .map((b) => asLrRow(b, lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))));
   const completedList = [...bookings]
     .filter((b) => Boolean(b.delivered) && lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)))
     .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
     .slice(0, 6)
-    .map((b) => ({
-      id: b.id,
-      lrNo: b.lrNo,
-      lrDate: b.lrDate,
-      party: b.billingParty,
-      from: b.from,
-      to: b.to,
-      amount: Number(b.grandTotal || b.total || b.freight || 0),
-      delivered: true,
-      billed: true,
-    }));
+    .map((b) => asLrRow(b, true));
 
   const months: { key: string; label: string; bookings: number; freight: number }[] =
     [];
@@ -394,6 +395,7 @@ export async function GET() {
       hireCount: pendingHireCount,
       enquiries: newEnquiries,
       lrTotal: pendingLrTotal,
+      lhc: pendingLhc,
     },
     completed: {
       lrs: deliveredBilled,
@@ -442,6 +444,8 @@ export async function GET() {
     recentBookings,
     pendingList,
     completedList,
+    lrRows,
+    partySnap,
   });
   } catch (err) {
     console.error("dashboard failed", err);

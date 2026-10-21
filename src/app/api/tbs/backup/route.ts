@@ -7,6 +7,7 @@ import {
   getLhpPayments,
   getMasters,
   getMoneyReceipts,
+  getDrivers,
   getNotes,
   getParties,
 } from "@/lib/tbs/store";
@@ -15,7 +16,7 @@ export async function GET() {
   const denied = await requireAuth();
   if (denied) return denied;
 
-  const [parties, bookings, challans, payments, bills, receipts, notes, masters] =
+  const [parties, bookings, challans, payments, bills, receipts, notes, drivers, masters] =
     await Promise.all([
       getParties(),
       getBookings(),
@@ -24,6 +25,7 @@ export async function GET() {
       getBills(),
       getMoneyReceipts(),
       getNotes(),
+      getDrivers(),
       getMasters(),
     ]);
 
@@ -157,6 +159,25 @@ export async function GET() {
       })),
     ),
     "Notes",
+  );
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(
+      drivers.map((d) => ({
+        Date: d.date,
+        "Driver Name": d.driverName,
+        "Broker Name": d.brokerName,
+        "LR No": d.lrNo,
+        "Lorry No": d.lorryNo,
+        "Mobile No": d.mobileNo,
+        Advance: d.advance,
+        Balance: d.balance,
+        Expense: d.expense,
+        "Challan No": d.challanNo,
+      })),
+    ),
+    "Drivers",
   );
 
   XLSX.utils.book_append_sheet(

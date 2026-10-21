@@ -36,6 +36,7 @@ function workbookFromLegacyJson(data: {
   bills?: Record<string, unknown>[];
   receipts?: Record<string, unknown>[];
   notes?: Record<string, unknown>[];
+  drivers?: Record<string, unknown>[];
   masters?: Record<string, string[]>;
 }) {
   const wb = XLSX.utils.book_new();
@@ -46,6 +47,7 @@ function workbookFromLegacyJson(data: {
   const bills = data.bills || [];
   const receipts = data.receipts || [];
   const notes = data.notes || [];
+  const drivers = data.drivers || [];
   const masters = data.masters || {};
 
   sheetFromRows(
@@ -155,6 +157,22 @@ function workbookFromLegacyJson(data: {
       Party: n.partyName,
       Amount: n.amount,
       Narration: n.narration,
+    })),
+  );
+  sheetFromRows(
+    wb,
+    "Drivers",
+    drivers.map((d) => ({
+      Date: d.date,
+      "Driver Name": d.driverName,
+      "Broker Name": d.brokerName,
+      "LR No": d.lrNo,
+      "Lorry No": d.lorryNo,
+      "Mobile No": d.mobileNo,
+      Advance: d.advance,
+      Balance: d.balance,
+      Expense: d.expense,
+      "Challan No": d.challanNo,
     })),
   );
   sheetFromRows(wb, "Masters", [

@@ -723,6 +723,17 @@
   margin: 4px auto 0;
 }
 
+html.lorry-rec-print-root .doc-sheet {
+  max-width: 297mm;
+}
+
+html.lorry-rec-print-root .doc-table th,
+html.lorry-rec-print-root .doc-table td {
+  font-size: 10px;
+  padding: 3px 4px;
+  white-space: nowrap;
+}
+
 @media print {
   .doc-print-toolbar {
     display: none !important;

@@ -1,5 +1,6 @@
 import { bad, failSave, ok, requireAuth } from "@/lib/tbs/api";
 import { getNotes, getParties, nextCode, saveNotes, uid } from "@/lib/tbs/store";
+import { duplicateDocMessage, findDupByNo } from "@/lib/tbs/nextCode";
 import type { NoteVoucher } from "@/lib/tbs/types";
 
 export async function GET(req: Request) {
@@ -25,6 +26,10 @@ export async function POST(req: Request) {
     if (!body.type) return bad("type required");
     const notes = await getNotes();
     const same = notes.filter((n) => n.type === body.type);
+    const voucherNo = body.voucherNo || nextCode(same, "voucherNo", 1);
+    if (findDupByNo(same, "voucherNo", voucherNo)) {
+      return bad(duplicateDocMessage("Voucher No", voucherNo));
+    }
     const row: NoteVoucher = {
       id: uid("n"),
       type: body.type,
@@ -32,7 +37,7 @@ export async function POST(req: Request) {
       partyName: body.partyName || "",
       amount: Number(body.amount) || 0,
       narration: body.narration || "",
-      voucherNo: body.voucherNo || nextCode(same, "voucherNo", 1),
+      voucherNo,
     };
     notes.unshift(row);
     await saveNotes(notes);
@@ -51,7 +56,13 @@ export async function PUT(req: Request) {
     const notes = await getNotes();
     const idx = notes.findIndex((n) => n.id === body.id);
     if (idx < 0) return bad("Not found", 404);
-    notes[idx] = { ...notes[idx], ...body };
+    const type = body.type || notes[idx].type;
+    const voucherNo = String(body.voucherNo || notes[idx].voucherNo).trim();
+    const same = notes.filter((n) => n.type === type && n.id !== body.id);
+    if (findDupByNo(same, "voucherNo", voucherNo)) {
+      return bad(duplicateDocMessage("Voucher No", voucherNo));
+    }
+    notes[idx] = { ...notes[idx], ...body, type, voucherNo };
     await saveNotes(notes);
     return ok(notes[idx]);
   } catch (e) {

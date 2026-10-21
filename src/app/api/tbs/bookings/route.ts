@@ -12,6 +12,7 @@ import {
 } from "@/lib/tbs/store";
 import type { Booking } from "@/lib/tbs/types";
 import { normalizeLrType } from "@/lib/tbs/lrType";
+import { duplicateDocMessage, findDupByNo } from "@/lib/tbs/nextCode";
 
 async function rememberVehicle(vehicleNo: string) {
   const v = vehicleNo.trim().toUpperCase();
@@ -139,11 +140,15 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Partial<Booking>;
     const bookings = await getBookings();
+    const lrNo = String(body.lrNo || "").trim() || nextCode(bookings, "lrNo", 1);
+    if (findDupByNo(bookings, "lrNo", lrNo)) {
+      return bad(duplicateDocMessage("LR No", lrNo));
+    }
     const t = totals(body);
     const booking: Booking = {
       id: uid("b"),
       bookingFrom: body.bookingFrom || "Sangli",
-      lrNo: body.lrNo || nextCode(bookings, "lrNo", 1),
+      lrNo,
       lrDate: body.lrDate || new Date().toISOString().slice(0, 10),
       from: body.from || "",
       to: body.to || "",
@@ -198,6 +203,16 @@ export async function PUT(req: Request) {
     let idx = bookings.findIndex((b) => b.id === body.id);
     if (idx < 0 && body.lrNo) {
       idx = bookings.findIndex((b) => b.lrNo === String(body.lrNo));
+    }
+    const lrNo = String(body.lrNo || "").trim();
+    if (lrNo) {
+      const dup = findDupByNo(
+        bookings,
+        "lrNo",
+        lrNo,
+        idx >= 0 ? bookings[idx].id : body.id,
+      );
+      if (dup) return bad(duplicateDocMessage("LR No", lrNo));
     }
     const t = totals(body);
     const vehicleNo = (body.vehicleNo || "").trim().toUpperCase();

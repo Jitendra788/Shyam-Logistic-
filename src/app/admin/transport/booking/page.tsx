@@ -291,9 +291,27 @@ export default function BookingPage() {
     await reload();
   }
 
+  function duplicateLrOnForm() {
+    const lr = String(current.lrNo || "").trim();
+    if (!lr) return "";
+    const hit = (data?.bookings || []).find(
+      (b) =>
+        b.id !== current.id &&
+        (b.lrNo.trim().toLowerCase() === lr.toLowerCase() ||
+          Number(b.lrNo) === Number(lr)),
+    );
+    if (!hit) return "";
+    return `LR No ${lr} already saved hai. Same LR Number se naya booking save nahi ho sakta. Please unique / naya LR No enter karein, phir Save dabao.`;
+  }
+
   async function save() {
     if (current.id) {
       await update();
+      return;
+    }
+    const dup = duplicateLrOnForm();
+    if (dup) {
+      setMsg(dup);
       return;
     }
     setSaving(true);
@@ -320,6 +338,11 @@ export default function BookingPage() {
 
   async function update() {
     if (!current.id) return;
+    const dup = duplicateLrOnForm();
+    if (dup) {
+      setMsg(dup);
+      return;
+    }
     setSaving(true);
     const res = await fetch("/api/tbs/bookings", {
       method: "PUT",

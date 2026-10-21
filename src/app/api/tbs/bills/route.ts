@@ -10,6 +10,23 @@ import {
 import { displayBillNo } from "@/lib/tbs/billPrint";
 import type { Bill } from "@/lib/tbs/types";
 import { needsPartyBill } from "@/lib/tbs/lrType";
+import { duplicateDocMessage } from "@/lib/tbs/nextCode";
+
+function billedLrIds(bills: Bill[], exceptId?: string) {
+  const ids = new Set<string>();
+  for (const b of bills) {
+    if (b.id === exceptId) continue;
+    for (const id of b.lrIds || []) ids.add(id);
+  }
+  return ids;
+}
+
+function sameBillNumber(a: Bill, billNo: string, billDate: string) {
+  return (
+    displayBillNo(a.billNo, a.billDate).toUpperCase() ===
+    displayBillNo(billNo, billDate).toUpperCase()
+  );
+}
 
 function blockedBillLrs(bookings: Awaited<ReturnType<typeof getBookings>>, lrIds: string[]) {
   return bookings.filter((b) => lrIds.includes(b.id) && !needsPartyBill(b.lrType));
@@ -53,6 +70,20 @@ export async function POST(req: Request) {
     }
     const serial = body.billNo || nextCode(bills, "billNo", 1);
     const billDate = body.billDate || new Date().toISOString().slice(0, 10);
+    const shown = displayBillNo(String(serial), billDate);
+    if (bills.some((b) => sameBillNumber(b, shown, billDate))) {
+      return bad(duplicateDocMessage("Bill No", shown));
+    }
+    const already = lrIds.filter((id) => billedLrIds(bills).has(id));
+    if (already.length) {
+      const nos = bookings
+        .filter((b) => already.includes(b.id))
+        .map((b) => b.lrNo)
+        .join(", ");
+      return bad(
+        `LR ${nos || already.join(", ")} already billed hai. Same LR se dusra bill nahi banega. Unique LR select karein, phir Save dabao.`,
+      );
+    }
     const bill: Bill = {
       id: uid("bill"),
       billNo: displayBillNo(String(serial), billDate),
@@ -94,10 +125,25 @@ export async function PUT(req: Request) {
     }
     const idx = bills.findIndex((b) => b.id === body.id);
     if (idx < 0) return bad("Not found", 404);
+    const billDate = body.billDate || bills[idx].billDate;
+    const shown = displayBillNo(String(body.billNo || bills[idx].billNo), billDate);
+    if (bills.some((b) => b.id !== body.id && sameBillNumber(b, shown, billDate))) {
+      return bad(duplicateDocMessage("Bill No", shown));
+    }
+    const already = (body.lrIds || []).filter((id) => billedLrIds(bills, body.id).has(id));
+    if (already.length) {
+      const nos = bookings
+        .filter((b) => already.includes(b.id))
+        .map((b) => b.lrNo)
+        .join(", ");
+      return bad(
+        `LR ${nos || already.join(", ")} already billed hai. Same LR se dusra bill nahi banega. Unique LR select karein, phir Save dabao.`,
+      );
+    }
     bills[idx] = {
       ...bills[idx],
       ...body,
-      billNo: displayBillNo(String(body.billNo || bills[idx].billNo), body.billDate || bills[idx].billDate),
+      billNo: shown,
     };
     await saveBills(bills);
     return ok(bills[idx]);

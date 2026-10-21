@@ -14,6 +14,7 @@ import { ShyamStamp } from "@/components/tbs/ShyamStamp";
 
 type StatusKey =
   | ""
+  | "pending"
   | "not_delivered_not_billed"
   | "billed_not_delivered"
   | "delivered_not_billed"
@@ -36,7 +37,7 @@ type Row = {
 };
 
 const STATUS_STYLE: Record<
-  Exclude<StatusKey, "">,
+  Exclude<StatusKey, "pending" | "">,
   { bg: string; color: string; label: string }
 > = {
   not_delivered_not_billed: {
@@ -97,6 +98,7 @@ function downloadExcel(rows: Row[], from: string, to: string) {
 
 const STATUS_KEYS: StatusKey[] = [
   "",
+  "pending",
   "not_delivered_not_billed",
   "billed_not_delivered",
   "delivered_not_billed",
@@ -257,7 +259,11 @@ export default function BookingReportPage() {
               </tr>
             ) : (
               rows.map((r) => {
-                const st = STATUS_STYLE[r.status];
+                const st = STATUS_STYLE[r.status] || {
+                  bg: "#fff3e0",
+                  color: "#e65100",
+                  label: "Pending",
+                };
                 return (
                   <tr
                     key={r.id}
@@ -284,7 +290,25 @@ export default function BookingReportPage() {
       </div>
 
       <div className="booking-status-legend">
-        {(Object.keys(STATUS_STYLE) as Exclude<StatusKey, "">[]).map((key) => {
+        <button
+          type="button"
+          className="booking-status-chip"
+          style={{
+            background: "#fff3e0",
+            color: "#e65100",
+            outline: status === "pending" ? "3px solid #000" : "1px solid #666",
+          }}
+          onClick={() => {
+            const next: StatusKey = status === "pending" ? "" : "pending";
+            setStatus(next);
+            void load(next);
+          }}
+          title="Click to filter pending bookings"
+        >
+          Pending Booking
+          {typeof counts.pending === "number" ? ` (${counts.pending})` : ""}
+        </button>
+        {(Object.keys(STATUS_STYLE) as Exclude<StatusKey, "pending" | "">[]).map((key) => {
           const st = STATUS_STYLE[key];
           const active = status === key;
           return (

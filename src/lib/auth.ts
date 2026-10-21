@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual } from "crypto";
+import { ADMIN_COOKIE } from "@/lib/auth-edge";
 
-const COOKIE_NAME = "sl_admin_session";
+const COOKIE_NAME = ADMIN_COOKIE;
 const MAX_AGE_SEC = 60 * 60 * 24 * 7; // 7 days
 
 function secret() {
@@ -19,33 +20,45 @@ export function getAdminCredentials() {
   };
 }
 
-export function createSessionToken(username: string): string {
-  const exp = Date.now() + MAX_AGE_SEC * 1000;
-  const payload = `${username}.${exp}`;
-  return `${payload}.${sign(payload)}`;
-}
+type ParsedSession = { username: string; exp: number; rev: string };
 
-export function verifySessionToken(token: string | undefined): boolean {
-  if (!token) return false;
+function parseSession(token: string | undefined): ParsedSession | null {
+  if (!token) return null;
   const parts = token.split(".");
-  if (parts.length !== 3) return false;
-  const [username, expStr, sig] = parts;
-  const payload = `${username}.${expStr}`;
+  if (parts.length !== 4) return null;
+  const [username, expStr, rev, sig] = parts;
+  if (!username || !expStr || !rev || !sig) return null;
+  const payload = `${username}.${expStr}.${rev}`;
   const expected = sign(payload);
-
   try {
     const a = Buffer.from(sig, "utf8");
     const b = Buffer.from(expected, "utf8");
-    if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   } catch {
-    return false;
+    return null;
   }
-
   const exp = Number(expStr);
-  if (!Number.isFinite(exp) || Date.now() > exp) return false;
-
+  if (!Number.isFinite(exp) || Date.now() > exp) return null;
   const { username: adminUser } = getAdminCredentials();
-  return username === adminUser;
+  if (username !== adminUser) return null;
+  return { username, exp, rev };
+}
+
+export async function createSessionToken(username: string): Promise<string> {
+  const { getPasswordRev } = await import("@/lib/adminPassword");
+  const exp = Date.now() + MAX_AGE_SEC * 1000;
+  const rev = await getPasswordRev();
+  const payload = `${username}.${exp}.${rev}`;
+  return `${payload}.${sign(payload)}`;
+}
+
+export async function verifySessionToken(
+  token: string | undefined,
+): Promise<boolean> {
+  const parsed = parseSession(token);
+  if (!parsed) return false;
+  const { getPasswordRev } = await import("@/lib/adminPassword");
+  return parsed.rev === (await getPasswordRev());
 }
 
 export async function isAuthenticated(): Promise<boolean> {
@@ -56,7 +69,7 @@ export async function isAuthenticated(): Promise<boolean> {
 export async function getSessionUsername(): Promise<string | null> {
   const jar = await cookies();
   const token = jar.get(COOKIE_NAME)?.value;
-  if (!verifySessionToken(token)) return null;
+  if (!(await verifySessionToken(token))) return null;
   return token?.split(".")[0] || null;
 }
 

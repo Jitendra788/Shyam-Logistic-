@@ -11,7 +11,24 @@ import {
 import type { Challan } from "@/lib/tbs/types";
 import { challanHireBalance } from "@/lib/tbs/challanHire";
 import { applyVehicleToLrs } from "@/lib/tbs/legacySkdb";
-import { nextAvailableCode, unusedOrNext } from "@/lib/tbs/nextCode";
+import {
+  duplicateDocMessage,
+  findDupByNo,
+  nextAvailableCode,
+} from "@/lib/tbs/nextCode";
+
+function challanLrClash(
+  challans: Challan[],
+  lrIds: string[],
+  exceptId?: string,
+) {
+  const used = new Map<string, string>();
+  for (const c of challans) {
+    if (c.id === exceptId) continue;
+    for (const id of c.lrIds || []) used.set(id, c.challanNo);
+  }
+  return lrIds.filter((id) => used.has(id));
+}
 
 async function syncLorryNo(lrIds: string[] | undefined, vehicleNo: string) {
   const bookings = await getBookings();
@@ -86,6 +103,19 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Partial<Challan>;
     const challans = await getChallans();
+    const challanNo =
+      String(body.challanNo || "").trim() ||
+      nextAvailableCode(challans, "challanNo", 1);
+    if (findDupByNo(challans, "challanNo", challanNo)) {
+      return bad(duplicateDocMessage("Challan No", challanNo));
+    }
+    const lrIds = body.lrIds || [];
+    const clash = challanLrClash(challans, lrIds);
+    if (clash.length) {
+      return bad(
+        `Selected LR already dusre challan pe hai. Same LR se duplicate challan nahi banega. Unique LR select karein, phir Save dabao.`,
+      );
+    }
     const freight = Number(body.freight) || 0;
     const advance = Number(body.advance) || 0;
     const transfer = Number(body.transfer) || 0;
@@ -93,7 +123,7 @@ export async function POST(req: Request) {
     const fuel = Number(body.fuel) || 0;
     const challan: Challan = {
       id: uid("c"),
-      challanNo: unusedOrNext(challans, "challanNo", body.challanNo, 1),
+      challanNo,
       challanDate: body.challanDate || new Date().toISOString().slice(0, 10),
       vehicleNo: (body.vehicleNo || "").trim().toUpperCase(),
       brokerOwner: body.brokerOwner || "",
@@ -113,7 +143,7 @@ export async function POST(req: Request) {
       insuNo: body.insuNo || "",
       owner: body.owner || "",
       panNo: body.panNo || "",
-      lrIds: body.lrIds || [],
+      lrIds,
     };
     challans.unshift(challan);
     await saveChallans(challans);
@@ -136,6 +166,16 @@ export async function PUT(req: Request) {
     const challans = await getChallans();
     const idx = challans.findIndex((c) => c.id === body.id);
     if (idx < 0) return bad("Not found", 404);
+    const challanNo = String(body.challanNo || challans[idx].challanNo).trim();
+    if (findDupByNo(challans, "challanNo", challanNo, body.id)) {
+      return bad(duplicateDocMessage("Challan No", challanNo));
+    }
+    const clash = challanLrClash(challans, body.lrIds || [], body.id);
+    if (clash.length) {
+      return bad(
+        `Selected LR already dusre challan pe hai. Same LR se duplicate challan nahi banega. Unique LR select karein, phir Save dabao.`,
+      );
+    }
     const freight = Number(body.freight) || 0;
     const advance = Number(body.advance) || 0;
     const transfer = Number(body.transfer) || 0;
@@ -144,6 +184,7 @@ export async function PUT(req: Request) {
     challans[idx] = {
       ...challans[idx],
       ...body,
+      challanNo,
       vehicleNo: (body.vehicleNo || "").trim().toUpperCase(),
       balance: challanHireBalance({ freight, advance, transfer, cash, fuel }),
     };

@@ -21,6 +21,7 @@ const navGroups: NavGroup[] = [
     mark: "R",
     links: [
       { href: "/admin/registration/parties", label: "Party Creation" },
+      { href: "/admin/registration/drivers", label: "Lorry Record" },
       { href: "/admin/letterhead", label: "Letterhead" },
     ],
   },

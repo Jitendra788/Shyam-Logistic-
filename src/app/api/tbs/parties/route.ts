@@ -8,6 +8,7 @@ import {
   uid,
 } from "@/lib/tbs/store";
 import type { Party } from "@/lib/tbs/types";
+import { duplicateDocMessage, findDupByNo } from "@/lib/tbs/nextCode";
 
 async function rememberPartyType(partyType: string) {
   const t = partyType.trim();
@@ -37,11 +38,21 @@ export async function POST(req: Request) {
     const body = (await req.json()) as Partial<Party>;
     if (!body.partyName?.trim()) return bad("Party Name required");
     const parties = await getParties();
+    const partyName = body.partyName.trim();
+    const partyCode =
+      String(body.partyCode || "").trim() || nextCode(parties, "partyCode", 1);
+    if (
+      parties.some((p) => p.partyName.trim().toLowerCase() === partyName.toLowerCase())
+    ) {
+      return bad(duplicateDocMessage("Party Name", partyName));
+    }
+    if (findDupByNo(parties, "partyCode", partyCode)) {
+      return bad(duplicateDocMessage("Party Code", partyCode));
+    }
     const party: Party = {
       id: uid("p"),
-      partyCode:
-        String(body.partyCode || "").trim() || nextCode(parties, "partyCode", 1),
-      partyName: body.partyName.trim(),
+      partyCode,
+      partyName,
       contactNo: body.contactNo || "",
       email: String(body.email || "").trim(),
       address: body.address || "",
@@ -70,10 +81,25 @@ export async function PUT(req: Request) {
     const parties = await getParties();
     const idx = parties.findIndex((p) => p.id === body.id);
     if (idx < 0) return bad("Not found", 404);
+    const partyName = String(body.partyName || parties[idx].partyName).trim();
+    const partyCode = String(body.partyCode || parties[idx].partyCode).trim();
+    if (
+      parties.some(
+        (p) =>
+          p.id !== body.id &&
+          p.partyName.trim().toLowerCase() === partyName.toLowerCase(),
+      )
+    ) {
+      return bad(duplicateDocMessage("Party Name", partyName));
+    }
+    if (findDupByNo(parties, "partyCode", partyCode, body.id)) {
+      return bad(duplicateDocMessage("Party Code", partyCode));
+    }
     parties[idx] = {
       ...parties[idx],
       ...body,
-      partyCode: String(body.partyCode || parties[idx].partyCode).trim(),
+      partyName,
+      partyCode,
       email: String(body.email ?? parties[idx].email ?? "").trim(),
     };
     await saveParties(parties);

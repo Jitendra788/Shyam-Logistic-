@@ -30,29 +30,30 @@ export function useAdminAuth() {
   return ready;
 }
 
-export function useTbsApi<T>(url: string | null) {
+export function useTbsApi<T>(url: string | null, opts?: { poll?: boolean }) {
   const ready = useAdminAuth();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(Boolean(url));
   const [error, setError] = useState("");
+  const poll = opts?.poll !== false;
 
-  const reload = useCallback(async (opts?: { silent?: boolean }) => {
+  const reload = useCallback(async (reloadOpts?: { silent?: boolean }) => {
     if (!url || !ready) {
       setLoading(false);
       return;
     }
-    if (!opts?.silent) setLoading(true);
+    if (!reloadOpts?.silent) setLoading(true);
     setError("");
     try {
       const res = await fetch(url, { cache: "no-store", credentials: "same-origin" });
       if (!res.ok) throw new Error("Failed to load");
       setData((await res.json()) as T);
     } catch (e) {
-      if (!opts?.silent) {
+      if (!reloadOpts?.silent) {
         setError(e instanceof Error ? e.message : "Failed to load");
       }
     } finally {
-      if (!opts?.silent) setLoading(false);
+      if (!reloadOpts?.silent) setLoading(false);
     }
   }, [url, ready]);
 
@@ -63,8 +64,14 @@ export function useTbsApi<T>(url: string | null) {
     }
     if (!ready) return;
     void reload();
-    const id = window.setInterval(() => void reload({ silent: true }), 10000);
+    if (!poll) return undefined;
+    const id = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      void reload({ silent: true });
+    }, 30000);
     return () => window.clearInterval(id);
+    // poll is fixed per hook usage (print pages pass false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, reload, url]);
 
   return { ready, data, loading, error, reload, setData };

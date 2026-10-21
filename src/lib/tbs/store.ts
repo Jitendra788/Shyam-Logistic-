@@ -14,6 +14,7 @@ import type {
   Bill,
   Booking,
   Challan,
+  DriverRegister,
   LhpPayment,
   Masters,
   MoneyReceipt,
@@ -214,6 +215,7 @@ type TbsState = {
   bills: Bill[];
   receipts: MoneyReceipt[];
   notes: NoteVoucher[];
+  drivers: DriverRegister[];
   masters: Masters;
 };
 
@@ -226,6 +228,7 @@ function emptyState(): TbsState {
     bills: [],
     receipts: [],
     notes: [],
+    drivers: [],
     masters: { ...defaultMasters },
   };
 }
@@ -249,7 +252,8 @@ function stateSize(s: TbsState) {
     s.payments.length +
     s.bills.length +
     s.receipts.length +
-    s.notes.length
+    s.notes.length +
+    s.drivers.length
   );
 }
 
@@ -262,6 +266,7 @@ function mergeStates(...parts: TbsState[]): TbsState {
   out.bills = mergeRowLists(...parts.map((p) => p.bills));
   out.receipts = mergeRowLists(...parts.map((p) => p.receipts));
   out.notes = mergeRowLists(...parts.map((p) => p.notes));
+  out.drivers = mergeRowLists(...parts.map((p) => p.drivers));
   out.masters = Object.assign(
     {},
     defaultMasters,
@@ -290,15 +295,22 @@ function normalizeState(raw: Partial<TbsState> | null | undefined): TbsState {
     bills: Array.isArray(raw.bills) ? raw.bills : [],
     receipts: Array.isArray(raw.receipts) ? raw.receipts : [],
     notes: Array.isArray(raw.notes) ? raw.notes : [],
+    drivers: Array.isArray(raw.drivers) ? raw.drivers : [],
     masters: { ...defaultMasters, ...(raw.masters || {}) },
   };
 }
 
 let inflightState: Promise<TbsState> | null = null;
+let memState: TbsState | null = null;
 
-async function readCollection<T>(file: string): Promise<T | undefined> {
-  const fromPg = await pgGet<T>(file);
-  if (fromPg !== undefined) return fromPg;
+async function readCollection<T>(
+  file: string,
+  opts?: { skipPg?: boolean },
+): Promise<T | undefined> {
+  if (!opts?.skipPg) {
+    const fromPg = await pgGet<T>(file);
+    if (fromPg !== undefined) return fromPg;
+  }
   const fromSql = await sqliteGet<T>(file);
   if (fromSql !== undefined) return fromSql;
   if (hasBlobStore()) {
@@ -346,16 +358,38 @@ async function fetchSharedState(): Promise<TbsState> {
     }
   }
 
+  const skipPg = { skipPg: true };
+  const [
+    parties,
+    bookings,
+    challans,
+    payments,
+    bills,
+    receipts,
+    notes,
+    drivers,
+    masters,
+  ] = await Promise.all([
+    readCollection<Party[]>("parties.json", skipPg),
+    readCollection<Booking[]>("bookings.json", skipPg),
+    readCollection<Challan[]>("challans.json", skipPg),
+    readCollection<LhpPayment[]>("lhp-payments.json", skipPg),
+    readCollection<Bill[]>("bills.json", skipPg),
+    readCollection<MoneyReceipt[]>("money-receipts.json", skipPg),
+    readCollection<NoteVoucher[]>("notes.json", skipPg),
+    readCollection<DriverRegister[]>("drivers.json", skipPg),
+    readCollection<Masters>("masters.json", skipPg),
+  ]);
   const legacy = normalizeState({
-    parties: (await readCollection<Party[]>("parties.json")) || [],
-    bookings: (await readCollection<Booking[]>("bookings.json")) || [],
-    challans: (await readCollection<Challan[]>("challans.json")) || [],
-    payments: (await readCollection<LhpPayment[]>("lhp-payments.json")) || [],
-    bills: (await readCollection<Bill[]>("bills.json")) || [],
-    receipts: (await readCollection<MoneyReceipt[]>("money-receipts.json")) || [],
-    notes: (await readCollection<NoteVoucher[]>("notes.json")) || [],
-    masters:
-      (await readCollection<Masters>("masters.json")) || defaultMasters,
+    parties: parties || [],
+    bookings: bookings || [],
+    challans: challans || [],
+    payments: payments || [],
+    bills: bills || [],
+    receipts: receipts || [],
+    notes: notes || [],
+    drivers: drivers || [],
+    masters: masters || defaultMasters,
   });
   if (stateSize(legacy) > 0) parts.push(legacy);
 
@@ -367,14 +401,21 @@ async function fetchSharedState(): Promise<TbsState> {
 }
 
 async function loadState(): Promise<TbsState> {
+  if (memState) return memState;
   if (inflightState) return inflightState;
-  inflightState = fetchSharedState().finally(() => {
-    inflightState = null;
-  });
+  inflightState = fetchSharedState()
+    .then((s) => {
+      memState = s;
+      return s;
+    })
+    .finally(() => {
+      inflightState = null;
+    });
   return inflightState;
 }
 
 async function persistState(state: TbsState): Promise<void> {
+  memState = state;
   inflightState = Promise.resolve(state);
   try {
     if (hasPostgres()) {
@@ -420,7 +461,7 @@ let writeChain: Promise<void> = Promise.resolve();
 
 async function patchState(patch: Partial<TbsState>): Promise<void> {
   const run = writeChain.then(async () => {
-    const cur = await fetchSharedState();
+    const cur = await loadState();
     await persistState({ ...cur, ...patch });
   });
   writeChain = run.catch(() => undefined);
@@ -457,6 +498,7 @@ const seedLhp: LhpPayment[] = [];
 const seedBills: Bill[] = [];
 const seedMr: MoneyReceipt[] = [];
 const seedNotes: NoteVoucher[] = [];
+const seedDrivers: DriverRegister[] = [];
 
 export async function getMasters() {
   const raw = useSharedState()
@@ -539,6 +581,15 @@ export async function saveNotes(data: NoteVoucher[]) {
   return writeJson("notes.json", data);
 }
 
+export async function getDrivers() {
+  if (useSharedState()) return (await loadState()).drivers;
+  return readJson("drivers.json", seedDrivers);
+}
+export async function saveDrivers(data: DriverRegister[]) {
+  if (useSharedState()) return patchState({ drivers: data });
+  return writeJson("drivers.json", data);
+}
+
 export { nextCode } from "./nextCode";
 
 export function uid(prefix: string) {
@@ -548,6 +599,7 @@ export function uid(prefix: string) {
 /** Wipe all TBS transport data (keeps default masters lists). */
 export async function wipeAllTbsData() {
   mem.clear();
+  memState = null;
   inflightState = null;
   const redis = redisClient();
   await Promise.all([
@@ -565,6 +617,7 @@ export async function wipeAllTbsData() {
             "bills.json",
             "money-receipts.json",
             "notes.json",
+            "drivers.json",
             "masters.json",
           ].map((file) =>
             redis.del(redisKey(file)).catch((err) => {
@@ -580,6 +633,7 @@ export async function wipeAllTbsData() {
     writeJson("bills.json", [] as Bill[]),
     writeJson("money-receipts.json", [] as MoneyReceipt[]),
     writeJson("notes.json", [] as NoteVoucher[]),
+    writeJson("drivers.json", [] as DriverRegister[]),
     writeJson("masters.json", { ...defaultMasters }),
   ]);
   if (useSharedState()) {

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import {
   BillPrint,
   BookingBillPrint,
   ChallanPrint,
   LhpPrint,
+  LorryRecordsPrint,
   MrPrint,
   NotePrint,
   PartiesListPrint,
@@ -23,6 +24,7 @@ import type {
   Challan,
   LhpPayment,
   MoneyReceipt,
+  DriverRegister,
   NoteVoucher,
   Party,
 } from "@/lib/tbs/types";
@@ -47,33 +49,46 @@ type Bundle = {
   receipts?: MoneyReceipt[];
   payments?: LhpPayment[];
   notes?: NoteVoucher[];
+  drivers?: DriverRegister[];
 };
 
 function useBundle(type: string) {
+  const noPoll = { poll: false as const };
   const parties = useTbsApi<{ parties: Party[] }>(
     type.includes("party") || type === "parties" || type === "booking" || type === "bill" || type === "note"
       ? "/api/tbs/parties"
       : null,
+    noPoll,
   );
   const bookings = useTbsApi<{ bookings: Booking[]; parties: Party[] }>(
     ["booking", "bookings", "challan", "bill", "challans", "bills"].includes(type)
       ? "/api/tbs/bookings"
       : null,
+    noPoll,
   );
   const challans = useTbsApi<{ challans: Challan[] }>(
     ["challan", "challans", "lhp", "lhp-list"].includes(type) ? "/api/tbs/challans" : null,
+    noPoll,
   );
   const bills = useTbsApi<{ bills: Bill[]; bookings: Booking[] }>(
     ["bill", "bills", "mr", "mrs"].includes(type) ? "/api/tbs/bills" : null,
+    noPoll,
   );
   const mrs = useTbsApi<{ receipts: MoneyReceipt[] }>(
     ["mr", "mrs"].includes(type) ? "/api/tbs/money-receipts" : null,
+    noPoll,
   );
   const lhp = useTbsApi<{ payments: LhpPayment[] }>(
     ["lhp", "lhp-list"].includes(type) ? "/api/tbs/lhp" : null,
+    noPoll,
   );
   const notes = useTbsApi<{ notes: NoteVoucher[] }>(
     type === "note" ? "/api/tbs/notes" : null,
+    noPoll,
+  );
+  const drivers = useTbsApi<{ drivers: DriverRegister[] }>(
+    type === "lorry-records" ? "/api/tbs/drivers" : null,
+    noPoll,
   );
 
   const loading =
@@ -83,7 +98,8 @@ function useBundle(type: string) {
     bills.loading ||
     mrs.loading ||
     lhp.loading ||
-    notes.loading;
+    notes.loading ||
+    drivers.loading;
 
   const data: Bundle = {
     parties: parties.data?.parties || bookings.data?.parties,
@@ -93,6 +109,7 @@ function useBundle(type: string) {
     receipts: mrs.data?.receipts,
     payments: lhp.data?.payments,
     notes: notes.data?.notes,
+    drivers: drivers.data?.drivers,
   };
 
   return { loading, data };
@@ -143,6 +160,8 @@ function PrintInner() {
   const type = params.get("type") || "";
   const id = params.get("id") || "";
   const noteType = params.get("noteType") || "";
+  const from = params.get("from") || "";
+  const to = params.get("to") || "";
   const auto = params.get("auto") === "1";
   const { loading, data } = useBundle(type);
 
@@ -272,6 +291,15 @@ function PrintInner() {
       if (!n) return null;
       return <NotePrint note={n} />;
     }
+    if (type === "lorry-records") {
+      const list = (data.drivers || []).filter((d) => {
+        const iso = d.date || "";
+        if (from && iso < from) return false;
+        if (to && iso > to) return false;
+        return true;
+      });
+      return <LorryRecordsPrint records={list} from={from} to={to} />;
+    }
     if (type === "note" && noteType) {
       const list = (data.notes || []).filter((n) => n.type === noteType);
       const title =
@@ -296,7 +324,7 @@ function PrintInner() {
       );
     }
     return null;
-  }, [type, id, noteType, data]);
+  }, [type, id, noteType, from, to, data]);
 
   const shareText = useMemo(
     () => (!loading ? buildShareText(type, id, data) : null),
@@ -316,12 +344,17 @@ function PrintInner() {
       ? data.challans?.find((x) => x.id === id || x.challanNo === id)
       : undefined;
 
+  const printedOnce = useRef(false);
+  const readyToPrint = Boolean(auto && content && !loading && type !== "booking");
   useEffect(() => {
-    if (auto && content && !loading && type !== "booking") {
-      const t = setTimeout(() => window.print(), 800);
-      return () => clearTimeout(t);
-    }
-  }, [auto, content, loading, type]);
+    if (!readyToPrint || printedOnce.current) return;
+    const t = window.setTimeout(() => {
+      if (printedOnce.current) return;
+      printedOnce.current = true;
+      window.print();
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [readyToPrint]);
 
   const isBookingPdf = Boolean(booking);
 

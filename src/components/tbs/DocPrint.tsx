@@ -20,6 +20,7 @@ import type {
   Bill,
   Booking,
   Challan,
+  DriverRegister,
   LhpPayment,
   MoneyReceipt,
   NoteVoucher,
@@ -681,6 +682,76 @@ export function RegisterPrint({
   return (
     <Shell title={title}>
       <Table columns={columns} rows={rows} />
+    </Shell>
+  );
+}
+
+export function LorryRecordsPrint({
+  records,
+  from,
+  to,
+}: {
+  records: DriverRegister[];
+  from?: string;
+  to?: string;
+}) {
+  useEffect(() => {
+    document.documentElement.classList.add("lorry-rec-print-root");
+    const style = document.createElement("style");
+    style.id = "lorry-rec-page-size";
+    style.textContent =
+      "@media print { @page { size: A4 landscape; margin: 8mm; } }";
+    document.head.appendChild(style);
+    return () => {
+      document.documentElement.classList.remove("lorry-rec-print-root");
+      style.remove();
+    };
+  }, []);
+
+  const period =
+    from || to
+      ? `From ${from ? fmtDate(from) : "start"}  To  ${to ? fmtDate(to) : "end"}`
+      : "All dates";
+  const totAdv = records.reduce((s, r) => s + (Number(r.advance) || 0), 0);
+  const totBal = records.reduce((s, r) => s + (Number(r.balance) || 0), 0);
+  const totExp = records.reduce((s, r) => s + (Number(r.expense) || 0), 0);
+
+  return (
+    <Shell title="LORRY RECORD">
+      <div className="doc-meta" style={{ marginBottom: 8, fontWeight: 700 }}>
+        {period} · A4 · {records.length} record{records.length === 1 ? "" : "s"}
+      </div>
+      <Table
+        columns={[
+          "Sr",
+          "Date",
+          "Driver Name",
+          "Broker Name",
+          "LR No",
+          "Lorry No",
+          "Mobile",
+          "Advance",
+          "Balance",
+          "Expense",
+          "Challan No",
+        ]}
+        rows={records.map((r, i) => [
+          i + 1,
+          fmtDate(r.date),
+          r.driverName,
+          r.brokerName,
+          r.lrNo,
+          r.lorryNo,
+          r.mobileNo,
+          r.advance || 0,
+          r.balance || 0,
+          r.expense || 0,
+          r.challanNo,
+        ])}
+      />
+      <div className="doc-total">
+        Advance {totAdv} &nbsp;|&nbsp; Balance {totBal} &nbsp;|&nbsp; Expense {totExp}
+      </div>
     </Shell>
   );
 }

@@ -8,6 +8,7 @@ import {
   uid,
 } from "@/lib/tbs/store";
 import type { MoneyReceipt } from "@/lib/tbs/types";
+import { duplicateDocMessage, findDupByNo } from "@/lib/tbs/nextCode";
 
 export async function GET() {
   const denied = await requireAuth();
@@ -48,6 +49,11 @@ export async function POST(req: Request) {
       const paidAmt = Number(item.paidAmt) || 0;
       const deduction = Number(item.deduction) || 0;
       if (!paidAmt && !deduction) continue;
+      const mrNo = String(item.mrNo || "").trim() || String(mrSeq);
+      if (findDupByNo([...receipts, ...created], "mrNo", mrNo)) {
+        return bad(duplicateDocMessage("MR No", mrNo));
+      }
+      if (!String(item.mrNo || "").trim()) mrSeq += 1;
       const row: MoneyReceipt = {
         id: uid("mr"),
         transactionDate:
@@ -56,7 +62,7 @@ export async function POST(req: Request) {
         date: item.date || "",
         partyName: item.partyName || "",
         outstanding,
-        mrNo: item.mrNo || String(mrSeq++),
+        mrNo,
         paidAmt,
         deduction,
         balance: outstanding - paidAmt - deduction,
@@ -81,12 +87,17 @@ export async function PUT(req: Request) {
     const receipts = await getMoneyReceipts();
     const idx = receipts.findIndex((r) => r.id === body.id);
     if (idx < 0) return bad("Not found", 404);
+    const mrNo = String(body.mrNo || receipts[idx].mrNo).trim();
+    if (findDupByNo(receipts, "mrNo", mrNo, body.id)) {
+      return bad(duplicateDocMessage("MR No", mrNo));
+    }
     const outstanding = Number(body.outstanding) || 0;
     const paidAmt = Number(body.paidAmt) || 0;
     const deduction = Number(body.deduction) || 0;
     receipts[idx] = {
       ...receipts[idx],
       ...body,
+      mrNo,
       balance: outstanding - paidAmt - deduction,
     };
     await saveMoneyReceipts(receipts);

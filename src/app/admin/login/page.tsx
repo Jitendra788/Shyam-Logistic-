@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,18 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
+  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("changed") === "1") {
+        setNote("Password change ho gaya. Ab naya password se login karo.");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -114,6 +125,7 @@ export default function AdminLoginPage() {
                 </button>
               </span>
             </label>
+            {note ? <p className="login-ok">{note}</p> : null}
             {error ? <p className="login-error">{error}</p> : null}
             <button type="submit" disabled={loading} className="login-submit">
               {loading ? "Signing in…" : "Continue"}

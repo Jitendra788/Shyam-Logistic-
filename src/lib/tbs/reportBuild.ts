@@ -103,8 +103,14 @@ export function buildTbsReport(
           id: b.id,
         };
       });
-    const filtered = q.status ? mapped.filter((r) => r.status === q.status) : mapped;
+    const filtered =
+      q.status === "pending"
+        ? mapped.filter((r) => r.status !== "delivered_billed")
+        : q.status
+          ? mapped.filter((r) => r.status === q.status)
+          : mapped;
     const finalRows = filtered.map((r, i) => ({ ...r, sr: i + 1 }));
+    const pendingCount = mapped.filter((r) => r.status !== "delivered_billed").length;
     return {
       kind,
       parties: partyNames(
@@ -113,6 +119,7 @@ export function buildTbsReport(
       ),
       rows: finalRows,
       counts: {
+        pending: pendingCount,
         not_delivered_not_billed: mapped.filter((r) => r.status === "not_delivered_not_billed").length,
         billed_not_delivered: mapped.filter((r) => r.status === "billed_not_delivered").length,
         delivered_not_billed: mapped.filter((r) => r.status === "delivered_not_billed").length,
