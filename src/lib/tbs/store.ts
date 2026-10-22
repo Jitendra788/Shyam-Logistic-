@@ -124,19 +124,19 @@ async function writeToFs<T>(file: string, data: T): Promise<boolean> {
 async function readJson<T>(file: string, fallback: T): Promise<T> {
   const onVercel = Boolean(process.env.VERCEL);
 
-  if (mem.has(file) && !onVercel) {
+  if (mem.has(file)) {
     return mem.get(file) as T;
   }
 
   const fromPg = await pgGet<T>(file);
   if (fromPg !== undefined) {
-    if (!onVercel) mem.set(file, fromPg);
+    mem.set(file, fromPg);
     return fromPg;
   }
 
   const fromSql = await sqliteGet<T>(file);
   if (fromSql !== undefined) {
-    if (!onVercel) mem.set(file, fromSql);
+    mem.set(file, fromSql);
     return fromSql;
   }
 
@@ -173,12 +173,26 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 }
 
 async function writeJson<T>(file: string, data: T): Promise<void> {
-  if (!process.env.VERCEL) mem.set(file, data);
+  mem.set(file, data);
 
-  const [pgOk, sqlOk, blobOk] = await Promise.all([
-    hasPostgres() ? pgSet(file, data) : Promise.resolve(false),
+  const pg = hasPostgres();
+  const blob = hasBlobStore();
+  const pgOk = pg ? await pgSet(file, data) : false;
+  if (pgOk) {
+    void sqliteSet(file, data);
+    if (blob) void blobSet(file, data);
+    const redis = redisClient();
+    if (redis) {
+      void redis.set(redisKey(file), data).catch((err) => {
+        console.error("Upstash write failed", file, err);
+      });
+    }
+    return;
+  }
+
+  const [sqlOk, blobOk] = await Promise.all([
     sqliteSet(file, data),
-    hasBlobStore() ? blobSet(file, data) : Promise.resolve(false),
+    blob ? blobSet(file, data) : Promise.resolve(false),
   ]);
   const redis = redisClient();
   let redisOk = false;
@@ -207,7 +221,7 @@ async function writeJson<T>(file: string, data: T): Promise<void> {
 
 const STATE_KEY = "tbs-state-v1.json";
 
-type TbsState = {
+export type TbsState = {
   parties: Party[];
   bookings: Booking[];
   challans: Challan[];
@@ -466,6 +480,82 @@ async function patchState(patch: Partial<TbsState>): Promise<void> {
   });
   writeChain = run.catch(() => undefined);
   return run;
+}
+
+function prependUnique(list: string[] | undefined, values: string[], upper = false) {
+  let next = [...(list || [])];
+  for (const raw of values) {
+    const v = upper ? raw.trim().toUpperCase() : raw.trim();
+    if (!v) continue;
+    if (next.some((x) => x.toLowerCase() === v.toLowerCase())) continue;
+    next = [v, ...next];
+  }
+  return next;
+}
+
+export function nudgeMasters(
+  masters: Masters,
+  hints: {
+    vehicles?: string[];
+    stations?: string[];
+    brokers?: string[];
+    particulars?: string[];
+    partyTypes?: string[];
+    gstPaidBy?: string[];
+    lrTypes?: string[];
+    gstLabels?: string[];
+  },
+): Masters {
+  const next: Masters = { ...masters };
+  if (hints.vehicles?.length) {
+    next.vehicles = prependUnique(next.vehicles, hints.vehicles, true);
+  }
+  if (hints.stations?.length) {
+    next.stations = prependUnique(next.stations, hints.stations);
+  }
+  if (hints.particulars?.length) {
+    next.particulars = prependUnique(next.particulars, hints.particulars);
+  }
+  if (hints.partyTypes?.length) {
+    next.partyTypes = prependUnique(next.partyTypes, hints.partyTypes);
+  }
+  if (hints.gstPaidBy?.length) {
+    next.gstPaidBy = prependUnique(next.gstPaidBy, hints.gstPaidBy);
+  }
+  if (hints.lrTypes?.length) {
+    next.lrTypes = prependUnique(next.lrTypes, hints.lrTypes);
+  }
+  if (hints.gstLabels?.length) {
+    next.gstLabels = prependUnique(next.gstLabels, hints.gstLabels);
+  }
+  if (hints.brokers?.length) {
+    let brokers = [...(next.brokers || [])];
+    for (const raw of hints.brokers) {
+      const name = raw.trim();
+      if (!name) continue;
+      if (brokers.some((x) => x.toLowerCase() === name.toLowerCase())) continue;
+      const rest = brokers.filter((x) => x !== "All");
+      brokers = ["All", name, ...rest];
+    }
+    next.brokers = brokers;
+  }
+  return next;
+}
+
+/** One write for shared state; parallel file writes locally. */
+export async function saveSlice(patch: Partial<TbsState>): Promise<void> {
+  if (useSharedState()) return patchState(patch);
+  const jobs: Promise<void>[] = [];
+  if (patch.parties) jobs.push(writeJson("parties.json", patch.parties));
+  if (patch.bookings) jobs.push(writeJson("bookings.json", patch.bookings));
+  if (patch.challans) jobs.push(writeJson("challans.json", patch.challans));
+  if (patch.payments) jobs.push(writeJson("lhp-payments.json", patch.payments));
+  if (patch.bills) jobs.push(writeJson("bills.json", patch.bills));
+  if (patch.receipts) jobs.push(writeJson("money-receipts.json", patch.receipts));
+  if (patch.notes) jobs.push(writeJson("notes.json", patch.notes));
+  if (patch.drivers) jobs.push(writeJson("drivers.json", patch.drivers));
+  if (patch.masters) jobs.push(writeJson("masters.json", patch.masters));
+  await Promise.all(jobs);
 }
 
 export const defaultMasters: Masters = {

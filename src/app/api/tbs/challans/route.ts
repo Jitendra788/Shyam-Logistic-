@@ -3,9 +3,8 @@ import {
   getBookings,
   getChallans,
   getMasters,
-  saveBookings,
-  saveChallans,
-  saveMasters,
+  nudgeMasters,
+  saveSlice,
   uid,
 } from "@/lib/tbs/store";
 import type { Challan } from "@/lib/tbs/types";
@@ -30,48 +29,12 @@ function challanLrClash(
   return lrIds.filter((id) => used.has(id));
 }
 
-async function syncLorryNo(lrIds: string[] | undefined, vehicleNo: string) {
-  const bookings = await getBookings();
-  const next = applyVehicleToLrs(bookings, lrIds || [], vehicleNo);
-  if (next.changed) await saveBookings(next.bookings);
-}
-
-async function rememberBroker(brokerOwner: string) {
-  const name = brokerOwner.trim();
-  if (!name) return;
-  const masters = await getMasters();
-  const exists = masters.brokers.some(
-    (x) => x.toLowerCase() === name.toLowerCase(),
-  );
-  if (!exists) {
-    const rest = masters.brokers.filter((x) => x !== "All");
-    masters.brokers = ["All", name, ...rest];
-    await saveMasters(masters);
-  }
-}
-
-async function rememberVehicle(vehicleNo: string) {
-  const v = vehicleNo.trim().toUpperCase();
-  if (!v) return;
-  const masters = await getMasters();
-  if (!masters.vehicles.includes(v)) {
-    masters.vehicles = [v, ...masters.vehicles];
-    await saveMasters(masters);
-  }
-}
-
-async function rememberStation(...stations: string[]) {
-  const masters = await getMasters();
-  let changed = false;
-  for (const raw of stations) {
-    const s = raw.trim();
-    if (!s) continue;
-    if (!masters.stations.some((x) => x.toLowerCase() === s.toLowerCase())) {
-      masters.stations = [s, ...masters.stations];
-      changed = true;
-    }
-  }
-  if (changed) await saveMasters(masters);
+function challanMasterHints(row: Partial<Challan>) {
+  return {
+    vehicles: [row.vehicleNo || ""],
+    brokers: [row.brokerOwner || ""],
+    stations: [row.fromStation || "", row.toStation || ""],
+  };
 }
 
 export async function GET() {
@@ -102,7 +65,11 @@ export async function POST(req: Request) {
   if (denied) return denied;
   try {
     const body = (await req.json()) as Partial<Challan>;
-    const challans = await getChallans();
+    const [challans, bookings, masters] = await Promise.all([
+      getChallans(),
+      getBookings(),
+      getMasters(),
+    ]);
     const challanNo =
       String(body.challanNo || "").trim() ||
       nextAvailableCode(challans, "challanNo", 1);
@@ -145,12 +112,12 @@ export async function POST(req: Request) {
       panNo: body.panNo || "",
       lrIds,
     };
-    challans.unshift(challan);
-    await saveChallans(challans);
-    await syncLorryNo(challan.lrIds, challan.vehicleNo);
-    await rememberVehicle(challan.vehicleNo);
-    await rememberBroker(challan.brokerOwner);
-    await rememberStation(challan.fromStation, challan.toStation);
+    const nextBookings = applyVehicleToLrs(bookings, challan.lrIds, challan.vehicleNo);
+    await saveSlice({
+      challans: [challan, ...challans],
+      masters: nudgeMasters(masters, challanMasterHints(challan)),
+      ...(nextBookings.changed ? { bookings: nextBookings.bookings } : {}),
+    });
     return ok(challan, 201);
   } catch (e) {
     return failSave(e);
@@ -163,7 +130,11 @@ export async function PUT(req: Request) {
   try {
     const body = (await req.json()) as Challan;
     if (!body.id) return bad("id required");
-    const challans = await getChallans();
+    const [challans, bookings, masters] = await Promise.all([
+      getChallans(),
+      getBookings(),
+      getMasters(),
+    ]);
     const idx = challans.findIndex((c) => c.id === body.id);
     if (idx < 0) return bad("Not found", 404);
     const challanNo = String(body.challanNo || challans[idx].challanNo).trim();
@@ -181,19 +152,25 @@ export async function PUT(req: Request) {
     const transfer = Number(body.transfer) || 0;
     const cash = Number(body.cash) || 0;
     const fuel = Number(body.fuel) || 0;
-    challans[idx] = {
+    const next = [...challans];
+    next[idx] = {
       ...challans[idx],
       ...body,
       challanNo,
       vehicleNo: (body.vehicleNo || "").trim().toUpperCase(),
       balance: challanHireBalance({ freight, advance, transfer, cash, fuel }),
     };
-    await saveChallans(challans);
-    await syncLorryNo(challans[idx].lrIds, challans[idx].vehicleNo);
-    await rememberVehicle(challans[idx].vehicleNo);
-    await rememberBroker(challans[idx].brokerOwner);
-    await rememberStation(challans[idx].fromStation, challans[idx].toStation);
-    return ok(challans[idx]);
+    const nextBookings = applyVehicleToLrs(
+      bookings,
+      next[idx].lrIds,
+      next[idx].vehicleNo,
+    );
+    await saveSlice({
+      challans: next,
+      masters: nudgeMasters(masters, challanMasterHints(next[idx])),
+      ...(nextBookings.changed ? { bookings: nextBookings.bookings } : {}),
+    });
+    return ok(next[idx]);
   } catch (e) {
     return failSave(e);
   }
@@ -206,7 +183,7 @@ export async function DELETE(req: Request) {
     const id = new URL(req.url).searchParams.get("id");
     if (!id) return bad("id required");
     const challans = await getChallans();
-    await saveChallans(challans.filter((c) => c.id !== id));
+    await saveSlice({ challans: challans.filter((c) => c.id !== id) });
     return ok({ ok: true });
   } catch (e) {
     return failSave(e);

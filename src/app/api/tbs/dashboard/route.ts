@@ -319,10 +319,6 @@ export async function GET() {
     .slice(0, 8)
     .map((b) => asLrRow(b, lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))));
 
-  const pendingList = [...bookings]
-    .filter((b) => !(Boolean(b.delivered) && lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))))
-    .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
-    .map((b) => asLrRow(b, lrCountsAsBilled(b.lrType, billedLrIds.has(b.id))));
   const completedList = [...bookings]
     .filter((b) => Boolean(b.delivered) && lrCountsAsBilled(b.lrType, billedLrIds.has(b.id)))
     .sort((a, b) => String(b.lrDate).localeCompare(String(a.lrDate)))
@@ -442,7 +438,7 @@ export async function GET() {
       list: vehiclesOnRoad.slice(0, 8),
     },
     recentBookings,
-    pendingList,
+    pendingList: [] as typeof lrRows,
     completedList,
     lrRows,
     partySnap,

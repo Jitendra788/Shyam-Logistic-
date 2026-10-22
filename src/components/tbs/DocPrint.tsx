@@ -715,6 +715,12 @@ export function LorryRecordsPrint({
   const totAdv = records.reduce((s, r) => s + (Number(r.advance) || 0), 0);
   const totBal = records.reduce((s, r) => s + (Number(r.balance) || 0), 0);
   const totExp = records.reduce((s, r) => s + (Number(r.expense) || 0), 0);
+  const totNet = records.reduce((s, r) => {
+    const adv = Number(r.advance) || 0;
+    const bal = Number(r.balance) || 0;
+    const exp = Number(r.expense) || 0;
+    return s + (r.totalBalance ?? adv + bal + exp);
+  }, 0);
 
   return (
     <Shell title="LORRY RECORD">
@@ -729,28 +735,36 @@ export function LorryRecordsPrint({
           "Broker Name",
           "LR No",
           "Lorry No",
+          "Challan No",
           "Mobile",
           "Advance",
           "Balance",
           "Expense",
-          "Challan No",
+          "Total Balance",
         ]}
-        rows={records.map((r, i) => [
-          i + 1,
-          fmtDate(r.date),
-          r.driverName,
-          r.brokerName,
-          r.lrNo,
-          r.lorryNo,
-          r.mobileNo,
-          r.advance || 0,
-          r.balance || 0,
-          r.expense || 0,
-          r.challanNo,
-        ])}
+        rows={records.map((r, i) => {
+          const adv = Number(r.advance) || 0;
+          const bal = Number(r.balance) || 0;
+          const exp = Number(r.expense) || 0;
+          return [
+            i + 1,
+            fmtDate(r.date),
+            r.driverName,
+            r.brokerName,
+            r.lrNo,
+            r.lorryNo,
+            r.challanNo,
+            r.mobileNo,
+            adv,
+            bal,
+            exp,
+            r.totalBalance ?? adv + bal + exp,
+          ];
+        })}
       />
       <div className="doc-total">
         Advance {totAdv} &nbsp;|&nbsp; Balance {totBal} &nbsp;|&nbsp; Expense {totExp}
+        &nbsp;|&nbsp; Total Balance {totNet}
       </div>
     </Shell>
   );

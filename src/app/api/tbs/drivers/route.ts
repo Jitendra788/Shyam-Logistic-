@@ -1,6 +1,5 @@
 import { bad, failSave, ok, requireAuth } from "@/lib/tbs/api";
 import {
-  getChallans,
   getDrivers,
   getMasters,
   saveDrivers,
@@ -24,7 +23,23 @@ function num(v: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function moneyLinesFrom(body: Partial<DriverRegister>) {
+  const raw = Array.isArray(body.moneyLines) ? body.moneyLines : [];
+  const lines = (raw.length ? raw : [{ advance: body.advance, balance: body.balance, expense: body.expense }]).map(
+    (l) => ({
+      advance: num(l?.advance),
+      balance: num(l?.balance),
+      expense: num(l?.expense),
+    }),
+  );
+  return lines.length ? lines : [{ advance: 0, balance: 0, expense: 0 }];
+}
+
 function rowFrom(body: Partial<DriverRegister>, id: string): DriverRegister {
+  const moneyLines = moneyLinesFrom(body);
+  const advance = moneyLines.reduce((s, l) => s + l.advance, 0);
+  const balance = moneyLines.reduce((s, l) => s + l.balance, 0);
+  const expense = moneyLines.reduce((s, l) => s + l.expense, 0);
   return {
     id,
     date: String(body.date || "").trim() || new Date().toISOString().slice(0, 10),
@@ -33,9 +48,11 @@ function rowFrom(body: Partial<DriverRegister>, id: string): DriverRegister {
     lrNo: String(body.lrNo || "").trim(),
     lorryNo: String(body.lorryNo || "").trim(),
     mobileNo: String(body.mobileNo || "").trim(),
-    advance: num(body.advance),
-    balance: num(body.balance),
-    expense: num(body.expense),
+    moneyLines,
+    advance,
+    balance,
+    expense,
+    totalBalance: advance + balance + expense,
     challanNo: String(body.challanNo || "").trim(),
   };
 }
@@ -44,18 +61,12 @@ export async function GET() {
   const denied = await requireAuth();
   if (denied) return denied;
   try {
-    const [drivers, masters, challans] = await Promise.all([
-      getDrivers(),
-      getMasters(),
-      getChallans(),
-    ]);
+    const [drivers, masters] = await Promise.all([getDrivers(), getMasters()]);
     const brokerSet = new Set<string>();
     for (const b of masters.brokers || []) if (b && b !== "All") brokerSet.add(b);
     for (const d of drivers) if (d.brokerName) brokerSet.add(d.brokerName);
-    for (const c of challans) if (c.brokerOwner) brokerSet.add(c.brokerOwner);
     const driverSet = new Set<string>();
     for (const d of drivers) if (d.driverName) driverSet.add(d.driverName);
-    for (const c of challans) if (c.driverName) driverSet.add(c.driverName);
     return ok({
       drivers,
       brokers: [...brokerSet],
@@ -72,7 +83,9 @@ export async function POST(req: Request) {
   if (denied) return denied;
   try {
     const body = (await req.json()) as Partial<DriverRegister>;
-    if (!body.driverName?.trim()) return bad("Driver Name required");
+    if (!String(body.lorryNo || "").trim() && !String(body.lrNo || "").trim()) {
+      return bad("Lorry No ya LR No likho");
+    }
     const drivers = await getDrivers();
     const row = rowFrom(body, uid("drv"));
     const dup = driverDup(drivers, row);
@@ -91,7 +104,9 @@ export async function PUT(req: Request) {
   try {
     const body = (await req.json()) as DriverRegister;
     if (!body.id) return bad("id required");
-    if (!body.driverName?.trim()) return bad("Driver Name required");
+    if (!String(body.lorryNo || "").trim() && !String(body.lrNo || "").trim()) {
+      return bad("Lorry No ya LR No likho");
+    }
     const drivers = await getDrivers();
     const idx = drivers.findIndex((d) => d.id === body.id);
     if (idx < 0) return bad("Not found", 404);

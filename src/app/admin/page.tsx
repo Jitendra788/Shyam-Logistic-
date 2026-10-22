@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAdminAuth } from "@/components/tbs/useTbs";
 import { partyLabel } from "@/lib/tbs/partyLabel";
@@ -379,6 +380,7 @@ const quickActions = [
 ];
 
 export default function AdminMasterPage() {
+  const router = useRouter();
   const ready = useAdminAuth();
   const [data, setData] = useState<Dash | null>(null);
   const [err, setErr] = useState("");
@@ -397,7 +399,8 @@ export default function AdminMasterPage() {
         credentials: "same-origin",
       });
       if (res.status === 401) {
-        throw new Error("Session expired — please log in again");
+        router.replace("/admin/login");
+        return;
       }
       if (!res.ok) {
         throw new Error(`Dashboard API error (${res.status})`);
@@ -461,7 +464,7 @@ export default function AdminMasterPage() {
         e instanceof Error ? e.message : "Dashboard data failed to load",
       );
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }
 
@@ -496,14 +499,14 @@ export default function AdminMasterPage() {
   }
 
   useEffect(() => {
-    if (!ready) return;
     void loadDash();
     const refresh = window.setInterval(() => {
       if (document.hidden) return;
       void loadDash({ silent: true });
-    }, 30000);
+    }, 60000);
     return () => window.clearInterval(refresh);
-  }, [ready]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const tick = () =>
@@ -519,7 +522,7 @@ export default function AdminMasterPage() {
     return () => window.clearInterval(id);
   }, []);
 
-  if (!ready) return <div className="tbs-empty">Loading…</div>;
+  if (!ready && !data) return <div className="tbs-empty">Loading…</div>;
 
   const p = data?.pending;
   const lrAll = data?.lrRows || [];
@@ -553,9 +556,10 @@ export default function AdminMasterPage() {
   const recentBookings = (data?.recentBookings || []).filter((r) =>
     matchRow(r, needle),
   );
-  const pendingRows = (data?.pendingList || []).filter((r) =>
-    matchRow(r, needle),
-  );
+  const pendingRows = (data?.pendingList?.length
+    ? data.pendingList
+    : lrAll.filter((r) => !(r.delivered && r.billed))
+  ).filter((r) => matchRow(r, needle));
   const completedRows = (data?.completedList || []).filter((r) =>
     matchRow(r, needle),
   );

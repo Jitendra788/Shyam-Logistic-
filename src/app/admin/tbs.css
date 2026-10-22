@@ -4396,6 +4396,31 @@ input.tbs-input[type="number"]::-webkit-inner-spin-button {
   margin: 0 0 16px;
 }
 
+.tbs-lorry-money {
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #dbe3ee;
+}
+
+.tbs-lorry-money-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b6b78;
+}
+
+.tbs-lorry-money-x {
+  border: 0;
+  background: none;
+  color: #b91c1c;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .tbs-sum-quick-title {
   margin: 2px 0 10px;
   font-size: 15px;

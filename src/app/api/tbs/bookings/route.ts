@@ -6,63 +6,23 @@ import {
   getMasters,
   getParties,
   nextCode,
-  saveBookings,
-  saveMasters,
+  nudgeMasters,
+  saveSlice,
   uid,
 } from "@/lib/tbs/store";
 import type { Booking } from "@/lib/tbs/types";
 import { normalizeLrType } from "@/lib/tbs/lrType";
 import { duplicateDocMessage, findDupByNo } from "@/lib/tbs/nextCode";
 
-async function rememberVehicle(vehicleNo: string) {
-  const v = vehicleNo.trim().toUpperCase();
-  if (!v) return;
-  const masters = await getMasters();
-  if (!masters.vehicles.includes(v)) {
-    masters.vehicles = [v, ...masters.vehicles];
-    await saveMasters(masters);
-  }
-}
-
-async function rememberParticular(particulars: string) {
-  const p = particulars.trim();
-  if (!p) return;
-  const masters = await getMasters();
-  const exists = masters.particulars.some(
-    (x) => x.toLowerCase() === p.toLowerCase(),
-  );
-  if (!exists) {
-    masters.particulars = [p, ...masters.particulars];
-    await saveMasters(masters);
-  }
-}
-
-async function rememberStation(...stations: string[]) {
-  const masters = await getMasters();
-  let changed = false;
-  for (const raw of stations) {
-    const s = raw.trim();
-    if (!s) continue;
-    if (!masters.stations.some((x) => x.toLowerCase() === s.toLowerCase())) {
-      masters.stations = [s, ...masters.stations];
-      changed = true;
-    }
-  }
-  if (changed) await saveMasters(masters);
-}
-
-async function rememberListValue(
-  key: "gstPaidBy" | "lrTypes" | "gstLabels",
-  value: string,
-) {
-  const v = value.trim();
-  if (!v) return;
-  const masters = await getMasters();
-  const list = [...(masters[key] || [])];
-  if (!list.some((x) => x.toLowerCase() === v.toLowerCase())) {
-    masters[key] = [v, ...list];
-    await saveMasters(masters);
-  }
+function bookingMasterHints(row: Partial<Booking>) {
+  return {
+    vehicles: [row.vehicleNo || ""],
+    particulars: [row.particulars || ""],
+    stations: [row.bookingFrom || "", row.from || "", row.to || ""],
+    gstPaidBy: [row.gstPaidBy || ""],
+    lrTypes: [row.lrType || ""],
+    gstLabels: [row.gstLabel || ""],
+  };
 }
 
 function totals(body: Partial<Booking>) {
@@ -139,7 +99,7 @@ export async function POST(req: Request) {
   if (denied) return denied;
   try {
     const body = (await req.json()) as Partial<Booking>;
-    const bookings = await getBookings();
+    const [bookings, masters] = await Promise.all([getBookings(), getMasters()]);
     const lrNo = String(body.lrNo || "").trim() || nextCode(bookings, "lrNo", 1);
     if (findDupByNo(bookings, "lrNo", lrNo)) {
       return bad(duplicateDocMessage("LR No", lrNo));
@@ -179,14 +139,10 @@ export async function POST(req: Request) {
       valueRs: Number(body.valueRs) || 0,
       delivered: Boolean(body.delivered),
     };
-    bookings.unshift(booking);
-    await saveBookings(bookings);
-    await rememberVehicle(booking.vehicleNo);
-    await rememberParticular(booking.particulars);
-    await rememberStation(booking.bookingFrom, booking.from, booking.to);
-    await rememberListValue("gstPaidBy", booking.gstPaidBy);
-    await rememberListValue("lrTypes", booking.lrType);
-    await rememberListValue("gstLabels", booking.gstLabel || "");
+    await saveSlice({
+      bookings: [booking, ...bookings],
+      masters: nudgeMasters(masters, bookingMasterHints(booking)),
+    });
     return ok(booking, 201);
   } catch (e) {
     return failSave(e);
@@ -199,7 +155,7 @@ export async function PUT(req: Request) {
   try {
     const body = (await req.json()) as Booking;
     if (!body.id) return bad("id required");
-    const bookings = await getBookings();
+    const [bookings, masters] = await Promise.all([getBookings(), getMasters()]);
     let idx = bookings.findIndex((b) => b.id === body.id);
     if (idx < 0 && body.lrNo) {
       idx = bookings.findIndex((b) => b.lrNo === String(body.lrNo));
@@ -228,16 +184,14 @@ export async function PUT(req: Request) {
       grandTotal: t.total + gstAmt,
       lrType: normalizeLrType(body.lrType || "") || body.lrType || "",
     };
-    if (idx < 0) bookings.unshift(merged);
-    else bookings[idx] = merged;
-    await saveBookings(bookings);
-    await rememberVehicle(vehicleNo);
-    await rememberParticular(body.particulars);
-    await rememberStation(body.bookingFrom, body.from, body.to);
-    await rememberListValue("gstPaidBy", body.gstPaidBy);
-    await rememberListValue("lrTypes", body.lrType);
-    await rememberListValue("gstLabels", body.gstLabel || "");
-    return ok(idx < 0 ? bookings[0] : bookings[idx]);
+    const next = [...bookings];
+    if (idx < 0) next.unshift(merged);
+    else next[idx] = merged;
+    await saveSlice({
+      bookings: next,
+      masters: nudgeMasters(masters, bookingMasterHints(merged)),
+    });
+    return ok(idx < 0 ? next[0] : next[idx]);
   } catch (e) {
     return failSave(e);
   }
@@ -250,7 +204,7 @@ export async function DELETE(req: Request) {
     const id = new URL(req.url).searchParams.get("id");
     if (!id) return bad("id required");
     const bookings = await getBookings();
-    await saveBookings(bookings.filter((b) => b.id !== id));
+    await saveSlice({ bookings: bookings.filter((b) => b.id !== id) });
     return ok({ ok: true });
   } catch (e) {
     return failSave(e);

@@ -170,11 +170,14 @@ export async function GET() {
         "Broker Name": d.brokerName,
         "LR No": d.lrNo,
         "Lorry No": d.lorryNo,
+        "Challan No": d.challanNo,
         "Mobile No": d.mobileNo,
         Advance: d.advance,
         Balance: d.balance,
         Expense: d.expense,
-        "Challan No": d.challanNo,
+        "Total Balance":
+          d.totalBalance ??
+          (Number(d.advance) || 0) + (Number(d.balance) || 0) + (Number(d.expense) || 0),
       })),
     ),
     "Drivers",

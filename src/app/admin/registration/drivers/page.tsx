@@ -14,7 +14,7 @@ import {
 } from "@/components/tbs/FormPrimitives";
 import { useTbsApi } from "@/components/tbs/useTbs";
 import { openPrint } from "@/lib/tbs/print";
-import type { DriverRegister } from "@/lib/tbs/types";
+import type { DriverRegister, LorryMoneyLine } from "@/lib/tbs/types";
 
 type Payload = {
   drivers: DriverRegister[];
@@ -23,24 +23,66 @@ type Payload = {
   vehicles: string[];
 };
 
-const empty = (): DriverRegister => ({
-  id: "",
-  date: todayISO(),
-  driverName: "",
-  brokerName: "",
-  lrNo: "",
-  lorryNo: "",
-  mobileNo: "",
-  advance: 0,
-  balance: 0,
-  expense: 0,
-  challanNo: "",
-});
+function emptyLine(): LorryMoneyLine {
+  return { advance: 0, balance: 0, expense: 0 };
+}
+
+function linesOf(row: DriverRegister): LorryMoneyLine[] {
+  if (row.moneyLines?.length) return row.moneyLines;
+  return [
+    {
+      advance: Number(row.advance) || 0,
+      balance: Number(row.balance) || 0,
+      expense: Number(row.expense) || 0,
+    },
+  ];
+}
+
+function withLines(row: DriverRegister, moneyLines: LorryMoneyLine[]): DriverRegister {
+  const lines = moneyLines.length ? moneyLines : [emptyLine()];
+  const advance = lines.reduce((s, l) => s + (Number(l.advance) || 0), 0);
+  const balance = lines.reduce((s, l) => s + (Number(l.balance) || 0), 0);
+  const expense = lines.reduce((s, l) => s + (Number(l.expense) || 0), 0);
+  return {
+    ...row,
+    moneyLines: lines,
+    advance,
+    balance,
+    expense,
+    totalBalance: advance + balance + expense,
+  };
+}
+
+const empty = (): DriverRegister =>
+  withLines(
+    {
+      id: "",
+      date: todayISO(),
+      driverName: "",
+      brokerName: "",
+      lrNo: "",
+      lorryNo: "",
+      mobileNo: "",
+      advance: 0,
+      balance: 0,
+      expense: 0,
+      challanNo: "",
+    },
+    [emptyLine()],
+  );
 
 function inDateRange(iso: string, from: string, to: string) {
   if (from && iso < from) return false;
   if (to && iso > to) return false;
   return true;
+}
+
+function totalOf(row: DriverRegister) {
+  const lines = linesOf(row);
+  const advance = lines.reduce((s, l) => s + (Number(l.advance) || 0), 0);
+  const balance = lines.reduce((s, l) => s + (Number(l.balance) || 0), 0);
+  const expense = lines.reduce((s, l) => s + (Number(l.expense) || 0), 0);
+  return row.totalBalance ?? advance + balance + expense;
 }
 
 export default function DriverRegisterPage() {
@@ -54,6 +96,8 @@ export default function DriverRegisterPage() {
 
   const drivers = data?.drivers || [];
   const current = form || empty();
+  const line = linesOf(current)[0] || emptyLine();
+  const totalBalance = totalOf(current);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -75,6 +119,10 @@ export default function DriverRegisterPage() {
     setForm({ ...current, [key]: value });
   }
 
+  function patchAmt(key: keyof LorryMoneyLine, n: number) {
+    setForm(withLines(current, [{ ...line, [key]: n }]));
+  }
+
   async function save() {
     if (current.id) {
       await update();
@@ -85,7 +133,7 @@ export default function DriverRegisterPage() {
     const res = await fetch("/api/tbs/drivers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(current),
+      body: JSON.stringify(withLines(current, [line])),
     });
     setSaving(false);
     if (!res.ok) {
@@ -107,7 +155,7 @@ export default function DriverRegisterPage() {
     const res = await fetch("/api/tbs/drivers", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(current),
+      body: JSON.stringify(withLines(current, [line])),
     });
     setSaving(false);
     if (!res.ok) {
@@ -123,7 +171,7 @@ export default function DriverRegisterPage() {
       setMsg("Select a record first, then Delete");
       return;
     }
-    if (!confirm("Delete this driver record?")) return;
+    if (!confirm("Delete this lorry record?")) return;
     setSaving(true);
     try {
       await apiDelete(`/api/tbs/drivers?id=${current.id}`);
@@ -218,6 +266,16 @@ export default function DriverRegisterPage() {
               </datalist>
             </div>
           </div>
+          <div className="tbs-row">
+            <div className="tbs-field" style={{ flex: 1 }}>
+              <label style={{ width: 120 }}>Challan No</label>
+              <input
+                className="tbs-input w-full"
+                value={current.challanNo}
+                onChange={(e) => set("challanNo", e.target.value)}
+              />
+            </div>
+          </div>
         </div>
         <div>
           <div className="tbs-row">
@@ -236,8 +294,8 @@ export default function DriverRegisterPage() {
               <ManualAmountInput
                 className="tbs-input w-full"
                 syncKey={`${current.id}-adv`}
-                value={current.advance}
-                onChange={(n) => set("advance", n)}
+                value={line.advance}
+                onChange={(n) => patchAmt("advance", n)}
               />
             </div>
           </div>
@@ -247,8 +305,8 @@ export default function DriverRegisterPage() {
               <ManualAmountInput
                 className="tbs-input w-full"
                 syncKey={`${current.id}-bal`}
-                value={current.balance}
-                onChange={(n) => set("balance", n)}
+                value={line.balance}
+                onChange={(n) => patchAmt("balance", n)}
               />
             </div>
           </div>
@@ -258,19 +316,15 @@ export default function DriverRegisterPage() {
               <ManualAmountInput
                 className="tbs-input w-full"
                 syncKey={`${current.id}-exp`}
-                value={current.expense}
-                onChange={(n) => set("expense", n)}
+                value={line.expense}
+                onChange={(n) => patchAmt("expense", n)}
               />
             </div>
           </div>
           <div className="tbs-row">
             <div className="tbs-field" style={{ flex: 1 }}>
-              <label style={{ width: 110 }}>Challan No</label>
-              <input
-                className="tbs-input w-full"
-                value={current.challanNo}
-                onChange={(e) => set("challanNo", e.target.value)}
-              />
+              <label style={{ width: 110 }}>Total Balance</label>
+              <input className="tbs-input w-full" readOnly value={totalBalance} />
             </div>
           </div>
         </div>
@@ -346,21 +400,23 @@ export default function DriverRegisterPage() {
           { key: "brokerName", label: "Broker Name", width: "140px" },
           { key: "lrNo", label: "LR No" },
           { key: "lorryNo", label: "Lorry No" },
+          { key: "challanNo", label: "Challan No" },
           { key: "mobileNo", label: "Mobile No" },
           { key: "advance", label: "Advance" },
           { key: "balance", label: "Balance" },
           { key: "expense", label: "Expense" },
-          { key: "challanNo", label: "Challan No" },
+          { key: "totalBalance", label: "Total Balance" },
         ]}
         rows={filtered}
         selectedId={current.id || null}
-        onSelect={(row) => setForm(row)}
+        onSelect={(row) => setForm(withLines(row, linesOf(row)))}
         renderCell={(row, key, i) => {
           if (key === "sr") return i + 1;
           if (key === "date") return fmtDate(row.date);
           if (key === "advance" || key === "balance" || key === "expense") {
             return row[key] || 0;
           }
+          if (key === "totalBalance") return totalOf(row);
           return (row as unknown as Record<string, string>)[key];
         }}
       />

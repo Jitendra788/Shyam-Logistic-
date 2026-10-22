@@ -143,6 +143,12 @@ export type NoteVoucher = {
   voucherNo: string;
 };
 
+export type LorryMoneyLine = {
+  advance: number;
+  balance: number;
+  expense: number;
+};
+
 export type DriverRegister = {
   id: string;
   date: string;
@@ -154,6 +160,8 @@ export type DriverRegister = {
   advance: number;
   balance: number;
   expense: number;
+  totalBalance?: number;
+  moneyLines?: LorryMoneyLine[];
   challanNo: string;
 };
 
